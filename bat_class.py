@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 
 Duration_of_Simulation = 100
 Size_of_Box = [200,200]
-All_Bats_Abscissae = [0]
-All_Bats_Ordinates = [10]
+All_Bats_X = [0]
+All_Bats_Y = [10]
 
 ###----------LAUNCHER----------###
 ### Class implementation to launch the environment for bats simulations
@@ -41,17 +41,17 @@ All_Bats_Ordinates = [10]
 
 class Launcher:
     
-    def __init__(self, simduration, boxsize, all_abscissae, all_ordinates):
-        self.all_abscissae = all_abscissae #rd.choice(range(self.boxsize[0]))
-        self.all_ordinates = all_ordinates #rd.choice(range(self.boxsize[1]))
-        self.all_initpos = [self.all_abscissae, self.all_ordinates]
+    def __init__(self, simduration, boxsize, all_x, all_y):
+        self.all_x = all_x #rd.choice(range(self.boxsize[0]))
+        self.all_y = all_y #rd.choice(range(self.boxsize[1]))
+        self.all_initpos = [self.all_x, self.all_y]
         self.simduration = simduration
         self.timecount = 0
         self.boxsize = boxsize # has to be of the form [x,y]
         
         assert isinstance(self.boxsize, list) and len(self.boxsize) == 2, "'boxsize' must be a list of 2 elements." 
         # returns error if boxsize is not of the right format, i.e. [x,y]
-        assert len(self.all_abscissae) == len(self.all_ordinates), "Coordinates must be of same length."
+        assert len(self.all_x) == len(self.all_y), "Coordinates must be of same length."
         # returns error if all_abscissae and all_ordinates are of different lengths 
     
     def Timeline(self):
@@ -137,7 +137,7 @@ class Launcher:
 Direction_of_Movement = 0
 Dist_Covered_Per_Iter = 10
 # Duration_of_Simulation = 100 # already set earlier
-Agent_Initial_Position = [All_Bats_Abscissae[0], All_Bats_Ordinates[0]]
+Agent_Initial_Position = [All_Bats_X[0], All_Bats_Y[0]]
 Inter_Pulse_Interval = 3
 Duration_of_Call = 1
 BoxSize = [200,200]
@@ -150,12 +150,12 @@ class Bat_Jamming:
         self.movdirection = movdirection
         self.iterdist = iterdist
         self.initpos = initpos
-        self.abscissa = self.initpos[0]
-        self.ordinate = self.initpos[1]        
+        self.x = self.initpos[0]
+        self.y = self.initpos[1]        
         self.IPI = IPI
         self.callstarttime = 0 # I set it at zero at the moment, for lack of a better idea
     
-        self.positionshistory = [self.abscissa, self.ordinate]
+        self.positionshistory = [self.x, self.y]
         self.callshistory = np.empty([1,self.simduration], dtype = int)
         
         assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
@@ -163,15 +163,15 @@ class Bat_Jamming:
     def Movement(self):
         
         for iteration in range(self.simduration):
-            self.newabscissa = self.abscissa + self.iterdist * m.cos(self.movdirection)
-            self.newordinate = self.ordinate + self.iterdist * m.sin(self.movdirection)
+            self.newx = self.x + self.iterdist * m.cos(self.movdirection)
+            self.newy = self.y + self.iterdist * m.sin(self.movdirection)
         
-            self.abscissa = self.Boundaries(self.newabscissa, self.boxsize[0])
-            self.ordinate = self.Boundaries(self.newordinate, self.boxsize[1])
+            self.x = self.Boundaries(self.newx, self.boxsize[0])
+            self.y = self.Boundaries(self.newy, self.boxsize[1])
         
-            self.currpos = [self.abscissa, self.ordinate]
+            self.currpos = [self.x, self.y]
         
-            self.positionshistory = np.append(self.positionshistory, [self.abscissa, self.ordinate])
+            self.positionshistory = np.append(self.positionshistory, [self.x, self.y])
         
     def Calling(self):
         
@@ -211,8 +211,8 @@ class Bat_Jamming:
         self.xAxis = [] 
         self.yAxis = []
         
-        for abscissa, ordinate in zip(self.positionshistory[0:2*self.simduration:2],self.positionshistory[1:2*self.simduration:2]):
-            self.xAxis = np.append(self.xAxis, abscissa)
-            self.yAxis = np.append(self.yAxis, ordinate)
+        for x, y in zip(self.positionshistory[0:2*self.simduration:2],self.positionshistory[1:2*self.simduration:2]):
+            self.xAxis = np.append(self.xAxis, x)
+            self.yAxis = np.append(self.yAxis, y)
         
         plt.plot(self.xAxis, self.yAxis, 'ro')
