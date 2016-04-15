@@ -176,12 +176,12 @@ class Bat_Jamming:
     def Calling(self):
         
         for iteration in range(self.simduration):
-            self.calltest = float(iteration)/float(self.IPI)
+            self.calltest = float(iteration-self.callstarttime)/float(self.IPI)
             
             if self.calltest%1 == 0:
-                self.callmatrix[0,iteration] = 1
+                self.callshistory[0,iteration] = 1
             else:
-                self.callmatrix[0,iteration] = 0
+                self.callshistory[0,iteration] = 0
             
             
     #def ShapeofBeam(self, angle, shape, depth): # function in construction
