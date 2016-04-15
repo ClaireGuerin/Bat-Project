@@ -234,4 +234,4 @@ Inter_Pulse_Interval = 3
 all_bats = {}
 
 for ID in env.all_ID:
-    all_bats[ID] = Bat_Jamming(ID,Direction_of_Movement,Dist_Covered_Per_Iter,Inter_Pulse_Interval)
+    all_bats[ID] = Bat_Jamming(int(ID),Direction_of_Movement,Dist_Covered_Per_Iter,Inter_Pulse_Interval)
