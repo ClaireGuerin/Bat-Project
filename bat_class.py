@@ -177,12 +177,15 @@ class Bat_Jamming:
         
     def Calling(self):
         
-        for iteration in range(self.simduration):        
-            #self.callstarttime += self.IPI
-            #self.callendtime += self.IPI
-        
-            #self.callstiminghistory = np.append(self.callstiminghistory, [self.callstarttime, self.callendtime])
-    
+        for iteration in range(self.simduration):
+            self.calltest = float(iteration)/float(self.IPI)
+            
+            if self.calltest%1 == 0:
+                self.callmatrix[0,iteration] = 1
+            else:
+                self.callmatrix[0,iteration] = 0
+            
+            
     #def ShapeofBeam(self, angle, shape, depth): # function in construction
         #self.halfangle = angle/2
         #self.shape = shape
