@@ -231,8 +231,7 @@ Direction_of_Movement = 0
 Dist_Covered_Per_Iter = 10
 Inter_Pulse_Interval = 3
 
-all_bats = []
+all_bats = {}
 
-#for ID in env.all_ID:
-#    bat = Bat_Jamming(ID,Direction_of_Movement,Dist_Covered_Per_Iter,Inter_Pulse_Interval)
-#    all_bats.append([bat, ID])
+for ID in env.all_ID:
+    all_bats[ID] = Bat_Jamming(ID,Direction_of_Movement,Dist_Covered_Per_Iter,Inter_Pulse_Interval)
