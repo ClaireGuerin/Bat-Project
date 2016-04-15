@@ -156,7 +156,7 @@ class Bat_Jamming:
         self.callstarttime = 0 # I set it at zero at the moment, for lack of a better idea
     
         self.positionshistory = [self.abscissa, self.ordinate]
-        self.callshistory = np.empty([1,self.simduration], dtype = 1)
+        self.callshistory = np.empty([1,self.simduration], dtype = int)
         
         assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
     
