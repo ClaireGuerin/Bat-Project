@@ -5,24 +5,23 @@ Created on Mon Apr 04 14:31:31 2016
 @author: Claire
 """
 
-# import random as rd
+import random as rd
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
 
 Duration_of_Simulation = 100
 Size_of_Box = [200,200]
-All_Bats_X = [0]
-All_Bats_Y = [10]
+Size_of_Population = 100
 
 ###----------LAUNCHER----------###
 ### Class implementation to launch the environment for bats simulations
-### Initiating inputs: simduration, boxsize, abscissa, ordinate
+### Initiating inputs: simduration, boxsize, x, y
 ### simduration: positive integer. Duration of simulation 
 ### ### sim stands for simulation throughout code
 ### boxsize: list of 2 elemnts. Cartesian space within which the agents can move
-### all_abscissae: list of n elements, where n is the number of agents. Initial abscissa(e) of agent(s)
-### all_ordinates: list of n elements, where n is the number of agents. Initial ordinate(s) of agent(s)
+### all_x: list of n elements, where n is the number of agents. Initial abscissa(e) of agent(s)
+### all_y: list of n elements, where n is the number of agents. Initial ordinate(s) of agent(s)
 
 ###----------INITIATING OUTPUTS----------###
 ### all_initpos: list of 2 lists of n elements each. Initial position(s) of agent(s)
@@ -41,18 +40,20 @@ All_Bats_Y = [10]
 
 class Launcher:
     
-    def __init__(self, simduration, boxsize, all_x, all_y):
-        self.all_x = all_x #rd.choice(range(self.boxsize[0]))
-        self.all_y = all_y #rd.choice(range(self.boxsize[1]))
-        self.all_initpos = [self.all_x, self.all_y]
+    def __init__(self, popsize, simduration, boxsize):
+        self.popsize = popsize
         self.simduration = simduration
         self.timecount = 0
+        self.all_ID = []
+        self.all_initpos = []
         self.boxsize = boxsize # has to be of the form [x,y]
         
         assert isinstance(self.boxsize, list) and len(self.boxsize) == 2, "'boxsize' must be a list of 2 elements." 
         # returns error if boxsize is not of the right format, i.e. [x,y]
-        assert len(self.all_x) == len(self.all_y), "Coordinates must be of same length."
-        # returns error if all_abscissae and all_ordinates are of different lengths 
+        
+    def Identification(self):
+        for i in range(self.popsize):
+            self.all_ID = np.append(self.all_ID,i)    
     
     def Timeline(self):
         self.timetracking = [self.timecount]
@@ -60,6 +61,20 @@ class Launcher:
         for iteration in range(self.simduration):
             self.timecount += 1
             self.timetracking = np.append(self.timetracking, self.timecount)
+    
+    def Positions(self):
+        
+        for ID in self.all_ID:
+           self.agent_initx = rd.choice(range(self.boxsize[0]))
+           self.agent_inity = rd.choice(range(self.boxsize[1]))
+           self.agent_initpos = [self.agent_initx, self.agent_inity]
+           
+           self.all_initpos.append(self.agent_initpos)
+            
+env = Launcher(Size_of_Population, Duration_of_Simulation, Size_of_Box)
+env.Identification()
+env.Positions()
+env.Timeline()
 
 
 ###----------BAT_JAMMING----------###
@@ -76,9 +91,9 @@ class Launcher:
 ### boxsize: space within which the agent can move 
 
 ###----------INITIATING OUTPUTS----------###
-### abscissa: positive integer. Initial abscissa of the agent, extracted from all_initpos (Launcher class)
-### ordinate: positive integer. Initial ordinate of the agent, extracted from all_initpos (Launcher class)
-### initpos: vector of length 2. Position of the agent (comprises abscissa and ordinate)
+### x: positive integer. Initial abscissa of the agent, extracted from all_initpos (Launcher class)
+### y: positive integer. Initial ordinate of the agent, extracted from all_initpos (Launcher class)
+### initpos: vector of length 2. Position of the agent (comprises x and y)
 ### ### init & pos respectively stand for initial & position throughout the code.
 ### callstarttime: positive integer. Starting time within the simulation for the agent's first call
 ### callendtime: positive integer. Ending time of the call.
@@ -89,7 +104,7 @@ class Launcher:
 # Function keeping agent within defined boundaries; 
 # when agent goes out of the boundaries, it is set back to the beginning.
 # Inputs: coord, coordbound
-# coord: coordinate (abscissa or ordinate) to be checked for i.e. position of the agent
+# coord: coordinate (x or y) to be checked for i.e. position of the agent
 # coordbound: boundaries for agent flow
 
 #----------OUTPUTS----------#
@@ -101,9 +116,9 @@ class Launcher:
 # Inputs: taken from __init___ OUTPUTS
 
 #---------OUTPUTS----------#
-# newabscissa: new coordinate of the agent on the x-axis
-# newordinate: new coordinate of the agent on the y-axis
-# newpos: new coordinates of the agents at iteration i+1 (abscissa, ordinate)
+# newx: new coordinate of the agent on the x-axis
+# newy: new coordinate of the agent on the y-axis
+# newpos: new coordinates of the agents at iteration i+1 (x, y)
 # positionhistory: list. updated record of agent's all past positions
 #----------end of documentation for MOVEMENT----------#
 
@@ -112,8 +127,8 @@ class Launcher:
 # Inputs: taken from MOVEMENT function OUTPUTS
 
 #----------OUTPUTS----------#
-# xAxis: vector of all abscissa
-# yAxis: vector of all ordinates
+# xAxis: vector of all x
+# yAxis: vector of all y
 #----------end of documentation for PLOTTING----------#
 
 #----------CALLING----------#
@@ -136,20 +151,17 @@ class Launcher:
 
 Direction_of_Movement = 0
 Dist_Covered_Per_Iter = 10
-# Duration_of_Simulation = 100 # already set earlier
-Agent_Initial_Position = [All_Bats_X[0], All_Bats_Y[0]]
 Inter_Pulse_Interval = 3
-Duration_of_Call = 1
-BoxSize = [200,200]
 
 class Bat_Jamming:
     
-    def __init__(self, movdirection, iterdist, simduration, initpos, IPI, boxsize):
-        self.boxsize = boxsize
-        self.simduration = simduration
+    def __init__(self, ID, movdirection, iterdist, IPI):
+        self.ID = ID
+        self.boxsize = env.boxsize
+        self.simduration = env.simduration
         self.movdirection = movdirection
         self.iterdist = iterdist
-        self.initpos = initpos
+        self.initpos = env.all_initpos[self.ID]
         self.x = self.initpos[0]
         self.y = self.initpos[1]        
         self.IPI = IPI
