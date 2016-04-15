@@ -10,10 +10,6 @@ import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
 
-Duration_of_Simulation = 100
-Size_of_Box = [200,200]
-Size_of_Population = 100
-
 ###----------LAUNCHER----------###
 ### Class implementation to launch the environment for bats simulations
 ### Initiating inputs: simduration, boxsize, x, y
@@ -71,11 +67,6 @@ class Launcher:
            
            self.all_initpos.append(self.agent_initpos)
             
-env = Launcher(Size_of_Population, Duration_of_Simulation, Size_of_Box)
-env.Identification()
-env.Positions()
-env.Timeline()
-
 
 ###----------BAT_JAMMING----------###
 ### Class implementation for agent moving within defined boundaries, in a straight direction.
@@ -148,10 +139,6 @@ env.Timeline()
 # ...
 #----------end of docmentation for SHAPEOFBEAM----------#
 ###----------end of documentation for MOVESNGROOVES----------###
-
-Direction_of_Movement = 0
-Dist_Covered_Per_Iter = 10
-Inter_Pulse_Interval = 3
 
 class Bat_Jamming:
     
@@ -228,3 +215,24 @@ class Bat_Jamming:
             self.yAxis = np.append(self.yAxis, y)
         
         plt.plot(self.xAxis, self.yAxis, 'ro')
+
+# Run a multi-agents simulation
+
+Size_of_Population = 100
+Duration_of_Simulation = 100
+Size_of_Box = [200,200]
+
+env = Launcher(Size_of_Population, Duration_of_Simulation, Size_of_Box)
+env.Identification()
+env.Positions()
+env.Timeline()
+
+Direction_of_Movement = 0
+Dist_Covered_Per_Iter = 10
+Inter_Pulse_Interval = 3
+
+all_bats = []
+
+#for ID in env.all_ID:
+#    bat = Bat_Jamming(ID,Direction_of_Movement,Dist_Covered_Per_Iter,Inter_Pulse_Interval)
+#    all_bats.append([bat, ID])
