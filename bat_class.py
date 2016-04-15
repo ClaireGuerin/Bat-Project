@@ -144,7 +144,7 @@ BoxSize = [200,200]
 
 class Bat_Jamming:
     
-    def __init__(self, movdirection, iterdist, simduration, initpos, IPI, callduration, boxsize):
+    def __init__(self, movdirection, iterdist, simduration, initpos, IPI, boxsize):
         self.boxsize = boxsize
         self.simduration = simduration
         self.movdirection = movdirection
@@ -153,12 +153,10 @@ class Bat_Jamming:
         self.abscissa = self.initpos[0]
         self.ordinate = self.initpos[1]        
         self.IPI = IPI
-        self.callduration = callduration
-        self.callstarttime = 0 # I set it at zero at the moment, for lack of better idea
-        self.callendtime = self.callstarttime + self.callduration 
+        self.callstarttime = 0 # I set it at zero at the moment, for lack of a better idea
     
         self.positionshistory = [self.abscissa, self.ordinate]
-        self.callstiminghistory = [self.callstarttime, self.callendtime]
+        self.callshistory = np.empty([1,self.simduration], dtype = 1)
         
         assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
     
