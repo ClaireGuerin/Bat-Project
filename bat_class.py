@@ -21,12 +21,12 @@ import matplotlib.pyplot as plt
 ### realduration: positive integer. "Real" duration the simulation is supposed to reflect. 
 
 ###----------INITIATING OUTPUTS----------###
-### all_ID: empty array of dimensions 1x(n=popsize elements). 
-### all_initpos: empty list of n=popsize lists of 2 elements each. 
+### all_ID: empty list of dimensions 1x(n=popsize elements). 
+### all_initpos: empty array of n=popsize lists of 2 elements each. 
 ### ### init & pos respectively stand for initial and position throughout the code
 ### timecount: positive integer. Timing of simulation iteration.
-### timetracking: list of 1 element. Initial timing of the simulation
-### timeresolution: positive integer. Resolution of the time simulated.
+### timetracking: array of dimension 1 x simduration. 
+### timeresolution: positive float. Resolution of the time simulated.
 
 #----------IDENTIFICATION----------#
 # Function listing the agents by ID, from 0 to popsize-1.
@@ -60,19 +60,21 @@ class Launcher:
         self.popsize = popsize
         self.simduration = simduration
         self.timecount = 0
-        self.timetracking = [self.timecount]
+        self.timetracking = np.empty([1,self.simduration], dtype = float)
+        self.timetracking[0,0] = self.timecount
         self.realduration = realduration
-        self.timeresolution = self.simduration/self.realduration
+        self.timeresolution = float(self.simduration/self.realduration)
         self.all_ID = []
-        self.all_initpos = []
+        self.all_initpos = np.empty([self.popsize,2], dtype=float)
         self.boxsize = boxsize # has to be of the form [x,y]
         
         assert isinstance(self.boxsize, list) and len(self.boxsize) == 2, "'boxsize' must be a list of 2 elements." 
         # returns error if boxsize is not of the right format, i.e. [x,y]
         
     def Identification(self):
+        
         for agent in range(self.popsize):
-            self.all_ID = np.append(self.all_ID,agent)  
+            self.all_ID = np.append(self.all_ID, agent)  
             
     def Positions(self):
         
@@ -80,13 +82,14 @@ class Launcher:
            self.agent_initx = rd.choice(range(self.boxsize[0]))
            self.agent_inity = rd.choice(range(self.boxsize[1]))
            
-           self.all_initpos.append([self.agent_initx, self.agent_inity])
+           self.all_initpos[ID,0] = self.agent_inity
+           self.all_initpos[ID,1] = self.agent_initx
     
     def Timeline(self):
             
         for iteration in range(self.simduration):
             self.timecount += self.timeresolution
-            self.timetracking = np.append(self.timetracking, self.timecount)
+            self.timetracking[0,iteration] = self.timecount
 
 ###----------BAT_JAMMING_00----------###
 ### Class implementation for agents moving:
