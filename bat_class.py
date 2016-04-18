@@ -51,15 +51,8 @@ class Launcher:
         
     def Identification(self):
         for i in range(self.popsize):
-            self.all_ID = np.append(self.all_ID,i)    
-    
-    def Timeline(self):
-        self.timetracking = [self.timecount]
-    
-        for iteration in range(self.simduration):
-            self.timecount += self.timeresolution
-            self.timetracking = np.append(self.timetracking, self.timecount)
-    
+            self.all_ID = np.append(self.all_ID,i)  
+            
     def Positions(self):
         
         for ID in self.all_ID:
@@ -68,7 +61,13 @@ class Launcher:
            self.agent_initpos = [self.agent_initx, self.agent_inity]
            
            self.all_initpos.append(self.agent_initpos)
-            
+    
+    def Timeline(self):
+        self.timetracking = [self.timecount]
+    
+        for iteration in range(self.simduration):
+            self.timecount += self.timeresolution
+            self.timetracking = np.append(self.timetracking, self.timecount)
 
 ###----------BAT_JAMMING----------###
 ### Class implementation for agent moving within defined boundaries, in a straight direction.
@@ -156,7 +155,8 @@ class Bat_Jamming:
         self.IPI = IPI
         self.callstarttime = 0 # I set it at zero at the moment, for lack of a better idea
     
-        self.positionshistory = [self.x, self.y]
+        self.xhistory = [self.x]
+        self.yhistory = [self.y]
         self.callshistory = np.empty([1,self.simduration], dtype = int)
         
         assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
@@ -170,9 +170,8 @@ class Bat_Jamming:
             self.x = self.Boundaries(self.newx, self.boxsize[0])
             self.y = self.Boundaries(self.newy, self.boxsize[1])
         
-            self.currpos = [self.x, self.y]
-        
-            self.positionshistory = np.append(self.positionshistory, [self.x, self.y])
+            self.xhistory = np.append(self.xhistory, self.x)
+            self.yhistory = np.append(self.yhistory, self.y)
         
     def Calling(self):
         
@@ -208,19 +207,19 @@ class Bat_Jamming:
             return range(coordbound)[0]
         print "Bat within boundaries"
         
-    def Plotting(self):
-        self.xAxis = [] 
-        self.yAxis = []
+    #def Plotting(self):
+        #self.xAxis = [] 
+        #self.yAxis = []
         
-        for x, y in zip(self.positionshistory[0:2*self.simduration:2],self.positionshistory[1:2*self.simduration:2]):
-            self.xAxis = np.append(self.xAxis, x)
-            self.yAxis = np.append(self.yAxis, y)
+        #for x, y in zip(self.positionshistory[0:2*self.simduration:2],self.positionshistory[1:2*self.simduration:2]):
+            #self.xAxis = np.append(self.xAxis, x)
+            #self.yAxis = np.append(self.yAxis, y)
         
-        plt.plot(self.xAxis, self.yAxis, 'ro')
+        #plt.plot(self.xAxis, self.yAxis, 'ro')
 
 # Run a multi-agents simulation
 
-POPSIZE = 100
+POPSIZE = 3
 BOXSIZE = [200,200]
 SIMDURATION = 100
 REALDURATION = 100
@@ -235,7 +234,10 @@ ITERDIST = 10
 INTERPULSEINTERV = 3
 
 all_bats = {}
+all_x = []
+all_y = []
 
 for ID in env.all_ID:
     all_bats[ID] = Bat_Jamming(int(ID),MOVDIRECTION,ITERDIST,INTERPULSEINTERV)
     all_bats[ID].Movement()
+    plt.plot(all_bats[ID].xhistory, all_bats[ID].yhistory, marker = '^')
