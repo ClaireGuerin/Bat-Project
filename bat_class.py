@@ -36,10 +36,12 @@ import matplotlib.pyplot as plt
 
 class Launcher:
     
-    def __init__(self, popsize, simduration, boxsize):
+    def __init__(self, popsize, boxsize, simduration, realduration):
         self.popsize = popsize
         self.simduration = simduration
         self.timecount = 0
+        self.realtime = realduration
+        self.timeresolution = simduration/realduration
         self.all_ID = []
         self.all_initpos = []
         self.boxsize = boxsize # has to be of the form [x,y]
@@ -55,7 +57,7 @@ class Launcher:
         self.timetracking = [self.timecount]
     
         for iteration in range(self.simduration):
-            self.timecount += 1
+            self.timecount += self.timeresolution
             self.timetracking = np.append(self.timetracking, self.timecount)
     
     def Positions(self):
@@ -218,20 +220,22 @@ class Bat_Jamming:
 
 # Run a multi-agents simulation
 
-Size_of_Population = 100
-Duration_of_Simulation = 100
-Size_of_Box = [200,200]
+POPSIZE = 100
+BOXSIZE = [200,200]
+SIMDURATION = 100
+REALDURATION = 100
 
-env = Launcher(Size_of_Population, Duration_of_Simulation, Size_of_Box)
+env = Launcher(POPSIZE, BOXSIZE, SIMDURATION, REALDURATION)
 env.Identification()
 env.Positions()
 env.Timeline()
 
-Direction_of_Movement = 0
-Dist_Covered_Per_Iter = 10
-Inter_Pulse_Interval = 3
+MOVDIRECTION = 0
+ITERDIST = 10
+INTERPULSEINTERV = 3
 
 all_bats = {}
 
 for ID in env.all_ID:
-    all_bats[ID] = Bat_Jamming(int(ID),Direction_of_Movement,Dist_Covered_Per_Iter,Inter_Pulse_Interval)
+    all_bats[ID] = Bat_Jamming(int(ID),MOVDIRECTION,ITERDIST,INTERPULSEINTERV)
+    all_bats[ID].Movement()
