@@ -11,26 +11,46 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 ###----------LAUNCHER----------###
-### Class implementation to launch the environment for bats simulations
-### Initiating inputs: simduration, boxsize, x, y
+### Class implementation to launch the simulation environment.
+### By convention, an object of class Launcher() is stored under the name env (stands for environment)
+### Initiating inputs: popsize, boxsize, simduration, realduration
+### popsize: positive integer. number of agents to simulate i.e. size of the bat group.
+### boxsize: list of 2 elements. Cartesian space within which the agents can move
 ### simduration: positive integer. Duration of simulation 
 ### ### sim stands for simulation throughout code
-### boxsize: list of 2 elemnts. Cartesian space within which the agents can move
-### all_x: list of n elements, where n is the number of agents. Initial abscissa(e) of agent(s)
-### all_y: list of n elements, where n is the number of agents. Initial ordinate(s) of agent(s)
+### realduration: positive integer. "Real" duration the simulation is supposed to reflect. 
 
 ###----------INITIATING OUTPUTS----------###
-### all_initpos: list of 2 lists of n elements each. Initial position(s) of agent(s)
+### all_ID: empty array of dimensions 1x(n=popsize elements). 
+### all_initpos: empty list of n=popsize lists of 2 elements each. 
 ### ### init & pos respectively stand for initial and position throughout the code
-### timecount: positive integer. Timing of the simulation
+### timecount: positive integer. Timing of simulation iteration.
+### timetracking: list of 1 element. Initial timing of the simulation
+### timeresolution: positive integer. Resolution of the time simulated.
+
+#----------IDENTIFICATION----------#
+# Function listing the agents by ID, from 0 to popsize-1.
+# Inputs: popsize taken from __init__ method.
+
+#----------OUTPUTS----------#
+# all_ID: array of dimensions 1 x (n=popsize). ID of each agent from 0 to n-1.
+#----------end of documentation for IDENTIFICATION----------#
+
+#----------POSITIONS--------#
+# Function randomly attributing initial positions to each agent
+# Inputs: all_ID taken from Identification method.
+
+#----------OUPTPUTS----------#
+# all_initpos: updated all_initpos. Contains initial position(s) of agent(s)
+#----------end of documentation for POSITIONS----------#
 
 #----------TIMELINE----------#
 # Function drawing the timeline of the simulation
 # Inputs: taken from __init__ method
 
 #----------OUTPUTS----------#
-# timecount: updated timecount. At the end of the simulation, timecount = simduration
-# timetracking: array of dimensions 1 x simduration. Timeline of the simulation, with size 1 timesteps.
+# timecount: updated timecount. At the end of the simulation, timecount = simduration / timeresolution
+# timetracking: array of dimensions 1xsimduration. Updated timetracking with "Real times" corresponding to each simulation iteration
 #----------end of documentation for TIMELINE----------#
 ###----------end of documentation for LAUNCHER----------#  
 
@@ -40,8 +60,9 @@ class Launcher:
         self.popsize = popsize
         self.simduration = simduration
         self.timecount = 0
-        self.realtime = realduration
-        self.timeresolution = simduration/realduration
+        self.timetracking = [self.timecount]
+        self.realduration = realduration
+        self.timeresolution = self.simduration/self.realduration
         self.all_ID = []
         self.all_initpos = []
         self.boxsize = boxsize # has to be of the form [x,y]
@@ -50,47 +71,67 @@ class Launcher:
         # returns error if boxsize is not of the right format, i.e. [x,y]
         
     def Identification(self):
-        for i in range(self.popsize):
-            self.all_ID = np.append(self.all_ID,i)  
+        for agent in range(self.popsize):
+            self.all_ID = np.append(self.all_ID,agent)  
             
     def Positions(self):
         
         for ID in self.all_ID:
            self.agent_initx = rd.choice(range(self.boxsize[0]))
            self.agent_inity = rd.choice(range(self.boxsize[1]))
-           self.agent_initpos = [self.agent_initx, self.agent_inity]
            
-           self.all_initpos.append(self.agent_initpos)
+           self.all_initpos.append([self.agent_initx, self.agent_inity])
     
     def Timeline(self):
-        self.timetracking = [self.timecount]
-    
+            
         for iteration in range(self.simduration):
             self.timecount += self.timeresolution
             self.timetracking = np.append(self.timetracking, self.timecount)
 
-###----------BAT_JAMMING----------###
-### Class implementation for agent moving within defined boundaries, in a straight direction.
-### Initiating Inputs: movdirection, iterdist, simduration
+###----------BAT_JAMMING_00----------###
+### Class implementation for agents moving:
+### - within defined boundaries;
+### - in a straight direction;
+### - while calling at regular IPI;
+### - only timing of sound taken into account;
+### - without echoes.
+### Initiating Inputs: ID, movdirection, iterdist, IPI
+### ID: positive integer. ID of the agent.
 ### movdirection: integer within [-pi;pi]. Angle (in RADIANS) of the agent's direction along the plane. 
 ### ### mov stands for movement throughout the code.
 ### iterdist: positive integer. Distance covered by the agent in a single iteration. 
-### ### iter and dist respectively stand for iteration & distance throughout the code.
-### simduration: positive integer. Duration of simulation.
-### ### sim stands for simulation throughout the code.
+### ### iter & dist respectively stand for iteration & distance throughout the code.
 ### IPI: inter-pulse interval
-### callduration: timing of call
-### boxsize: space within which the agent can move 
 
 ###----------INITIATING OUTPUTS----------###
-### x: positive integer. Initial abscissa of the agent, extracted from all_initpos (Launcher class)
-### y: positive integer. Initial ordinate of the agent, extracted from all_initpos (Launcher class)
-### initpos: vector of length 2. Position of the agent (comprises x and y)
+### boxsize: list of 2 elements. Extracted from env.boxsize (env: Launcher-class object).
+### simduration: positive integer. Extracted from env.simduration (env: Launcher-class object).
+### initpos: list of 2 elements. Extracted from env.all_initpos (env: Launcher-class object).
 ### ### init & pos respectively stand for initial & position throughout the code.
+### x: positive integer. Initial abscissa of the agent
+### y: positive integer. Initial ordinate of the agent
 ### callstarttime: positive integer. Starting time within the simulation for the agent's first call
-### callendtime: positive integer. Ending time of the call.
-### positionshistory: list of length 2*simduration. All positions of the agent through time
-### callstiminghistory: list of length 2*number of calls. All calls' starting and ending time of the agent through time.
+### xhistory: list of length 1 x simduration. All abscissae of the agent through time. Initially, xhistory = x
+### yhistory: list of length 1 x simduration. All ordinates of the agent through time. Initially, yhistory = y
+### callshistory: array of dimensions 1 x number of calls. All calls' starting times of the agent through time.
+
+#----------MOVEMENT----------#
+# Function changing agent's position over time. Straight line with a direction set by movdirection.
+# Inputs: x, y, iterdist, movdirection taken from __init___ method
+
+#---------OUTPUTS----------#
+# newx: new coordinate of the agent on the x-axis at iteration i+1
+# newy: new coordinate of the agent on the y-axis at iteration i+1
+# xhistory: list. updated record of agent's all past positions on the x-axis
+# yhistory: list. updated record of agent's all past positions on the y-axis
+#----------end of documentation for MOVEMENT----------#
+
+#----------CALLING----------#
+# Inputs: simduration, callstarttime, IPI taken from __init__ method.
+
+#----------OUTPUTS----------#
+# callshistory: array. Updated records of calls. 
+# For each iteration, the output is 1 if the agent calls, and 0 otherwise.
 
 #----------BOUNDARIES----------#
 # Function keeping agent within defined boundaries; 
@@ -102,32 +143,6 @@ class Launcher:
 #----------OUTPUTS----------#
 # coord or Repositionned coord of the agent
 #----------end of documentation for BOUNDARIES----------#
-
-#----------MOVEMENT----------#
-# Function changing agent's position over time. Straight line when turnangle = 0.
-# Inputs: taken from __init___ OUTPUTS
-
-#---------OUTPUTS----------#
-# newx: new coordinate of the agent on the x-axis
-# newy: new coordinate of the agent on the y-axis
-# newpos: new coordinates of the agents at iteration i+1 (x, y)
-# positionhistory: list. updated record of agent's all past positions
-#----------end of documentation for MOVEMENT----------#
-
-#----------PLOTTING----------#
-# Function compiling graphic visualisation of agent's movement over time.
-# Inputs: taken from MOVEMENT function OUTPUTS
-
-#----------OUTPUTS----------#
-# xAxis: vector of all x
-# yAxis: vector of all y
-#----------end of documentation for PLOTTING----------#
-
-#----------CALLING----------#
-# Inputs: taken from __init__ method.
-
-#----------OUTPUTS----------#
-# callhistory
 
 #----------SHAPEOFBEAM----------#
 # IN CONSTRUCTION. Supposed to create agent's calling sonar
@@ -141,7 +156,7 @@ class Launcher:
 #----------end of docmentation for SHAPEOFBEAM----------#
 ###----------end of documentation for MOVESNGROOVES----------###
 
-class Bat_Jamming:
+class Bat_Jamming_00:
     
     def __init__(self, ID, movdirection, iterdist, IPI):
         self.ID = ID
@@ -153,7 +168,7 @@ class Bat_Jamming:
         self.x = self.initpos[0]
         self.y = self.initpos[1]        
         self.IPI = IPI
-        self.callstarttime = 0 # I set it at zero at the moment, for lack of a better idea
+        self.callstarttime = 0 # I set it to zero at the moment, for lack of a better idea
     
         self.xhistory = [self.x]
         self.yhistory = [self.y]
@@ -206,18 +221,8 @@ class Bat_Jamming:
         else:
             return range(coordbound)[0]
         print "Bat within boundaries"
-        
-    #def Plotting(self):
-        #self.xAxis = [] 
-        #self.yAxis = []
-        
-        #for x, y in zip(self.positionshistory[0:2*self.simduration:2],self.positionshistory[1:2*self.simduration:2]):
-            #self.xAxis = np.append(self.xAxis, x)
-            #self.yAxis = np.append(self.yAxis, y)
-        
-        #plt.plot(self.xAxis, self.yAxis, 'ro')
 
-# Run a multi-agents simulation
+### Run a multi-agents simulation and plot agents' movements.
 
 POPSIZE = 3
 BOXSIZE = [200,200]
@@ -231,13 +236,13 @@ env.Timeline()
 
 MOVDIRECTION = 0
 ITERDIST = 10
-INTERPULSEINTERV = 3
+INTER_PULSE_INTERVAL = 3
 
 all_bats = {}
 all_x = []
 all_y = []
 
 for ID in env.all_ID:
-    all_bats[ID] = Bat_Jamming(int(ID),MOVDIRECTION,ITERDIST,INTERPULSEINTERV)
+    all_bats[ID] = Bat_Jamming_00(int(ID),MOVDIRECTION,ITERDIST,INTER_PULSE_INTERVAL)
     all_bats[ID].Movement()
     plt.plot(all_bats[ID].xhistory, all_bats[ID].yhistory, marker = '^')
