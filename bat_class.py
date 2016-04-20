@@ -306,3 +306,4 @@ for timestep in env.timeclock:
             # makes the instance call
         plt.plot(all_bats[ID].xhistory, all_bats[ID].yhistory, marker = '^')
             # plot all instances movements over time
+
