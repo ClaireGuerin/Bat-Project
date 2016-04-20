@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 ### all_initpos: empty array of n=popsize lists of 2 elements each. 
 ### ### init & pos respectively stand for initial and position throughout the code
 ### timecount: positive integer. Timing of simulation iteration.
-### timetracking: array of dimension 1 x simduration. 
+### timeclock: array of dimension 1 x simduration. 
 ### timeresolution: positive float. Resolution of the time simulated.
 
 #----------IDENTIFICATION----------#
@@ -50,7 +50,7 @@ import matplotlib.pyplot as plt
 
 #----------OUTPUTS----------#
 # timecount: updated timecount. At the end of the simulation, timecount = simduration / timeresolution
-# timetracking: array of dimensions 1xsimduration. Updated timetracking with "Real times" corresponding to each simulation iteration
+# timeclock: array of dimensions 1xsimduration. Updated timeclock with "Real times" corresponding to each simulation iteration
 #----------end of documentation for TIMELINE----------#
 ###----------end of documentation for LAUNCHER----------#  
 
@@ -59,37 +59,51 @@ class Launcher:
     def __init__(self, popsize, boxsize, simduration, realduration):
         self.popsize = popsize
         self.simduration = simduration
-        self.timecount = 0
-        self.timetracking = np.empty([1,self.simduration], dtype = float)
-        self.timetracking[0,0] = self.timecount
+        self.timecount = 0 
+            # set the time at 0.
+        self.timeclock = [self.timecount] 
+            # record the first time, i.e. 0.
         self.realduration = realduration
-        self.timeresolution = float(self.simduration/self.realduration)
+        self.timeresolution = float(self.simduration/self.realduration) 
+            # the time resolution corresponds to the relative time between simulation time and "actual" time, "percieved" by the agent.
         self.all_ID = []
         self.all_initpos = np.empty([self.popsize,2], dtype=float)
-        self.boxsize = boxsize # has to be of the form [x,y]
+            # create an empty array of intial positions for the whole population.
+            # ultimately, I think all of our array/list variables should be set this way, 
+            # as it is less time-consuming computationally-wise.
+        self.boxsize = boxsize 
+            # has to be of the form [x,y], see below:
         
         assert isinstance(self.boxsize, list) and len(self.boxsize) == 2, "'boxsize' must be a list of 2 elements." 
-        # returns error if boxsize is not of the right format, i.e. [x,y]
+            # returns error if boxsize is not of the right format, i.e. [x,y]
         
     def Identification(self):
         
         for agent in range(self.popsize):
-            self.all_ID = np.append(self.all_ID, agent)  
+            self.all_ID = np.append(self.all_ID, agent)
+                # fills-in a list of all agents ID from 0 to n = (population size - 1)
             
     def Positions(self):
         
         for ID in self.all_ID:
            self.agent_initx = rd.choice(range(self.boxsize[0]))
+               # gives each agent a random coordinate on the x-axis, within the environment boundaries
            self.agent_inity = rd.choice(range(self.boxsize[1]))
+               # gives each agent a random coordinate on the y-axis, within the environment boundaries
            
-           self.all_initpos[ID,0] = self.agent_inity
-           self.all_initpos[ID,1] = self.agent_initx
+           self.all_initpos[int(ID),0] = self.agent_initx
+               # stores the x-coordinate in an array
+           self.all_initpos[int(ID),1] = self.agent_inity
+               # stores the y-coordinate in an array
     
     def Timeline(self):
             
         for iteration in range(self.simduration):
             self.timecount += self.timeresolution
-            self.timetracking[0,iteration] = self.timecount
+                # increment timecount with timeresolution. 
+                # timecount corresponds to the "actual" time, as opposed to simulated time
+            self.timeclock = np.append(self.timeclock, self.timecount)
+                # store the new, incremented timecount in timeclock.
 
 ###----------BAT_JAMMING_00----------###
 ### Class implementation for agents moving:
@@ -98,11 +112,11 @@ class Launcher:
 ### - while calling at regular IPI;
 ### - only timing of sound taken into account;
 ### - without echoes.
-### Initiating Inputs: ID, movdirection, iterdist, IPI
+### Initiating Inputs: ID, movdirection, stepsize, IPI
 ### ID: positive integer. ID of the agent.
 ### movdirection: integer within [-pi;pi]. Angle (in RADIANS) of the agent's direction along the plane. 
 ### ### mov stands for movement throughout the code.
-### iterdist: positive integer. Distance covered by the agent in a single iteration. 
+### stepsize: positive integer. Distance covered by the agent in a single iteration. 
 ### ### iter & dist respectively stand for iteration & distance throughout the code.
 ### IPI: inter-pulse interval
 
@@ -120,7 +134,7 @@ class Launcher:
 
 #----------MOVEMENT----------#
 # Function changing agent's position over time. Straight line with a direction set by movdirection.
-# Inputs: x, y, iterdist, movdirection taken from __init___ method
+# Inputs: x, y, stepsize, movdirection taken from __init___ method
 
 #---------OUTPUTS----------#
 # newx: new coordinate of the agent on the x-axis at iteration i+1
@@ -161,46 +175,52 @@ class Launcher:
 
 class Bat_Jamming_00:
     
-    def __init__(self, ID, movdirection, iterdist, IPI):
+    def __init__(self, ID, movdirection, stepsize, IPI):
         self.ID = ID
         self.boxsize = env.boxsize
+            # takes boxsize from env, an object of the class Launcher
         self.simduration = env.simduration
+            # takes simduration from env, an object of the class Launcher
         self.movdirection = movdirection
-        self.iterdist = iterdist
-        self.initpos = env.all_initpos[self.ID]
-        self.x = self.initpos[0]
-        self.y = self.initpos[1]        
+        self.stepsize = stepsize       
         self.IPI = IPI
-        self.callstarttime = 0 # I set it to zero at the moment, for lack of a better idea
-    
-        self.xhistory = [self.x]
-        self.yhistory = [self.y]
-        self.callshistory = np.empty([1,self.simduration], dtype = int)
         
         assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
+            # returns an error message if movdirection is not within [-pi;pi].
     
     def Movement(self):
+        self.newx = self.x + self.stepsize * m.cos(self.movdirection)
+            # calculates the new x coordinate according to:
+                # the distance travelled over 1 time step.
+                # the direction of the movement
+        self.newy = self.y + self.stepsize * m.sin(self.movdirection)
+             # calculates the new y coordinate according to:
+                # the distance travelled over 1 time step.
+                # the direction of the movement
         
-        for iteration in range(self.simduration):
-            self.newx = self.x + self.iterdist * m.cos(self.movdirection)
-            self.newy = self.y + self.iterdist * m.sin(self.movdirection)
+        self.x = self.Boundaries(self.newx, self.boxsize[0])
+            # verify that the new x coordinate is within boundaries
+        self.y = self.Boundaries(self.newy, self.boxsize[1])
+            # verify that the new y coordinate is within boundaries
         
-            self.x = self.Boundaries(self.newx, self.boxsize[0])
-            self.y = self.Boundaries(self.newy, self.boxsize[1])
-        
-            self.xhistory = np.append(self.xhistory, self.x)
-            self.yhistory = np.append(self.yhistory, self.y)
+        self.xhistory = np.append(self.xhistory, self.x)
+            # store the newly calculated x in xhistory
+        self.yhistory = np.append(self.yhistory, self.y)
+            # store the newly calculated y in yhistory
         
     def Calling(self):
-        
-        for iteration in range(self.simduration):
-            self.calltest = float(iteration-self.callstarttime)/float(self.IPI)
+        self.calltest = float(self.timestep-self.callstarttime)/float(self.IPI)
+            # calculates the theoretical number of calls since the 1st call:
+            # (time since the 1st call = current time - time of the 1st call)/IPI
             
-            if self.calltest%1 == 0:
-                self.callshistory[0,iteration] = 1
-            else:
-                self.callshistory[0,iteration] = 0
-            
+        if self.calltest%1 == 0:
+            self.callshistory = np.append(self.callshistory, 1)
+                # adds a new call (accounted for with a 1) if the theoretical number of 
+                # calls since the 1st call is a natural number
+        else:
+            self.callshistory = np.append(self.callshistory, 0)
+                # adds a no new call (accounted for with a 0) if the theoretical number
+                # of calls since the 1st call is a float            
             
     #def ShapeofBeam(self, angle, shape, depth): # function in construction
         #self.halfangle = angle/2
@@ -221,31 +241,68 @@ class Bat_Jamming_00:
         
         if coord in range(coordbound): 
             return coord
+                # if the coordinate is within boundaries, it stays the same.
         else:
             return range(coordbound)[0]
+                # if the coordinate isn't within boundaries, it is reset to the beginning.
         print "Bat within boundaries"
 
 ### Run a multi-agents simulation and plot agents' movements.
 
 POPSIZE = 3
+    # size of the population of bats you want to simulate
 BOXSIZE = [200,200]
+    # space within which the bats are moving
 SIMDURATION = 100
-REALDURATION = 100
+    # duration of the simulation you want to run
+REALDURATION = 1000 
+    # duration of the simulation in "real" time
+    # e.g. you can run the simulation for say,
+    # 100 iterations, corresponding to a total of 1000 milliseconds.
 
 env = Launcher(POPSIZE, BOXSIZE, SIMDURATION, REALDURATION)
+    # sets the simulation environment with Launcher, according to the parameters given 
+    # above, and stores it in an object called env
 env.Identification()
 env.Positions()
 env.Timeline()
+    # run the functions contained in the Launcher class
 
 MOVDIRECTION = 0
-ITERDIST = 10
+    # direction of the movement of the bat. 
+STEPSIZE = 10
+    # distance travelled by the bat over each time step / iteration
 INTER_PULSE_INTERVAL = 3
+    # Inter-pulse interval, i.e. time interval between each call 
+
 
 all_bats = {}
-all_x = []
-all_y = []
+    # creates an empty dictionary for every bat instance to be stored
 
 for ID in env.all_ID:
-    all_bats[ID] = Bat_Jamming_00(int(ID),MOVDIRECTION,ITERDIST,INTER_PULSE_INTERVAL)
-    all_bats[ID].Movement()
-    plt.plot(all_bats[ID].xhistory, all_bats[ID].yhistory, marker = '^')
+    all_bats[ID] = Bat_Jamming_00(int(ID), MOVDIRECTION,STEPSIZE,INTER_PULSE_INTERVAL)
+        # stores all instances of the class Bat_Jamming_00 within the bat population
+    all_bats[ID].x = env.all_initpos[int(ID)][0]
+        # initial x coordinate for each instance, taken from env
+    all_bats[ID].xhistory = [all_bats[ID].x]
+        # stores it in xhistory
+    all_bats[ID].y = env.all_initpos[int(ID)][1]
+        # initial y coordinate for each instance, taken from env
+    all_bats[ID].yhistory = [all_bats[ID].y]
+        # stores it in yhistory
+    all_bats[ID].callstarttime = 0 
+        # sets the starting time for the initial call 
+        # set to zero at the moment, for lack of a better idea
+    all_bats[ID].callshistory = []
+        # creates an empty list to store calls records
+
+for timestep in env.timeclock:
+    for ID in env.all_ID:
+        all_bats[ID].timestep = timestep
+            # indicates the current time step for each instance 
+        all_bats[ID].Movement()
+            # makes the instance move
+        all_bats[ID].Calling()
+            # makes the instance call
+        plt.plot(all_bats[ID].xhistory, all_bats[ID].yhistory, marker = '^')
+            # plot all instances movements over time
