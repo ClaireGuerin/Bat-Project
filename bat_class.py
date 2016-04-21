@@ -61,13 +61,14 @@ class Launcher:
         self.simduration = simduration
         self.timecount = 0 
             # set the time at 0.
-        self.timeclock = [self.timecount] 
+        self.timeclock = np.empty(self.simduration, dtype = float)
+        self.timeclock[0] = self.timecount 
             # record the first time, i.e. 0.
         self.realduration = realduration
         self.timeresolution = float(self.simduration/self.realduration) 
             # the time resolution corresponds to the relative time between simulation time and "actual" time, "percieved" by the agent.
-        self.all_ID = []
-        self.all_initpos = np.empty([self.popsize,2], dtype=float)
+        self.all_ID = np.empty(self.popsize, dtype = int)
+        self.all_initpos = np.empty([self.popsize,2], dtype = float)
             # create an empty array of intial positions for the whole population.
             # ultimately, I think all of our array/list variables should be set this way, 
             # as it is less time-consuming computationally-wise.
@@ -80,7 +81,7 @@ class Launcher:
     def Identification(self):
         
         for agent in range(self.popsize):
-            self.all_ID = np.append(self.all_ID, agent)
+            self.all_ID[agent] = agent
                 # fills-in a list of all agents ID from 0 to n = (population size - 1)
             
     def Positions(self):
@@ -102,7 +103,7 @@ class Launcher:
             self.timecount += self.timeresolution
                 # increment timecount with timeresolution. 
                 # timecount corresponds to the "actual" time, as opposed to simulated time
-            self.timeclock = np.append(self.timeclock, self.timecount)
+            self.timeclock[iteration] = self.timecount
                 # store the new, incremented timecount in timeclock.
 
 ###----------BAT_JAMMING_00----------###
@@ -255,7 +256,7 @@ BOXSIZE = [200,200]
     # space within which the bats are moving
 SIMDURATION = 100
     # duration of the simulation you want to run
-REALDURATION = 1000 
+REALDURATION = 100 
     # duration of the simulation in "real" time
     # e.g. you can run the simulation for say,
     # 100 iterations, corresponding to a total of 1000 milliseconds.
@@ -274,6 +275,8 @@ STEPSIZE = 10
     # distance travelled by the bat over each time step / iteration
 INTER_PULSE_INTERVAL = 3
     # Inter-pulse interval, i.e. time interval between each call 
+    # For now these 3 parameters are the same for all agents, 
+    # but this can be changed if we want to
 
 
 all_bats = {}
