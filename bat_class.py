@@ -278,9 +278,10 @@ INTER_PULSE_INTERVAL = 3
     # For now these 3 parameters are the same for all agents, 
     # but this can be changed if we want to
 
-
 all_bats = {}
     # creates an empty dictionary for every bat instance to be stored
+all_x = {key:{0:0} for key in list(env.all_ID)}
+all_y = {key:{0:0} for key in list(env.all_ID)}
 
 for ID in env.all_ID:
     all_bats[ID] = Bat_Jamming_00(int(ID), MOVDIRECTION,STEPSIZE,INTER_PULSE_INTERVAL)
@@ -298,6 +299,9 @@ for ID in env.all_ID:
         # set to zero at the moment, for lack of a better idea
     all_bats[ID].callshistory = []
         # creates an empty list to store calls records
+    all_x[ID][0] = all_bats[ID].xhistory[0]
+    all_y[ID][0] = all_bats[ID].yhistory[0]
+
 
 for timestep in env.timeclock:
     for ID in env.all_ID:
@@ -305,8 +309,50 @@ for timestep in env.timeclock:
             # indicates the current time step for each instance 
         all_bats[ID].Movement()
             # makes the instance move
+        
+        if ID not in all_x:
+            all_x.add(ID)
+            
+            if timestep not in all_x:
+                all_x.update({ID:{timestep:all_bats[ID].xhistory[timestep]}})
+            else:
+                continue
+        
+        else:
+            continue
+        
+        all_y.update({ID:{timestep:all_bats[ID].yhistory[timestep]}})
         all_bats[ID].Calling()
             # makes the instance call
         plt.plot(all_bats[ID].xhistory, all_bats[ID].yhistory, marker = '^')
             # plot all instances movements over time
 
+timestep = 2
+ID = 0
+callsources = {}
+
+def On_circle(center_x, center_y, radius, x, y):
+    dist = (x - center_x) ** 2 + (y - center_y) ** 2
+    return dist == radius
+    
+def TOA(ID, timestep):
+    
+    if all_bats[ID].callshistory[timestep] == 1:
+        callsources.update({ID:{timestep:{'xsource': all_bats[ID].xhistory[timestep], 'ysource': all_bats[ID].yhistory[timestep]}}})
+        # if a bat called at this timestep, store the position of the bat at the time of 
+        # calling into a dictionary of the form {bat:{time of calling:[x,y]}}
+    else:
+        continue
+        
+        # here, I need to find a way to implement a duration limit for storage
+        # for example, via incrementation of the times in the dictionary
+        # or by setting current time - time in dict < maxtime
+        # remember that iteration time and "real" time can be different
+        
+    for ident in callsources:
+        for timing in callsources[ident]:
+            speed_sound = 340.29 # speed of sound at sea level in m/s
+            propdist = float(speed_sound * (timestep - timing) / env.timeresolution)
+            # calculate, for a certain call, its propagation distance at timestep 
+            # according to the time when the call was emitted and the speed of sound
+            
