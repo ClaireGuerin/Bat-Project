@@ -345,9 +345,9 @@ def Max_circle(center_x, center_y, radius, x, y):
 def TOA(ID, timestep):
     
     if all_bats[ID].callshistory[timestep] == 1:
-        callsources.update({ID:{timestep:{'xsource': all_bats[ID].xhistory[timestep], 'ysource': all_bats[ID].yhistory[timestep]}}})
-        # if this bat called at this timestep, store the position of the bat at the time of 
-        # calling into a dictionary of the form {bat:{time of calling:[x,y]}}
+        callsources.update({ID:{timestep:{'xsource': all_bats[ID].xhistory[timestep], 'ysource': all_bats[ID].yhistory[timestep], 'propdist':0}}})
+        # if this bat called at this timestep, store the position of the bat at the time 
+        # of calling into a dictionary of the form {bat:{time of calling:[x,y,propdist]}}
         # I have to check whether .update is actually the appropriate way to do it        
         
     else:
@@ -361,7 +361,7 @@ def TOA(ID, timestep):
             timestore = timestep - calltime
             # the storing time of the corresponding call into the dictionary 
             # is calculated. Remember that iteration time and "real" time can 
-            # be different
+            # be different --> choose max_timestore appropriately
             
             if timestore > max_timestore:
             # if the storing time is longer than a predefined time: 
@@ -370,14 +370,16 @@ def TOA(ID, timestep):
             
             else:
                 continue
+            
+            speed_sound = 340.29 # speed of sound at sea level in m/s
+            propdist = float(speed_sound * timestore / env.timeresolution)
+            # calculate, for a certain call, its propagation distance at timestep 
+            # according to the time when the call was emitted and the speed of sound
+            callsources[ID][timestep]['propdist'] = propdist
+            # update the propagation distance in callsource
         
     else:
         continue
-        
-    for identity in callsources:
-        for timing in callsources[identity]:
-            speed_sound = 340.29 # speed of sound at sea level in m/s
-            propdist = float(speed_sound * (timestep - timing) / env.timeresolution)
-            # calculate, for a certain call, its propagation distance at timestep 
-            # according to the time when the call was emitted and the speed of sound
+    
+            
             
