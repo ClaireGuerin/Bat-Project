@@ -331,9 +331,15 @@ timestep = 2
 ID = 0
 callsources = {}
 
-def On_circle(center_x, center_y, radius, x, y):
+def Min_circle(center_x, center_y, radius, x, y):
+    # nb: x and y have to be np.arrays for this function to work
     dist = (x - center_x) ** 2 + (y - center_y) ** 2
-    return dist == radius
+    return dist > radius
+
+def Max_circle(center_x, center_y, radius, x, y):
+    # nb: x and y have to be np.arrays for this function to work
+    dist = (x - center_x) ** 2 + (y - center_y) ** 2
+    return dist < radius
     
 def TOA(ID, timestep):
     
