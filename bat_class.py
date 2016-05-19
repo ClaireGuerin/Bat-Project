@@ -328,8 +328,9 @@ for timestep in env.timeclock:
             # plot all instances movements over time
 
 timestep = 2
-ID = 0
+ID = 1
 callsources = {}
+max_timestore = 3
 
 def Min_circle(center_x, center_y, radius, x, y):
     # nb: x and y have to be np.arrays for this function to work
@@ -345,18 +346,36 @@ def TOA(ID, timestep):
     
     if all_bats[ID].callshistory[timestep] == 1:
         callsources.update({ID:{timestep:{'xsource': all_bats[ID].xhistory[timestep], 'ysource': all_bats[ID].yhistory[timestep]}}})
-        # if a bat called at this timestep, store the position of the bat at the time of 
+        # if this bat called at this timestep, store the position of the bat at the time of 
         # calling into a dictionary of the form {bat:{time of calling:[x,y]}}
+        # I have to check whether .update is actually the appropriate way to do it        
+        
+    else:
+        continue
+    
+    if ID in callsources.keys():
+    # if the agent has ever called before: 
+        
+        for calltime in callsources[ID].keys():
+        # for each time step at which the agent previously called:
+            timestore = timestep - calltime
+            # the storing time of the corresponding call into the dictionary 
+            # is calculated. Remember that iteration time and "real" time can 
+            # be different
+            
+            if timestore > max_timestore:
+            # if the storing time is longer than a predefined time: 
+                callsources.pop(callsources[ID].keys()[calltime], None)
+                # erase it from the memory / dictionary
+            
+            else:
+                continue
+        
     else:
         continue
         
-        # here, I need to find a way to implement a duration limit for storage
-        # for example, via incrementation of the times in the dictionary
-        # or by setting current time - time in dict < maxtime
-        # remember that iteration time and "real" time can be different
-        
-    for ident in callsources:
-        for timing in callsources[ident]:
+    for identity in callsources:
+        for timing in callsources[identity]:
             speed_sound = 340.29 # speed of sound at sea level in m/s
             propdist = float(speed_sound * (timestep - timing) / env.timeresolution)
             # calculate, for a certain call, its propagation distance at timestep 
