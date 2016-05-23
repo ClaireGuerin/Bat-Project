@@ -163,17 +163,7 @@ class Launcher:
 # coord or Repositionned coord of the agent
 #----------end of documentation for BOUNDARIES----------#
 
-#----------SHAPEOFBEAM----------#
-# IN CONSTRUCTION. Supposed to create agent's calling sonar
-# Inputs: angle, shape, depth
-# angle: call angle indicating width range
-# shape: shape of call beam. Triangle, Hemicircle or else.
-# depth: length / how far the beam can reach in frontal direction
-
-#----------OUTPUTS----------#
-# ...
-#----------end of docmentation for SHAPEOFBEAM----------#
-###----------end of documentation for MOVESNGROOVES----------###
+###----------end of documentation for BAT_JAMMING_00----------###
 
 class Bat_Jamming_00:
     
@@ -252,7 +242,7 @@ class Bat_Jamming_00:
 ###----------HEARING_00----------###
 ### Class implementation for agents hearing:
 ### - calls from the others and themselves;
-### - considering sound propagates in a circle shape, towards all directions
+### - considering sound propagates in a ring shape, towards all directions
 ### Initiating inputs: ID, timestep, max_timestore
 ### ID: integer. Focal bat/agent identification number for which sound hearing is recorded
 ### timestep: integer. Simulation time step at which the bat is hearing
@@ -277,17 +267,107 @@ class Bat_Jamming_00:
 #----------OUTPUTS----------#
 # callsources: dictionary. Updated record of all calls sources
 # callshearing: numpy array. Updated record of all heard calls
-
 #----------End of documentation for TOA----------#
+
+#----------Dict_update----------#
+# Function for updating a dictionary without over-writing the keys already stored
+# in the dictionary.
+# Inputs: dict1, dict2
+# dict1: original dictionary to be updated.
+# dict2: dictionary to add to dict1. NB: has to be of the same format as dict1.
+
+#----------OUTPUTS----------#
+# dict1: updated dictionary (new key is added to the already existing keys in the 
+#   dictionary, instead of replacing them) 
+#----------End of documentation for DICT_UPDATE----------#
+
+#----------DATA_STORAGE----------#
+# Function applying a time limit for storing keys in dictionary 
+# It is meant for callsources in TOA function, each sources must be deleted when the 
+# call is supposedly not likely to be heard anymore for it was emitted too long ago to 
+# show a significant intensity of call
+# Inputs taken from __init__ method: ID, timestep, max_timestore
+# Inputs: dict1, tcall
+# dict1: dictionary to be scrutinized for "out-of-date" calls. Here, dict1 will be callsources
+# tcall: integer. Time at which the call was emitted
+
+#----------OUPUTS----------#
+# timestore: integer. Time since when the call information has been stored in the dictionary
+#   (callsources) in timesteps of simulation
+# dict1: dictionary. Updated such as tcalls > maximum time of storage have been deleted
+#----------End of documentation for DATA_STORAGE----------#  
+
+#----------MIN_CIRCLE----------#
+# Function defining the inside concentric circle of the ring of propagation of a call
+# and checking if a specific point is outside the circle. Returns a boolean.
+# NB: x and y have to be int or np.arrays for this function to work
+# Inputs: center_x, center_y, radius, x, y 
+# center_x: integer. Abscissa of the center of the circle (i.e. source)
+# center_y: integer. Ordinate of the center of the circle (i.e. source)
+# radius: integer. radius of the circle
+# x: integer. Abscissa of the point to be checked for
+# y: integer. Ordinate of the point to be checked for
+
+#----------OUTPUTS----------#
+# dist: integer. Distance of the specific point to the center of the circle.
+# If dist is more than radius, the function returns TRUE.
+#----------End of documentation for MIN_CIRCLE----------#
+
+#----------MAX_CIRCLE----------#
+# Function defining the outside concentric circle of the ring of propagation of a call
+# and checking if a specific point is inside the circle. Returns a boolean.
+# NB: x and y have to be int or np.arrays for this function to work
+# Inputs: center_x, center_y, radius, x, y 
+# center_x: integer. Abscissa of the center of the circle (i.e. source)
+# center_y: integer. Ordinate of the center of the circle (i.e. source)
+# radius: integer. radius of the circle
+# x: integer. Abscissa of the point to be checked for
+# y: integer. Ordinate of the point to be checked for
+
+#----------OUTPUTS----------#
+# dist: integer. Distance of the specific point to the center of the circle.
+# If dist is less than radius, the function returns TRUE.
+#----------End of documentation for MAX_CIRCLE----------#
+
+#----------PROPAGATION----------#
+# Function for calculation of the distance of the sound from its source as it propagates
+# Inputs taken from __init__ method: ID, timestep
+# Inputs: dict1
+# Other inputs: timestore taken from data_storage method
+# dict1: dictionary (here, callsource) from which the propagation distance is extracted
+
+#----------OUTPUTS----------#
+# propdist: integer. Distance of propagation of the sound from its source
+# dict1: dictionary. callsource dictionary with updated propagation distances
+#----------End of documentation for PROPAGATION----------#
+
+#----------HEARING_TEST----------#
+# Function that checks, for a given call, whether the focal bat/agent is able to hear it
+# The agent can hear a call if and only if both conditions Min_circle and Max_circle are
+# met. In other words, if the focal bat is located in between the two circles determining
+# the ring of sound propagated from a call source at a specific time.
+# Inputs taken from __init__ method: callsources, ring_dev, timestep, ID
+# Inputs: ag_id, tcall, nparray
+# ag_id: integer. Identification number of the focal agent
+# tcall: integer. time at which a given call was emitted
+# nparray: numpy array. Meant to be hearhistory
+
+#----------OUTPUTS----------#
+# mintest: boolean. Is the bat out of the inside circle of the ring of sound?
+# maxtest: boolean. Is the bat in the outside circle of the ring of sound?
+# nparray: numpy array. Updated (hearhistory) with the call and hearing times, if the 
+# call is indeed heard by the focal agent/bat
+#----------End of documentation for HEARING_TEST----------#
 
 ###----------End of documentation for HEARING_00----------###  
        
 class Hearing_00:
     
-    def __init__(self, ID, timestep, max_timestore):
+    def __init__(self, ID, timestep, max_timestore, ring_dev):
         self.max_timestore = max_timestore
         self.ID = ID
         self.timestep = timestep
+        self.ring_dev = ring_dev
         self.callsources = {}
         self.hearhistory = []
     
@@ -310,13 +390,13 @@ class Hearing_00:
                     # update the propagation distance in callsource
             
                 for identity in env.all_ID:
-                # for each agent in the simulation:
+                    # for each agent in the simulation:
                 
                     if identity in self.callsources.keys():
-                    # if the agent has ever called before: 
+                        # if the agent has ever called before: 
                     
                         for calltime in self.callsources[self.ID].keys():
-                        # for each time step at which the agent previously called:
+                            # for each time step at which the agent previously called:
                             self.Hearing_test(identity, calltime, self.hearhistory)
                                 # identify and record calls that can be heard.
                             
@@ -326,31 +406,31 @@ class Hearing_00:
     def Dict_update(self, dict1, dict2):
         
         for key in dict2:
-            if key in dict1:dict1[key].update(dict2[key])
-            else:dict1[key] = dict2[key]
+            if key in dict1:
+                dict1[key].update(dict2[key])
+            else:
+                dict1[key] = dict2[key]
         
         return dict1
 
     def Data_storage(self, dict1, tcall):
         self.timestore = self.timestep - tcall
-        # the storing time of the corresponding call into the dictionary 
-        # is calculated. Remember that iteration time and "real" time can 
-        # be different --> choose max_timestore appropriately
+            # storing time of the corresponding call into the dictionary 
+            # Remember that iteration time and "real" time can be different 
+            # --> choose max_timestore appropriately
             
         if self.timestore > self.max_timestore:
-        # if the storing time is longer than a predefined time: 
+            # if the storing time is longer than a predefined time: 
             self.dict1.pop(self.dict1[self.ID].keys()[tcall], None)
-            # erase it from the memory / dictionary
+                # erase it from the memory / dictionary
         
         return self.dict1
 
     def Min_circle(self, center_x, center_y, radius, x, y):
-        # nb: x and y have to be int or np.arrays for this function to work
         dist = (x - center_x) ** 2 + (y - center_y) ** 2
         return dist > radius
 
     def Max_circle(self, center_x, center_y, radius, x, y):
-        # nb: x and y have to be int or np.arrays for this function to work
         dist = (x - center_x) ** 2 + (y - center_y) ** 2
         return dist < radius
         
@@ -367,13 +447,13 @@ class Hearing_00:
     def Hearing_test(self, ag_id, tcall, nparray):
         self.mintest = self.Min_circle(self.callsources[ag_id][tcall]['xsource'],
                                        self.callsources[ag_id][tcall]['ysource'],
-                                       self.callsources[ag_id][tcall]['propdist'],
+                                       self.callsources[ag_id][tcall]['propdist'] - self.ring_dev,
                                        all_bats[ID].xhistory[self.timestep],
                                        all_bats[ID].yhistory[self.timestep])
                                          
         self.maxtest = self.Max_circle(self.callsources[ag_id][tcall]['xsource'], 
                                        self.callsources[ag_id][tcall]['ysource'], 
-                                       self.callsources[ag_id][tcall]['propdist'],
+                                       self.callsources[ag_id][tcall]['propdist'] + self.ring_dev,
                                        all_bats[ID].xhistory[self.timestep],
                                        all_bats[ID].yhistory[self.timestep])
                 
@@ -385,7 +465,6 @@ class Hearing_00:
                 # as well as the time at which the bat called and has been heard
         
         return nparray
-            
 
 ### Run a multi-agents simulation and plot agents' movements.
 ###----------PARAMETERS----------###
@@ -411,9 +490,10 @@ MOVDIRECTION = 0
 STEPSIZE = 10
 INTER_PULSE_INTERVAL = 3
 MAX_TIMESTORE = 3
+RING_DEV = 1.5
 
 # Set the simulation environment with Launcher, according to the parameters given 
-# above, and stores it in an object called env
+# above, and stores it into an object called env
 # Run the functions contained in the Launcher class
 env = Launcher(POPSIZE, BOXSIZE, SIMDURATION, REALDURATION)
 env.Identification()
