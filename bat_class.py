@@ -329,11 +329,15 @@ for timestep in env.timeclock:
 
 timestep = 2
 ID = 1
-callsources = {}
-hearhistory = []
 MAX_TIMESTORE = 3
 
-class Hearing_00():
+class Hearing_00:
+    
+    def __init__(ID, timestep):
+        self.ID = ID
+        self.timestep = timestep
+        self.callsources = {}
+        self.hearhistory = []
     
     def D_update(dict1,dict2):
     
