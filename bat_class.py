@@ -9,6 +9,7 @@ import random as rd
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
+import pylab
 
 ###----------LAUNCHER----------###
 ### Class implementation to launch the simulation environment.
@@ -248,35 +249,176 @@ class Bat_Jamming_00:
                 # if the coordinate isn't within boundaries, it is reset to the beginning.
         print "Bat within boundaries"
 
+###----------HEARING_00----------###
+### Class implementation for agents hearing:
+### - calls from the others and themselves;
+### - considering sound propagates in a circle shape, towards all directions
+### Initiating inputs: ID, timestep, max_timestore
+### ID: integer. Focal bat/agent identification number for which sound hearing is recorded
+### timestep: integer. Simulation time step at which the bat is hearing
+### max_timestore: integer. Maximum time for storing the data, in simulation steps.
+###   Corresponds to the time after which the intensity of the call is considered too low to be heard anymore.
+
+###----------INITIATING OUTPUTS----------###
+### callsources: dictionary. Keeps track of the coordinates of all calls emitted by 
+###     every agent, at each timestep, as well as the updated propagation distance from the 
+###     source at the current time
+### hearhistory: numpy array of dimensions n * 4. Reports when an agent heard a sound.
+###     Data provided is, in order: 
+###     - ID of the hearing agent
+###     - time of hearing
+###     - ID of the calling agent = source identification
+###     - time at which the source called
+
+#----------TOA----------#
+# Function recording the calls heard by a specific agent, at a soecific time.
+# Inputs: ID, timestep, max_timestore, callsources, hearhistory taken from __init__ method
+
+#----------OUTPUTS----------#
+# callsources: dictionary. Updated record of all calls sources
+# callshearing: numpy array. Updated record of all heard calls
+
+#----------End of documentation for TOA----------#
+
+###----------End of documentation for HEARING_00----------###  
+       
+class Hearing_00:
+    
+    def __init__(self, ID, timestep, max_timestore):
+        self.max_timestore = max_timestore
+        self.ID = ID
+        self.timestep = timestep
+        self.callsources = {}
+        self.hearhistory = []
+    
+    def TOA(self):
+    
+        if all_bats[ID].callshistory[self.timestep] == 1:
+            self.Dict_update(self.callsources, {self.ID:{self.timestep:{'xsource': all_bats[ID].xhistory[self.timestep], 'ysource': all_bats[ID].yhistory[self.timestep], 'propdist':0}}})
+                # if this bat called at this timestep, store the position of the bat at the time 
+                # of calling into a dictionary of the form {bat:{time of calling:[x,y,propdist]}}
+                # I have to check whether D_update is actually the appropriate way to do it        
+    
+        if self.ID in self.callsources.keys():
+            # if the agent has ever called before: 
+        
+            for calltime in self.callsources[self.ID].keys():
+                # for each time step at which the agent previously called:
+                self.Data_storage(self.callsources, calltime)
+                    # erase calls that have been emitted too long ago to be heared anymore
+                self.Propagation(self.callsources)
+                    # update the propagation distance in callsource
+            
+                for identity in env.all_ID:
+                # for each agent in the simulation:
+                
+                    if identity in self.callsources.keys():
+                    # if the agent has ever called before: 
+                    
+                        for calltime in self.callsources[self.ID].keys():
+                        # for each time step at which the agent previously called:
+                            self.Hearing_test(identity, calltime, self.hearhistory)
+                                # identify and record calls that can be heard.
+                            
+        return self.callsources
+        return self.hearhistory
+    
+    def Dict_update(self, dict1, dict2):
+        
+        for key in dict2:
+            if key in dict1:dict1[key].update(dict2[key])
+            else:dict1[key] = dict2[key]
+        
+        return dict1
+
+    def Data_storage(self, dict1, tcall):
+        self.timestore = self.timestep - tcall
+        # the storing time of the corresponding call into the dictionary 
+        # is calculated. Remember that iteration time and "real" time can 
+        # be different --> choose max_timestore appropriately
+            
+        if self.timestore > self.max_timestore:
+        # if the storing time is longer than a predefined time: 
+            self.dict1.pop(self.dict1[self.ID].keys()[tcall], None)
+            # erase it from the memory / dictionary
+        
+        return self.dict1
+
+    def Min_circle(self, center_x, center_y, radius, x, y):
+        # nb: x and y have to be int or np.arrays for this function to work
+        dist = (x - center_x) ** 2 + (y - center_y) ** 2
+        return dist > radius
+
+    def Max_circle(self, center_x, center_y, radius, x, y):
+        # nb: x and y have to be int or np.arrays for this function to work
+        dist = (x - center_x) ** 2 + (y - center_y) ** 2
+        return dist < radius
+        
+    def Propagation(self, dict1):
+        SPEED_SOUND = 340.29 # speed of sound at sea level in m/s
+        self.propdist = float(SPEED_SOUND * self.timestore / env.timeresolution)
+            # calculate, for a certain call, its propagation distance at timestep 
+            # according to the time when the call was emitted and the speed of sound
+        dict1[self.ID][self.timestep]['propdist'] = self.propdist
+            # update the propagation distance in dict1
+        
+        return dict1
+    
+    def Hearing_test(self, ag_id, tcall, nparray):
+        self.mintest = self.Min_circle(self.callsources[ag_id][tcall]['xsource'],
+                                       self.callsources[ag_id][tcall]['ysource'],
+                                       self.callsources[ag_id][tcall]['propdist'],
+                                       all_bats[ID].xhistory[self.timestep],
+                                       all_bats[ID].yhistory[self.timestep])
+                                         
+        self.maxtest = self.Max_circle(self.callsources[ag_id][tcall]['xsource'], 
+                                       self.callsources[ag_id][tcall]['ysource'], 
+                                       self.callsources[ag_id][tcall]['propdist'],
+                                       all_bats[ID].xhistory[self.timestep],
+                                       all_bats[ID].yhistory[self.timestep])
+                
+        if self.mintest and self.maxtest:
+            # test if the agent 'ID' can hear any call from agent 'identity'
+            # including own calls
+            nparray = np.append(nparray,[self.ID, self.timestep, ag_id, tcall])
+                # if so, store the IDs of the hearing bat and the calling bat,
+                # as well as the time at which the bat called and has been heard
+        
+        return nparray
+            
+
 ### Run a multi-agents simulation and plot agents' movements.
+###----------PARAMETERS----------###
+### to be determined / chosen beforehand 
+### POPSIZE: size of the population of bats you want to simulate
+### BOXSIZE: space within which the bats are moving
+### SIMDURATION: duration of the simulation you want to run
+### REALDURATION: duration of the simulation in "real" time
+###     e.g. you can run the simulation for say,
+###     100 iterations, corresponding to a total of 1000 milliseconds.
+### MOVDIRECTION: direction of the movement of the bat.
+### STEPSIZE: distance travelled by the bat over each time step / iteration
+### INTER_PULSE_INTERVAL: Inter-pulse interval, i.e. time interval between each call 
+###     For now these 3 parameters are the same for all agents, but can be set as different
+### MAX_TIMESTORE: maximum time (in simulation time steps) for a call source to be taken into
+###     account for the hearing part of the simulation
 
 POPSIZE = 3
-    # size of the population of bats you want to simulate
 BOXSIZE = [200,200]
-    # space within which the bats are moving
 SIMDURATION = 100
-    # duration of the simulation you want to run
-REALDURATION = 100 
-    # duration of the simulation in "real" time
-    # e.g. you can run the simulation for say,
-    # 100 iterations, corresponding to a total of 1000 milliseconds.
+REALDURATION = 100
+MOVDIRECTION = 0
+STEPSIZE = 10
+INTER_PULSE_INTERVAL = 3
+MAX_TIMESTORE = 3
 
+# Set the simulation environment with Launcher, according to the parameters given 
+# above, and stores it in an object called env
+# Run the functions contained in the Launcher class
 env = Launcher(POPSIZE, BOXSIZE, SIMDURATION, REALDURATION)
-    # sets the simulation environment with Launcher, according to the parameters given 
-    # above, and stores it in an object called env
 env.Identification()
 env.Positions()
 env.Timeline()
-    # run the functions contained in the Launcher class
-
-MOVDIRECTION = 0
-    # direction of the movement of the bat. 
-STEPSIZE = 10
-    # distance travelled by the bat over each time step / iteration
-INTER_PULSE_INTERVAL = 3
-    # Inter-pulse interval, i.e. time interval between each call 
-    # For now these 3 parameters are the same for all agents, 
-    # but this can be changed if we want to
 
 all_bats = {}
     # creates an empty dictionary for every bat instance to be stored
@@ -315,6 +457,7 @@ for timestep in env.timeclock:
             
             if timestep not in all_x:
                 all_x.update({ID:{timestep:all_bats[ID].xhistory[timestep]}})
+                # CHANGE .update FOR THE BUILT-IN FUNCTION Dict_update IN Hearing class
             else:
                 continue
         
@@ -322,114 +465,10 @@ for timestep in env.timeclock:
             continue
         
         all_y.update({ID:{timestep:all_bats[ID].yhistory[timestep]}})
+        # CHANGE .update FOR THE BUILT-IN FUNCTION Dict_update IN Hearing class
         all_bats[ID].Calling()
             # makes the instance call
         plt.plot(all_bats[ID].xhistory, all_bats[ID].yhistory, marker = '^')
             # plot all instances movements over time
-
-timestep = 2
-ID = 1
-MAX_TIMESTORE = 3
-
-class Hearing_00:
-    
-    def __init__(self, ID, timestep, max_timestore):
-        self.max_timestore = max_timestore
-        self.ID = ID
-        self.timestep = timestep
-        self.callsources = {}
-        self.hearhistory = []
-    
-    def D_update(self, self.dict1,self.dict2):
-        
-        for key in self.dict2:
-            if key in self.dict1:self.dict1[key].update(self.dict2[key])
-            else:self.dict1[key] = self.dict2[key]
-        
-        return self.dict1
-
-    def Min_circle(self, self.center_x, self.center_y, self.radius, self.x, self.y):
-        # nb: x and y have to be int or np.arrays for this function to work
-        self.dist = (self.x - self.center_x) ** 2 + (self.y - self.center_y) ** 2
-        return self.dist > self.radius
-
-    def Max_circle(self, self.center_x, self.center_y, self.radius, self.x, self.y):
-    # nb: x and y have to be int or np.arrays for this function to work
-        self.dist = (self.x - self.center_x) ** 2 + (self.y - self.center_y) ** 2
-        return self.dist < self.radius
-    
-    def TOA(self):
-    
-        if all_bats[ID].callshistory[self.timestep] == 1:
-            self.D_update(self.callsources, {self.ID:{self.timestep:{'xsource': all_bats[ID].xhistory[self.timestep], 'ysource': all_bats[ID].yhistory[self.timestep], 'propdist':0}}})
-            # if this bat called at this timestep, store the position of the bat at the time 
-            # of calling into a dictionary of the form {bat:{time of calling:[x,y,propdist]}}
-            # I have to check whether D_update is actually the appropriate way to do it        
-        
-        else:
-            continue
-    
-        if self.ID in self.callsources.keys():
-        # if the agent has ever called before: 
-        
-            for calltime in self.callsources[self.ID].keys():
-            # for each time step at which the agent previously called:
-                self.timestore = self.timestep - calltime
-                # the storing time of the corresponding call into the dictionary 
-                # is calculated. Remember that iteration time and "real" time can 
-                # be different --> choose max_timestore appropriately
-            
-                if self.timestore > self.max_timestore:
-                    # if the storing time is longer than a predefined time: 
-                    self.callsources.pop(self.callsources[self.ID].keys()[calltime], None)
-                    # erase it from the memory / dictionary
-            
-                else:
-                    continue
-            
-                SPEED_SOUND = 340.29 # speed of sound at sea level in m/s
-                self.propdist = float(SPEED_SOUND * self.timestore / env.timeresolution)
-                # calculate, for a certain call, its propagation distance at timestep 
-                # according to the time when the call was emitted and the speed of sound
-                self.callsources[self.ID][self.timestep]['propdist'] = self.propdist
-                # update the propagation distance in callsource
-            
-                for identity in env.all_ID:
-                # for each agent in the simulation:
-                
-                    if identity in self.callsources.keys():
-                    # if the agent has ever called before: 
-                    
-                        for calltime in self.callsources[self.ID].keys():
-                        # for each time step at which the agent previously called:
-                            self.mintest = Min_circle(self.callsources[identity][calltime]['xsource'],
-                                                      self.callsources[identity][calltime]['ysource'],
-                                                      self.callsources[identity][calltime]['propdist'],
-                                                      all_bats[ID].xhistory[timestep],
-                                                      all_bats[ID].yhistory[timestep])
-                                         
-                            self.maxtest = Max_circle(self.callsources[identity][calltime]['xsource'], 
-                                                      self.callsources[identity][calltime]['ysource'], 
-                                                      self.callsources[identity][calltime]['propdist'],
-                                                      all_bats[ID].xhistory[timestep],
-                                                      all_bats[ID].yhistory[timestep])
-                
-                            if self.mintest and self.maxtest:
-                                # test if the agent 'ID' can hear any call from agent 'identity'
-                                # including own calls
-                                self.hearhistory = np.append(self.hearhistory,[self.ID, self.timestep, identity, calltime])
-                                # if so, store the IDs of the hearing bat and the calling bat,
-                                # as well as the time at which the bat called
-                        
-                            else:
-                                continue
-                    else:
-                        continue
-                
-            else:
-                continue
-    
-    return self.callsources
-    return self.hearhistory
-            
-            
+        pylab.show()
+            # WHY WON'T THE GRAPH SHOW???
