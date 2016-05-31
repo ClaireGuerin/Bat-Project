@@ -265,7 +265,7 @@ class Bat_Jamming_00:
             
         if self.timestore > self.max_timestore:
             # if the storing time is longer than a predefined time: 
-            dict1.pop(dict1[self.ID].keys()[tcall], None)
+            dict1[self.ID].pop(tcall, None)
                 # erase it from the memory / dictionary
         
         return dict1
@@ -607,6 +607,7 @@ for timestep in env.timeclock:
         all_bats[int(ID)].Calling()
             # makes the instance call  
         all_bats[int(ID)].TOA(int(timestep-1))
+        # need to find a way to have callsource "in-&-out" of the class... 
         
         Dict_update(all_sources,all_bats[int(ID)].callsource) 
          
