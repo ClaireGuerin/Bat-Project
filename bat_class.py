@@ -56,60 +56,8 @@ import matplotlib.pyplot as plt
 #----------end of documentation for TIMELINE----------#
 ###----------end of documentation for LAUNCHER----------#  
 
-class Launcher:
-    
-    def __init__(self, popsize, boxsize, simduration, realduration):
-        self.popsize = int(popsize)
-        self.simduration = int(simduration)
-        self.timecount = 0 
-            # set the time at 0.
-        self.timeclock = np.empty(self.simduration, dtype = float)
-        self.timeclock[0] = float(self.timecount) 
-            # record the first time, i.e. 0.
-        self.realduration = float(realduration)
-        self.timeresolution = float(self.simduration/self.realduration) 
-            # the time resolution corresponds to the relative time between simulation time and "actual" time, "percieved" by the agent.
-        self.all_ID = np.empty(self.popsize, dtype = int)
-        self.all_initpos = np.empty([self.popsize,2], dtype = float)
-            # create an empty array of intial positions for the whole population.
-            # ultimately, I think all of our array/list variables should be set this way, 
-            # as it is less time-consuming computationally-wise.
-        self.boxsize = boxsize 
-            # has to be of the form [x,y], see below:
-        
-        assert isinstance(self.boxsize, list) and len(self.boxsize) == 2, "'boxsize' must be a list of 2 elements." 
-            # returns error if boxsize is not of the right format, i.e. [x,y]
-        
-    def Identification(self):
-        
-        for agent in range(self.popsize):
-            self.all_ID[agent] = agent
-                # fills-in a list of all agents ID from 0 to n = (population size - 1)
-            
-    def Positions(self):
-        
-        for ID in self.all_ID:
-           self.agent_initx = rd.choice(range(self.boxsize[0]))
-               # gives each agent a random coordinate on the x-axis, within the environment boundaries
-           self.agent_inity = rd.choice(range(self.boxsize[1]))
-               # gives each agent a random coordinate on the y-axis, within the environment boundaries
-           
-           self.all_initpos[int(ID),0] = self.agent_initx
-               # stores the x-coordinate in an array
-           self.all_initpos[int(ID),1] = self.agent_inity
-               # stores the y-coordinate in an array
-    
-    def Timeline(self):
-            
-        for iteration in range(self.simduration):
-            self.timecount += self.timeresolution
-                # increment timecount with timeresolution. 
-                # timecount corresponds to the "actual" time, as opposed to simulated time
-            self.timeclock[iteration] = self.timecount
-                # store the new, incremented timecount in timeclock.
-
 ###----------BAT_JAMMING_00----------###
-### Class implementation for agents moving:
+### Class implementation nested into Launcher class for agents jamming:
 ### - within defined boundaries;
 ### - in a straight direction;
 ### - while calling at regular IPI;
@@ -185,18 +133,6 @@ class Launcher:
 # callsources: dictionary. Updated record of all calls sources
 # callshearing: numpy array. Updated record of all heard calls
 #----------End of documentation for TOA----------#
-
-#----------Dict_update----------#
-# Function for updating a dictionary without over-writing the keys already stored
-# in the dictionary.
-# Inputs: dict1, dict2
-# dict1: original dictionary to be updated.
-# dict2: dictionary to add to dict1. NB: has to be of the same format as dict1.
-
-#----------OUTPUTS----------#
-# dict1: updated dictionary (new key is added to the already existing keys in the 
-#   dictionary, instead of replacing them) 
-#----------End of documentation for DICT_UPDATE----------#
 
 #----------DATA_STORAGE----------#
 # Function applying a time limit for storing keys in dictionary 
@@ -277,150 +213,213 @@ class Launcher:
 #----------End of documentation for HEARING_TEST----------#
 ###----------end of documentation for BAT_JAMMING_00----------###
 
-class Bat_Jamming_00:
+class Launcher:
     
-    def __init__(self, ID, movdirection, stepsize, IPI, max_timestore, ring_dev):
-        self.ID = int(ID)
-        self.boxsize = env.boxsize
-            # takes boxsize from env, an object of the class Launcher
-        self.simduration = int(env.simduration)
-            # takes simduration from env, an object of the class Launcher
-        self.movdirection = float(movdirection)
-        self.stepsize = float(stepsize)       
-        self.IPI = float(IPI)
-        self.max_timestore = float(max_timestore)
-        self.ring_dev = int(ring_dev)
-        self.callsource = {}
-        self.hearhistory = []
+    def __init__(self, popsize, boxsize, simduration, realduration):
+        self.popsize = int(popsize)
+        self.simduration = int(simduration)
+        self.timecount = 0 
+            # set the time at 0.
+        self.timeclock = np.empty(self.simduration, dtype = float)
+        self.timeclock[0] = float(self.timecount) 
+            # record the first time, i.e. 0.
+        self.realduration = float(realduration)
+        self.timeresolution = float(self.simduration/self.realduration) 
+            # the time resolution corresponds to the relative time between simulation time and "actual" time, "percieved" by the agent.
+        self.all_ID = np.empty(self.popsize, dtype = int)
+        self.all_initpos = np.empty([self.popsize,2], dtype = float)
+            # create an empty array of intial positions for the whole population.
+            # ultimately, I think all of our array/list variables should be set this way, 
+            # as it is less time-consuming computationally-wise.
+        self.boxsize = boxsize 
+            # has to be of the form [x,y], see below:
         
-        assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
-            # returns an error message if movdirection is not within [-pi;pi].
-    
-    def Movement(self):
-        self.newx = self.x + self.stepsize * m.cos(self.movdirection)
-            # calculates the new x coordinate according to:
-                # the distance travelled over 1 time step.
-                # the direction of the movement
-        self.newy = self.y + self.stepsize * m.sin(self.movdirection)
-             # calculates the new y coordinate according to:
-                # the distance travelled over 1 time step.
-                # the direction of the movement
+        assert isinstance(self.boxsize, list) and len(self.boxsize) == 2, "'boxsize' must be a list of 2 elements." 
+            # returns error if boxsize is not of the right format, i.e. [x,y]
         
-        self.x = self.Boundaries(self.newx, self.boxsize[0])
-            # verify that the new x coordinate is within boundaries
-        self.y = self.Boundaries(self.newy, self.boxsize[1])
-            # verify that the new y coordinate is within boundaries
+    def Identification(self):
         
-        self.xhistory = np.append(self.xhistory, self.x)
-            # store the newly calculated x in xhistory
-        self.yhistory = np.append(self.yhistory, self.y)
-            # store the newly calculated y in yhistory
-        
-    def Calling(self):
-        self.calltest = float(self.timestep-self.callstarttime)/float(self.IPI)
-            # calculates the theoretical number of calls since the 1st call:
-            # (time since the 1st call = current time - time of the 1st call)/IPI
+        for agent in range(self.popsize):
+            self.all_ID[agent] = agent
+                # fills-in a list of all agents ID from 0 to n = (population size - 1)
             
-        if self.calltest%1 == 0:
-            self.callshistory = np.append(self.callshistory, 1)
-                # adds a new call (accounted for with a 1) if the theoretical number of 
-                # calls since the 1st call is a natural number
-        else:
-            self.callshistory = np.append(self.callshistory, 0)
-                # adds a "no new call" (accounted for with 0) if the theoretical number
-                # of calls since the 1st call is a float            
-            
-    def TOA(self, timestep):
-    
-        if all_bats[self.ID].callshistory[timestep] == 1:
-            Dict_update(self.callsource, {self.ID:{timestep:{'xsource': all_bats[ID].xhistory[timestep], 'ysource': all_bats[ID].yhistory[timestep], 'propdist':0}}})
-                # if this bat called at this timestep, store the position of the bat at the time 
-                # of calling into a dictionary of the form {bat:{time of calling:[x,y,propdist]}}
-                # I have to check whether D_update is actually the appropriate way to do it        
-    
-        if self.ID in self.callsource.keys():
-            # if the agent has ever called before: 
+    def Positions(self):
         
-            for calltime in self.callsource[self.ID].keys():
-                # for each time step at which the agent previously called:
-                self.Data_storage(self.callsource, timestep, calltime)
-                    # erase calls that have been emitted too long ago to be heared anymore
-                self.Propagation(self.callsource, calltime)
-                    # update the propagation distance in callsource
+        for ID in self.all_ID:
+           self.agent_initx = rd.choice(range(self.boxsize[0]))
+               # gives each agent a random coordinate on the x-axis, within the environment boundaries
+           self.agent_inity = rd.choice(range(self.boxsize[1]))
+               # gives each agent a random coordinate on the y-axis, within the environment boundaries
+           
+           self.all_initpos[int(ID),0] = self.agent_initx
+               # stores the x-coordinate in an array
+           self.all_initpos[int(ID),1] = self.agent_inity
+               # stores the y-coordinate in an array
+    
+    def Timeline(self):
             
-                for identity in env.all_ID:
-                    # for each agent in the simulation:
+        for iteration in range(self.simduration):
+            self.timecount += self.timeresolution
+                # increment timecount with timeresolution. 
+                # timecount corresponds to the "actual" time, as opposed to simulated time
+            self.timeclock[iteration] = self.timecount
+                # store the new, incremented timecount in timeclock.
+
+    class Bat_Jamming_00:
+    
+        def __init__(self, ID, movdirection, stepsize, IPI, max_timestore, ring_dev):
+            self.ID = int(ID)
+            self.boxsize = env.boxsize
+                # takes boxsize from env, an object of the class Launcher
+            self.simduration = int(env.simduration)
+                # takes simduration from env, an object of the class Launcher
+            self.movdirection = float(movdirection)
+            self.stepsize = float(stepsize)       
+            self.IPI = float(IPI)
+            self.max_timestore = float(max_timestore)
+            self.ring_dev = int(ring_dev)
+            self.callsource = {}
+            self.hearhistory = []
+        
+            assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
+                # returns an error message if movdirection is not within [-pi;pi].
+    
+        def Movement(self):
+            self.newx = self.x + self.stepsize * m.cos(self.movdirection)
+                # calculates the new x coordinate according to:
+                # ### the distance travelled over 1 time step.
+                # ### the direction of the movement
+            self.newy = self.y + self.stepsize * m.sin(self.movdirection)
+                # calculates the new y coordinate according to:
+                # ### the distance travelled over 1 time step.
+                # ### the direction of the movement
+        
+            self.x = self.Boundaries(self.newx, self.boxsize[0])
+                # verify that the new x coordinate is within boundaries
+            self.y = self.Boundaries(self.newy, self.boxsize[1])
+                # verify that the new y coordinate is within boundaries
+        
+            self.xhistory = np.append(self.xhistory, self.x)
+                # store the newly calculated x in xhistory
+            self.yhistory = np.append(self.yhistory, self.y)
+                # store the newly calculated y in yhistory
+        
+        def Calling(self):
+            self.calltest = float(self.timestep-self.callstarttime)/float(self.IPI)
+                # calculates the theoretical number of calls since the 1st call:
+                # (time since the 1st call = current time - time of the 1st call)/IPI
+            
+            if self.calltest%1 == 0:
+                self.callshistory = np.append(self.callshistory, 1)
+                    # adds a new call (accounted for with a 1) if the theoretical number of 
+                    # calls since the 1st call is a natural number
+            else:
+                self.callshistory = np.append(self.callshistory, 0)
+                    # adds a "no new call" (accounted for with 0) if the theoretical number
+                    # of calls since the 1st call is a float            
+            
+        def TOA(self, timestep):
+    
+            if all_bats[self.ID].callshistory[timestep] == 1:
+                Dict_update(self.callsource, {self.ID:{timestep:{'xsource': all_bats[ID].xhistory[timestep], 'ysource': all_bats[ID].yhistory[timestep], 'propdist':0}}})
+                    # if this bat called at this timestep, store the position of the bat at the time 
+                    # of calling into a dictionary of the form {bat:{time of calling:[x,y,propdist]}}
+                    # I have to check whether D_update is actually the appropriate way to do it        
+    
+            if self.ID in self.callsource.keys():
+                # if the agent has ever called before: 
+        
+                for calltime in self.callsource[self.ID].keys():
+                    # for each time step at which the agent previously called:
+                    self.Data_storage(self.callsource, timestep, calltime)
+                        # erase calls that have been emitted too long ago to be heared anymore
+                    self.Propagation(self.callsource, calltime)
+                        # update the propagation distance in callsource
+            
+                    for identity in env.all_ID:
+                        # for each agent in the simulation:
                 
-                    if identity in self.callsource.keys():
-                        # if the agent has ever called before: 
+                        if identity in self.callsource.keys():
+                            # if the agent has ever called before: 
                     
-                        for calltime in self.callsource[self.ID].keys():
-                            # for each time step at which the agent previously called:
-                            self.Hearing_test(identity, calltime, self.hearhistory, timestep)
-                                # identify and record calls that can be heard.
+                            for calltime in self.callsource[self.ID].keys():
+                                # for each time step at which the agent previously called:
+                                self.Hearing_test(identity, calltime, self.hearhistory, timestep)
+                                    # identify and record calls that can be heard.
     
-    def Boundaries(self, coord, coordbound):
+        def Boundaries(self, coord, coordbound):
         
-        if coord in range(coordbound): 
-            return coord
-                # if the coordinate is within boundaries, it stays the same.
-        else:
-            return range(coordbound)[0]
-                # if the coordinate isn't within boundaries, it is reset to the beginning.
-        print "Bat within boundaries"
+            if coord in range(coordbound): 
+                return coord
+                    # if the coordinate is within boundaries, it stays the same.
+            else:
+                return range(coordbound)[0]
+                    # if the coordinate isn't within boundaries, it is reset to the beginning.
         
-    def Data_storage(self, dict1, tmstp, tcall):
-        self.timestore = tmstp - tcall
-            # storing time of the corresponding call into the dictionary 
-            # Remember that iteration time and "real" time can be different 
-            # --> choose max_timestore appropriately
+        def Data_storage(self, dict1, tmstp, tcall):
+            self.timestore = tmstp - tcall
+                # storing time of the corresponding call into the dictionary 
+                # Remember that iteration time and "real" time can be different 
+                # --> choose max_timestore appropriately
             
-        if self.timestore > self.max_timestore:
-            # if the storing time is longer than a predefined time: 
-            dict1[self.ID].pop(tcall, None)
-                # erase it from the memory / dictionary
+            if self.timestore > self.max_timestore:
+                # if the storing time is longer than a predefined time: 
+                dict1[self.ID].pop(tcall, None)
+                    # erase it from the memory / dictionary
         
-        return dict1
+            return dict1
 
-    def Min_circle(self, center_x, center_y, radius, x, y):
-        dist = (x - center_x) ** 2 + (y - center_y) ** 2
-        return dist > radius
+        def Min_circle(self, center_x, center_y, radius, x, y):
+            dist = (x - center_x) ** 2 + (y - center_y) ** 2
+            return dist > radius
 
-    def Max_circle(self, center_x, center_y, radius, x, y):
-        dist = (x - center_x) ** 2 + (y - center_y) ** 2
-        return dist < radius
+        def Max_circle(self, center_x, center_y, radius, x, y):
+            dist = (x - center_x) ** 2 + (y - center_y) ** 2
+            return dist < radius
         
-    def Propagation(self, dict1, tmstp):
-        SPEED_SOUND = 340.29 # speed of sound at sea level in m/s
-        self.propdist = float(SPEED_SOUND * self.timestore / env.timeresolution)
-            # calculate, for a certain call, its propagation distance at timestep 
-            # according to the time when the call was emitted and the speed of sound
-        dict1[self.ID][tmstp]['propdist'] = self.propdist
-            # update the propagation distance in dict1
+        def Propagation(self, dict1, tmstp):
+            SPEED_SOUND = 340.29 # speed of sound at sea level in m/s
+            self.propdist = float(SPEED_SOUND * self.timestore / env.timeresolution)
+                # calculate, for a certain call, its propagation distance at timestep 
+                # according to the time when the call was emitted and the speed of sound
+            dict1[self.ID][tmstp]['propdist'] = self.propdist
+                # update the propagation distance in dict1
         
-        return dict1
+            return dict1
     
-    def Hearing_test(self, ag_id, tcall, nparray, tmstp):
-        self.mintest = self.Min_circle(self.callsource[ag_id][tcall]['xsource'],
-                                       self.callsource[ag_id][tcall]['ysource'],
-                                       self.callsource[ag_id][tcall]['propdist'] - self.ring_dev,
-                                       all_bats[int(ID)].xhistory[tmstp],
-                                       all_bats[int(ID)].yhistory[tmstp])
+        def Hearing_test(self, ag_id, tcall, hear_array, tmstp):
+            self.mintest = self.Min_circle(self.callsource[ag_id][tcall]['xsource'],
+                                           self.callsource[ag_id][tcall]['ysource'],
+                                           self.callsource[ag_id][tcall]['propdist'] - self.ring_dev,
+                                           all_bats[int(ID)].xhistory[tmstp],
+                                           all_bats[int(ID)].yhistory[tmstp])
                                          
-        self.maxtest = self.Max_circle(self.callsource[ag_id][tcall]['xsource'], 
-                                       self.callsource[ag_id][tcall]['ysource'], 
-                                       self.callsource[ag_id][tcall]['propdist'] + self.ring_dev,
-                                       all_bats[int(ID)].xhistory[tmstp],
-                                       all_bats[int(ID)].yhistory[tmstp])
+            self.maxtest = self.Max_circle(self.callsource[ag_id][tcall]['xsource'], 
+                                           self.callsource[ag_id][tcall]['ysource'], 
+                                           self.callsource[ag_id][tcall]['propdist'] + self.ring_dev,
+                                           all_bats[int(ID)].xhistory[tmstp],
+                                           all_bats[int(ID)].yhistory[tmstp])
                 
-        if self.mintest and self.maxtest:
-            # test if the agent 'ID' can hear any call from agent 'identity'
-            # including own calls
-            nparray = np.append(nparray,[self.ID, tmstp, ag_id, tcall])
-                # if so, store the IDs of the hearing bat and the calling bat,
-                # as well as the time at which the bat called and has been heard
+            if self.mintest and self.maxtest:
+                # test if the agent 'ID' can hear any call from agent 'identity'
+                # including own calls
+                hear_array = np.append(hear_array,[self.ID, tmstp, ag_id, tcall])
+                    # if so, store the IDs of the hearing bat and the calling bat,
+                    # as well as the time at which the bat called and has been heard
         
-        return nparray
+            return hear_array
+
+#----------Dict_update----------#
+# Function for updating a dictionary without over-writing the keys already stored
+# in the dictionary.
+# Inputs: dict1, dict2
+# dict1: original dictionary to be updated.
+# dict2: dictionary to add to dict1. NB: has to be of the same format as dict1.
+
+#----------OUTPUTS----------#
+# dict1: updated dictionary (new key is added to the already existing keys in the 
+#   dictionary, instead of replacing them) 
+#----------End of documentation for DICT_UPDATE----------#
 
 def Dict_update(dict1, dict2):
     
