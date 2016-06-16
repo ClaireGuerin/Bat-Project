@@ -11,55 +11,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 # import pylab
 
-###----------LAUNCHER----------###
-### Class implementation to initiate simulatory environment.
-### Inputs: popsize, boxsize, d_t, simduration
-### popsize: integer. Size of the bat population / Number of agents to run
-### boxsize: list of 2 integers. Area (rectangle) within which the agents can move, 
-### ### defined by the lengths of edges in meters.
-### d_t: float. Time resolution in milliseconds.
-### simduration: integer. Total number of time steps to be run in the simulation. 
-
-### Once intiated, a Launcher object also contains:
-### d_t: updated d_t so that the unit is in seconds (for homogeneisation in the program)
-### realtime: time of the simulation, in seconds. Initially set at 0.
-### timeclock: empty array for floats, dimensions 1*simduration. Will contain all the
-### ### times in seconds for each time step in the simulation.
-### realduration: duration of the simulation in seconds.
-### all_ID: empty array for integers, dimensions 1*popsize. Will contain the 
-### ### identification numbers of all the agents to be run in the simulation.
-### all_initpos: empty array for floats, dimensions 2*popsize. Will contain the initial 
-### ### positions of all the agents to be run in the simulation. 
-### callsources: empty dictionary. Will contain the sources of every calls, emitted by 
-### ### every agent throughout the simulation.
-
-#----------IDENTIFICATION----------#
-# function that assigns an identification number to every agent/bat to be considered
-# in the simulation, starting from 0.
-# Inputs: popsize & all_ID, taken from the method __init__
-
-#----------OUTPUTS----------#
-# all_ID: updated all_ID list with all the agents' identification numbers.
-
-#----------POSITIONS----------#
-# Function that randomly assigns an initial position to each agent on the grid.
-# Inputs: all_ID, boxsize & all_initpos taken from the method __init__
-
-#----------OUTPUTS----------#
-# agent_initx: float. Randomly attributed abscissae of an agent 
-# agent_inity: float. Randomly attributed ordinate of an agent
-# all_initpos: updated all_initpos array with the intial coordinates of every agent.
-
-#----------Timeline----------#
-# Function that creates a time line of the whole simulation in seconds, with the 
-# interval defined by time resolution.
-# Inputs: simduration, realtime & timeclock, taken from the method __init__
-
-#----------OUTPUTS----------#
-# realtime: float. Iterated with the time resolution d_t
-# timeclock: updated timeclock list with all the times in seconds corresponding to every
-#   time step in the simulation.
-
 class Launcher:
     
     def __init__(self, popsize, boxsize, d_t, simduration):
@@ -131,18 +82,18 @@ class Launcher:
             self.IPI = float(IPI * m.pow(10,-3))
             self.speedsound = 340.29 # speed of sound at sea level in m/s
             self.max_timestore = float(max_hear_dist / self.speedsound)
-            self.ring_width = int(1) # spatial difference between start and end of call, in meters
+            self.ring_width = float(1) # spatial difference between start and end of call, in meters
             self.hearhistory = []
         
             assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
                 # returns an error message if movdirection is not within [-pi;pi].
     
         def Movement(self):
-            self.newx = self.x + self.stepsize * m.cos(self.movdirection)
+            self.newx = float(self.x + self.stepsize * m.cos(self.movdirection))
                 # calculates the new x coordinate according to:
                 # ### the distance travelled over 1 time step.
                 # ### the direction of the movement
-            self.newy = self.y + self.stepsize * m.sin(self.movdirection)
+            self.newy = float(self.y + self.stepsize * m.sin(self.movdirection))
                 # calculates the new y coordinate according to:
                 # ### the distance travelled over 1 time step.
                 # ### the direction of the movement
@@ -171,7 +122,7 @@ class Launcher:
                     # adds a "no new call" (accounted for with 0) if the theoretical number
                     # of calls since the 1st call is a float                       
             
-            if all_bats[self.ID].callshistory[self.timestep] == 1:
+            if self.callshistory[self.timestep] == 1:
                 # if this bat called at this timestep:
                 Dict_update(env.callsources, {self.ID:{self.timestep:{'xsource': all_bats[ID].xhistory[self.timestep], 'ysource': all_bats[ID].yhistory[self.timestep], 'propdist':0}}})
                     # store the position of the bat at the time of calling into a 
@@ -204,10 +155,10 @@ class Launcher:
         def Boundaries(self, coord, coordbound):
         
             if coord > 0 and coord < coordbound: 
-                return coord
+                return float(coord)
                     # if the coordinate is within boundaries, it stays the same.
             else:
-                return 0
+                return float(0)
                     # if the coordinate isn't within boundaries, it is reset to the beginning.
         
         def Data_storage(self, dict1, tcall):
@@ -249,8 +200,8 @@ class Launcher:
             if self.ringtest:
                 # test if focal agent 'self.ID' can hear any call from agent 'identity'
                 # identity = ID is possible, in which case the bat hears itself
-                hear_array = np.append(hear_array,[self.ID, self.timestep, ag_id, tcall])
-                    # if so, store the IDs of the hearing bat and the calling bat,
+                hear_array = np.append(hear_array,[self.timestep, ag_id, tcall])
+                    # if so, store the ID of the calling bat,
                     # as well as the time at which the bat called and has been heard
         
             return hear_array
