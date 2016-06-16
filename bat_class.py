@@ -44,9 +44,9 @@ class Launcher:
     def Positions(self):
         
         for ID in self.all_ID:
-           self.agent_initx = rd.uniform(0, range(self.boxsize[0]))
+           self.agent_initx = rd.uniform(0, self.boxsize[0])
                # gives each agent a random coordinate on the x-axis, within the environment boundaries
-           self.agent_inity = rd.uniform(0, range(self.boxsize[1]))
+           self.agent_inity = rd.uniform(0, self.boxsize[1])
                # gives each agent a random coordinate on the y-axis, within the environment boundaries
            
            self.all_initpos[int(ID),0] = self.agent_initx
@@ -255,7 +255,7 @@ DELTA_T = 2
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
-SIMDURATION = 100
+SIMDURATION = 1000
 
 MOVDIRECTION = 0
     # flight direction of the agents
@@ -298,15 +298,15 @@ for ID in env.all_ID:
     # all_bats[int(ID)].callduration = 3
         # sets the duration of a bat's calls
         # not necessary for now, but might become useful later
-    all_bats[int(ID)].callshistory = []
+    all_bats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
         # creates an empty list to store calls records
     # all_x[int(ID)][0] = all_bats[int(ID)].xhistory[0]
     # all_y[int(ID)][0] = all_bats[int(ID)].yhistory[0]
 
 
-for timestep in env.timeclock:
+for timestep in range(env.simduration):
     for ID in env.all_ID:
-        all_bats[int(ID)].timestep = int(timestep - 1)
+        all_bats[int(ID)].timestep = int(timestep)
             # indicates the current time step for each instance 
         all_bats[int(ID)].Movement()
             # makes the instance move
