@@ -178,7 +178,7 @@ class Launcher:
             self.propdist = float(self.speedsound * self.timestore * env.d_t)
                 # calculate, for a certain call, its propagation distance at timestep 
                 # according to the time when the call was emitted and the speed of sound
-            dict1[self.ID][tmstp]['propdist'] = self.propdist
+            dict1[self.ID][int(tmstp)]['propdist'] = self.propdist
                 # update the propagation distance in dict1
         
             return dict1
@@ -255,7 +255,7 @@ DELTA_T = 2
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
-SIMDURATION = 1000
+SIMDURATION = 2
 
 MOVDIRECTION = 0
     # flight direction of the agents
