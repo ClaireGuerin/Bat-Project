@@ -114,17 +114,17 @@ class Launcher:
                 # (time since the 1st call = current time - time of the 1st call/IPI)
             
             if self.calltest%1 == 0:
-                self.callshistory = np.append(self.callshistory, 1)
+                self.callshistory[int(self.timestep)] = 1
                     # adds a new call (accounted for with a 1) if the theoretical number of 
                     # calls since the 1st call is a natural number
             else:
-                self.callshistory = np.append(self.callshistory, 0)
+                self.callshistory[int(self.timestep)] = 0
                     # adds a "no new call" (accounted for with 0) if the theoretical number
                     # of calls since the 1st call is a float                       
             
-            if self.callshistory[self.timestep] == 1:
+            if self.callshistory[int(self.timestep)] == 1:
                 # if this bat called at this timestep:
-                Dict_update(env.callsources, {self.ID:{self.timestep:{'xsource': all_bats[ID].xhistory[self.timestep], 'ysource': all_bats[ID].yhistory[self.timestep], 'propdist':0}}})
+                Dict_update(env.callsources, {self.ID:{self.timestep:{'xsource': self.xhistory[self.timestep], 'ysource': self.yhistory[self.timestep], 'propdist':0}}})
                     # store the position of the bat at the time of calling into a 
                     # dictionary of the form {bat:{time of calling:[x,y,propdist]}}
                     # ! check whether D_update is actually the appropriate way to do it        
