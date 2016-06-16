@@ -11,6 +11,55 @@ import numpy as np
 import matplotlib.pyplot as plt
 # import pylab
 
+###----------LAUNCHER----------###
+### Class implementation to initiate simulatory environment.
+### Inputs: popsize, boxsize, d_t, simduration
+### popsize: integer. Size of the bat population / Number of agents to run
+### boxsize: list of 2 integers. Area (rectangle) within which the agents can move, 
+### ### defined by the lengths of edges in meters.
+### d_t: float. Time resolution in milliseconds.
+### simduration: integer. Total number of time steps to be run in the simulation. 
+
+### Once intiated, a Launcher object also contains:
+### d_t: updated d_t so that the unit is in seconds (for homogeneisation in the program)
+### realtime: time of the simulation, in seconds. Initially set at 0.
+### timeclock: empty array for floats, dimensions 1*simduration. Will contain all the
+### ### times in seconds for each time step in the simulation.
+### realduration: duration of the simulation in seconds.
+### all_ID: empty array for integers, dimensions 1*popsize. Will contain the 
+### ### identification numbers of all the agents to be run in the simulation.
+### all_initpos: empty array for floats, dimensions 2*popsize. Will contain the initial 
+### ### positions of all the agents to be run in the simulation. 
+### callsources: empty dictionary. Will contain the sources of every calls, emitted by 
+### ### every agent throughout the simulation.
+
+#----------IDENTIFICATION----------#
+# function that assigns an identification number to every agent/bat to be considered
+# in the simulation, starting from 0.
+# Inputs: popsize & all_ID, taken from the method __init__
+
+#----------OUTPUTS----------#
+# all_ID: updated all_ID list with all the agents' identification numbers.
+
+#----------POSITIONS----------#
+# Function that randomly assigns an initial position to each agent on the grid.
+# Inputs: all_ID, boxsize & all_initpos taken from the method __init__
+
+#----------OUTPUTS----------#
+# agent_initx: float. Randomly attributed abscissae of an agent 
+# agent_inity: float. Randomly attributed ordinate of an agent
+# all_initpos: updated all_initpos array with the intial coordinates of every agent.
+
+#----------Timeline----------#
+# Function that creates a time line of the whole simulation in seconds, with the 
+# interval defined by time resolution.
+# Inputs: simduration, realtime & timeclock, taken from the method __init__
+
+#----------OUTPUTS----------#
+# realtime: float. Iterated with the time resolution d_t
+# timeclock: updated timeclock list with all the times in seconds corresponding to every
+#   time step in the simulation.
+
 class Launcher:
     
     def __init__(self, popsize, boxsize, d_t, simduration):
@@ -28,8 +77,6 @@ class Launcher:
         self.all_ID = np.empty(self.popsize, dtype = int)
         self.all_initpos = np.empty([self.popsize,2], dtype = float)
             # create an empty array of intial positions for the whole population.
-            # ultimately, I think all of our array/list variables should be set this way, 
-            # as it is less time-consuming computationally-wise.
         self.callsources = {}
         self.boxsize = boxsize 
             # has to be of the form [x,y], see below:
@@ -46,9 +93,9 @@ class Launcher:
     def Positions(self):
         
         for ID in self.all_ID:
-           self.agent_initx = rd.choice(range(self.boxsize[0]))
+           self.agent_initx = rd.uniform(0, range(self.boxsize[0]))
                # gives each agent a random coordinate on the x-axis, within the environment boundaries
-           self.agent_inity = rd.choice(range(self.boxsize[1]))
+           self.agent_inity = rd.uniform(0, range(self.boxsize[1]))
                # gives each agent a random coordinate on the y-axis, within the environment boundaries
            
            self.all_initpos[int(ID),0] = self.agent_initx
