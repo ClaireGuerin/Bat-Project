@@ -275,7 +275,7 @@ DELTA_T = 2
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
-SIMDURATION = 1
+SIMDURATION = 147
 
 MOVDIRECTION = 0
     # flight direction of the agents
