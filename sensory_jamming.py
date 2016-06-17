@@ -5,10 +5,12 @@ Created on Mon Apr 04 14:31:31 2016
 @author: Claire
 """
 
+from __future__ import division
 import random as rd
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
+
 # import pylab
 
 class Launcher:
@@ -95,8 +97,8 @@ class Launcher:
                 # Must be between -pi and pi (asserted later).
             self.stepsize = float(flightspeed * self.d_t) 
                 # float. Distance in meters covered by the agent in 1 time step
-            self.IPI = float(IPI * m.pow(10,-3))
-                # float. Agent's inter-pulse interval.
+            self.IPI = int(float(IPI * m.pow(10,-3)) / env.d_t)
+                # int. Agent's inter-pulse interval, converted in time steps.
             self.speedsound = 340.29 
                 # float. Speed of sound at sea level in m/s.
             self.max_timestore = float(max_hear_dist / self.speedsound)
@@ -135,7 +137,8 @@ class Launcher:
                 # store the newly calculated y in yhistory
         
         def Calling(self):
-            self.calltest = float(self.timestep-self.callstarttime)/float(self.IPI)
+            
+            self.calltest = float(self.timestep-self.firstcall)/float(self.IPI)
                 # calculate the theoretical number of calls since the 1st call:
                 # time since 1st call = current time - time of 1st call/IPI
             
@@ -144,16 +147,15 @@ class Launcher:
                 # natural number:
                 self.callshistory[int(self.timestep)] = 1
                     # add a new call (accounted for with a 1) 
-            else:
-                self.callshistory[int(self.timestep)] = 0
-                    # add a "no new call" (accounted for with 0)                  
-            
-            if self.callshistory[int(self.timestep)] == 1:
-                # if the focal bat called at this timestep:
                 Dict_update(env.callsources, {self.ID:{self.timestep:{'xsource': self.xhistory[self.timestep], 'ysource': self.yhistory[self.timestep], 'propdist':0}}})
                     # store the position of the bat at the time of calling into 
                     # a dictionary of the form: 
                     # {bat:{time of calling:[x,y,propdist]}}
+                
+            else:
+                self.callshistory[int(self.timestep)] = 0
+                    # add a "no new call" (accounted for with 0)
+
 
             if self.ID in env.callsources.keys():
                 # if the agent has ever called before: 
@@ -162,8 +164,11 @@ class Launcher:
                     # for each time step at which a call was emitted:
                     self.Data_storage(env.callsources, calltime)
                         # erase calls that are too old to be heared anymore
-                    self.Propagation(env.callsources, calltime)
-                        # & update the propagation distance of the remaining
+                    if calltime in env.callsources[int(self.ID)].keys():
+                        # if the call is still in the dictionary:
+                        self.Propagation(env.callsources, calltime)
+                            # update its propagation distance accordingly
+
                     
         def Hearing(self):
             
@@ -275,7 +280,7 @@ DELTA_T = 2
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
-SIMDURATION = 147
+SIMDURATION = 100
 
 MOVDIRECTION = 0
     # flight direction of the agents
@@ -283,7 +288,7 @@ FLIGHTSPEED = 5.5
     # bats' flight speed in m/s. 5.5 m/s corresponds to a slow bat
     # Hayward & Davis (1964), Winter (1999).
 INTER_PULSE_INTERVAL = 50 
-    # IPI in seconds (ms).  
+    # IPI (ms).  
 MAX_HEAR_DIST = 100 
     # maximum distance (in meters) at which a call can be heared
     # ideally, should implement hearing threshold instead e.g. 0 or 20 dB peSPL
@@ -312,17 +317,16 @@ for ID in env.all_ID:
         # initial y coordinate for each instance, taken from env
     all_bats[int(ID)].yhistory = [all_bats[int(ID)].y]
         # stores it in yhistory
-    all_bats[int(ID)].callstarttime = 0 
-        # sets the starting time for the initial call 
+    all_bats[int(ID)].firstcall = 0    
+        # time step for initiating the first call 
         # set to zero at the moment, for lack of a better idea
     # all_bats[int(ID)].callduration = 3
         # sets the duration of a bat's calls
         # not necessary for now, but might become useful later
     all_bats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
-        # creates an empty list to store calls records
+        # creates an empty list to store call times records
     # all_x[int(ID)][0] = all_bats[int(ID)].xhistory[0]
     # all_y[int(ID)][0] = all_bats[int(ID)].yhistory[0]
-
 
 for timestep in range(env.simduration):
     for ID in env.all_ID:
@@ -333,6 +337,6 @@ for timestep in range(env.simduration):
         all_bats[int(ID)].Calling()
             # makes the instance call  
         all_bats[int(ID)].Hearing()
-         
+            # makes the instance hear
         plt.plot(all_bats[int(ID)].xhistory, all_bats[int(ID)].yhistory, marker = '^')
             # plot all instances movements over time
