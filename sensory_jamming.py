@@ -270,7 +270,7 @@ def Dict_update(dict1, dict2):
 ### MAX_TIMESTORE: maximum time (in simulation time steps) for a call source to be taken into
 ###     account for the hearing part of the simulation
 
-POPSIZE = 1
+POPSIZE = 2
     # number of agents to run in one simulation
 BOXSIZE = [300,300]
     # spatial boundaries (in meters) within which the agents can move
@@ -280,7 +280,7 @@ DELTA_T = 2
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
-SIMDURATION = 100
+SIMDURATION = 900
 
 MOVDIRECTION = 0
     # flight direction of the agents
