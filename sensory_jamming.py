@@ -16,10 +16,10 @@ import matplotlib.pyplot as plt
 class Launcher:
     # Class implementation to initiate simulatory environment.
 
-    def __init__(self, popsize, boxsize, d_t, simduration):
+    def __init__(self, popsize, boxsize, t_res, simduration):
         self.popsize = int(popsize)
             # integer. Size of the bat population / Number of agents 
-        self.d_t = float(d_t)
+        self.t_res = float(t_res)
             # float. Time resolution, i.e. how much time (in s) 
             # is expressed in 1 simulation time step.
         self.simduration = int(simduration)
@@ -31,7 +31,7 @@ class Launcher:
             # contain all times in seconds for each simulation time step.
         self.timeclock[0] = float(self.realtime) 
             # record the first time, i.e. 0.
-        self.realduration = float(self.simduration * self.d_t)
+        self.realduration = float(self.simduration * self.t_res)
             # duration of the simulation in seconds.
         self.all_ID = np.empty(self.popsize, dtype = int)
             # empty array for integers, dimensions 1*popsize. Will 
@@ -76,7 +76,7 @@ class Launcher:
             
         for iteration in range(self.simduration):
             # for each time step in the simulation:
-            self.realtime += float(self.d_t)
+            self.realtime += float(self.t_res)
                 # increment timecount with time resolution. 
             self.timeclock[int(iteration)] = self.realtime
                 # store the new, incremented time count in timeclock.
@@ -90,14 +90,14 @@ class Launcher:
                 # integer. Identification number of the focal agent.
             self.boxsize = env.boxsize
                 # takes boxsize from env (class Launcher).
-            self.d_t = env.d_t
-                # takes d_t from env (class Launcher).
+            self.t_res = env.t_res
+                # takes t_res from env (class Launcher).
             self.movdirection = float(movdirection)
                 # float. Direction (in radians) towards which the agent flies.
                 # Must be between -pi and pi (asserted later).
-            self.stepsize = float(flightspeed * self.d_t) 
+            self.stepsize = float(flightspeed * self.t_res) 
                 # float. Distance in meters covered by the agent in 1 time step
-            self.IPI = int(float(IPI / env.d_t))
+            self.IPI = int(float(IPI / env.t_res))
                 # int. Agent's inter-pulse interval, converted in time steps.
             self.speedsound = 340.29
                 # float. Speed of sound at sea level in m/s.
@@ -199,7 +199,7 @@ class Launcher:
                 # Time (in time steps) for which the call has been stored into 
                 # the dictionary.
             
-            if self.timestore > self.max_timestore/self.d_t:
+            if self.timestore > self.max_timestore/self.t_res:
                 # if the storing time is longer than it should: 
                 dict1[int(self.ID)].pop(tcall, None)
                     # erase it from the memory / dictionary
@@ -207,7 +207,7 @@ class Launcher:
             return dict1
 
         def Propagation(self, dict1, tmstp):
-            self.propdist = float(self.speedsound * self.timestore * env.d_t)
+            self.propdist = float(self.speedsound * self.timestore * env.t_res)
                 # propagation distance at timestep according to the time when 
                 # the call was emitted and the speed of sound.
             dict1[int(self.ID)][int(tmstp)]['propdist'] = self.propdist
@@ -215,14 +215,14 @@ class Launcher:
         
             return dict1
     
-        def In_ring(self, center_x, center_y, radius, x, y):
+        def In_ring(self, callsource_x, callsource_y, dcfs, x, y):
             # function which tests if a bat is within the 'ring of sound' of a call
-            dist = m.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+            dist = m.sqrt((x - callsource_x) ** 2 + (y - callsource_y) ** 2)
                 # distance between an agent and a call's source
-            return dist < radius and dist > radius - self.ring_width
+            return dist <= dcfs and dist >= dcfs - self.ring_width
                 # boolean. Is dist within the distance travelled by the call 
-                # between the beginning (radius) and the end of the call 
-                # (radius - width)?
+                # between the beginning (dcfs) and the end of the call 
+                # (dcfs - width)?
         
         def Hearing_test(self, ag_id, tcall, hear_array):
             callcentre_x = env.callsources[int(ag_id)][int(tcall)]['xsource']
@@ -277,10 +277,10 @@ def Dict_update(dict1, dict2):
 
 POPSIZE = 2
     # number of agents to run in one simulation
-BOXSIZE = [300,300]
+BOXSIZE = [200,200]
     # spatial boundaries (in meters) within which the agents can move
     # here, the bats can move within an area of 9 ha
-DELTA_T = 0.002
+TIME_RESOLUTION = 0.002
     # time resolution, i.e. time (in s) represented in 1 simulation time step.
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
@@ -294,7 +294,7 @@ FLIGHTSPEED = 5.5
     # Hayward & Davis (1964), Winter (1999).
 INTER_PULSE_INTERVAL = 0.05 
     # IPI (ms).  
-MAX_HEAR_DIST = 100 
+MAX_HEAR_DIST = 300 
     # maximum distance (in meters) at which a call can be heared
     # ideally, should implement hearing threshold instead e.g. 0 or 20 dB peSPL
 CALL_DURATION = 0.01
@@ -303,7 +303,7 @@ CALL_DURATION = 0.01
 # Set the simulation environment with Launcher, according to the parameters given 
 # above, and stores it into an object called env
 # Run the functions contained in the Launcher class
-env = Launcher(POPSIZE, BOXSIZE, DELTA_T, SIMDURATION)
+env = Launcher(POPSIZE, BOXSIZE, TIME_RESOLUTION, SIMDURATION)
 env.Identification()
 env.Positions()
 env.Timeline()
@@ -324,7 +324,7 @@ for ID in env.all_ID:
         # initial y coordinate for each instance, taken from env
     all_bats[int(ID)].yhistory = [all_bats[int(ID)].y]
         # stores it in yhistory
-    all_bats[int(ID)].firstcall = 0    
+    all_bats[int(ID)].firstcall = int(0)   
         # time step for initiating the first call 
         # set to zero at the moment, for lack of a better idea
     # all_bats[int(ID)].callduration = 3
@@ -334,7 +334,8 @@ for ID in env.all_ID:
         # creates an empty list to store call times records
     # all_x[int(ID)][0] = all_bats[int(ID)].xhistory[0]
     # all_y[int(ID)][0] = all_bats[int(ID)].yhistory[0]
-
+    # all_bats[int(ID)].callshistory[all_bats[int(ID)].firstcall][0] = 1   
+    
 for timestep in range(env.simduration):
     for ID in env.all_ID:
         all_bats[int(ID)].timestep = int(timestep)

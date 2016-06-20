@@ -161,9 +161,9 @@ coord: Updated coordinate or original coordinate, depending whether it was orgin
 #----------IN_RING----------#
 # Function that tests whether a certain point (agent) is on the ring of sound.
 # Inputs: center_x, center_y, radius, x, y
-# center_x: float. Abscissa of the source of the call
-# center_y: float. Ordinate of the source of the call
-# radius: float. Distance of the propagated call to its source 
+# callsource_x: float. Abscissa of the source of the call
+# callsource_y: float. Ordinate of the source of the call
+# dcfs: float. Stands for Distance of Call from Source. Distance of the propagated call from its source 
 # x: float. Abscissa of the object / point to be checked for
 # y: float. Ordinate of the object / point to be checked for
 
