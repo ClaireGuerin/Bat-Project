@@ -51,7 +51,9 @@
 # Inputs: simduration, realtime & timeclock, taken from the method __init__
 
 #----------OUTPUTS----------#
-# realtime: float. Iterated with the time resolution d_t
+# realtime: float. Iterated with the time resolution d_t. /!\ Timeline creates a clock in terms of real time. 
+# 	As 1 simulation iteration is ran, there is simduration/realduration time spent "for real", = time resolution. 
+# 	Timecount corresponds to the "actual" time (in sec), as opposed to simulation time (in time steps).
 # timeclock: updated timeclock list with all the times in seconds corresponding to every
 #   time step in the simulation.
 #----------End of Documentation for Timeline----------#
@@ -184,3 +186,15 @@ coord: Updated coordinate or original coordinate, depending whether it was orgin
 #----------End of Documentation for Hearing_test----------#
 ###----------End of Documentation for Bat_Jamming_00----------###
 ###----------End of Documentation for Launcher----------###
+
+#----------Dict_update----------#
+# Function for updating a dictionary without over-writing the keys already 
+# stored in the dictionary.
+# Inputs: dict1, dict2
+# dict1: original dictionary to be updated.
+# dict2: dictionary to add to dict1. NB: has to be of the same format as dict1.
+
+#----------OUTPUTS----------#
+# dict1: updated dictionary (new key is added to the already existing keys in the 
+#   dictionary, instead of replacing them) 
+#----------End of documentation for DICT_UPDATE----------#

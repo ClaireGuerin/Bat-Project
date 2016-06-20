@@ -19,8 +19,8 @@ class Launcher:
     def __init__(self, popsize, boxsize, d_t, simduration):
         self.popsize = int(popsize)
             # integer. Size of the bat population / Number of agents 
-        self.d_t = float(d_t * m.pow(10,-3))
-            # float. Time resolution, i.e. how much time (in ms) 
+        self.d_t = float(d_t)
+            # float. Time resolution, i.e. how much time (in s) 
             # is expressed in 1 simulation time step.
         self.simduration = int(simduration)
             # integer. Total number of time steps to be run in the simulation. 
@@ -50,7 +50,7 @@ class Launcher:
             # returns error if boxsize is not of the right format, i.e. [x,y]
         
     def Identification(self):
-        
+        # function which assigns a unique serial number to each agent in the population        
         for agent in range(self.popsize):
             # for each agent in the bat population:
             self.all_ID[int(agent)] = agent
@@ -85,7 +85,7 @@ class Launcher:
         # Class implementation nested into Launcher class implementation.
         # Sets an agent's movement, calling and hearing rules.
     
-        def __init__(self, ID, movdirection, flightspeed, IPI, max_hear_dist):
+        def __init__(self, ID, movdirection, flightspeed, IPI, max_hear_dist, callduration):
             self.ID = int(ID)
                 # integer. Identification number of the focal agent.
             self.boxsize = env.boxsize
@@ -97,22 +97,23 @@ class Launcher:
                 # Must be between -pi and pi (asserted later).
             self.stepsize = float(flightspeed * self.d_t) 
                 # float. Distance in meters covered by the agent in 1 time step
-            self.IPI = int(float(IPI * m.pow(10,-3)) / env.d_t)
+            self.IPI = int(float(IPI / env.d_t))
                 # int. Agent's inter-pulse interval, converted in time steps.
-            self.speedsound = 340.29 
+            self.speedsound = 340.29
                 # float. Speed of sound at sea level in m/s.
             self.max_timestore = float(max_hear_dist / self.speedsound)
                 # float. Time maximal, in seconds, during which a sound can 
                 # travel, before its intensity passes below the hearing 
                 # threshold of the agent.
-            self.ring_width = float(1) 
-                # float. Spatial difference between start and end of call (m).
+            self.callduration = callduration
+            self.ring_width = float(self.callduration * self.speedsound) 
+                # float. difference in radii of the two concentric circles 
+                # (in 2D) which form the start and the end of the bat call.
             self.hearhistory = []
-                # empty array, dimensions 3*unknown. Will store the 
-                # identification number of the agent who's call has been heard 
-                # by the focal bat; the time at which the call was emitted; &
-                # the time at which it has been heard by the focal agent.
-        
+                # empty array, dimensions 3*Number of sounds heard. Will store: 
+                # - Row 1: ID of the source agent's call
+                # - Row 2: time at which the call was emitted 
+                # - Row 3: time at which it was heard by the focal agent        
             assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
                 # returns an error message if movdirection is not within [-pi;pi].
     
@@ -215,19 +216,23 @@ class Launcher:
             return dict1
     
         def In_ring(self, center_x, center_y, radius, x, y):
-            dist = (x - center_x) ** 2 + (y - center_y) ** 2
+            # function which tests if a bat is within the 'ring of sound' of a call
+            dist = m.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
                 # distance between an agent and a call's source
-            return dist > radius and dist < radius - self.ring_width
+            return dist < radius and dist > radius - self.ring_width
                 # boolean. Is dist within the distance travelled by the call 
                 # between the beginning (radius) and the end of the call 
                 # (radius - width)?
         
         def Hearing_test(self, ag_id, tcall, hear_array):
-            self.ringtest = self.In_ring(env.callsources[int(ag_id)][int(tcall)]['xsource'],
-                                           env.callsources[int(ag_id)][int(tcall)]['ysource'],
-                                           env.callsources[int(ag_id)][int(tcall)]['propdist'],
-                                           all_bats[int(self.ID)].xhistory[int(self.timestep)],
-                                           all_bats[int(self.ID)].yhistory[int(self.timestep)])
+            callcentre_x = env.callsources[int(ag_id)][int(tcall)]['xsource']
+            callcentre_y = env.callsources[int(ag_id)][int(tcall)]['ysource']
+            beam_radius = env.callsources[int(ag_id)][int(tcall)]['propdist']
+            agent_xpos = all_bats[int(self.ID)].xhistory[int(self.timestep)]
+            agent_ypos = all_bats[int(self.ID)].yhistory[int(self.timestep)]
+            
+            
+            self.ringtest = self.In_ring(callcentre_x, callcentre_y, beam_radius, agent_xpos, agent_ypos)
                 # boolean. Is dist within the distance travelled by the call 
                 # between the beginning (radius) and the end of the call 
                 # (radius - width)? 
@@ -275,8 +280,8 @@ POPSIZE = 2
 BOXSIZE = [300,300]
     # spatial boundaries (in meters) within which the agents can move
     # here, the bats can move within an area of 9 ha
-DELTA_T = 2
-    # time resolution, i.e. time (in ms) represented in 1 simulation time step.
+DELTA_T = 0.002
+    # time resolution, i.e. time (in s) represented in 1 simulation time step.
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
@@ -287,11 +292,13 @@ MOVDIRECTION = 0
 FLIGHTSPEED = 5.5   
     # bats' flight speed in m/s. 5.5 m/s corresponds to a slow bat
     # Hayward & Davis (1964), Winter (1999).
-INTER_PULSE_INTERVAL = 50 
+INTER_PULSE_INTERVAL = 0.05 
     # IPI (ms).  
 MAX_HEAR_DIST = 100 
     # maximum distance (in meters) at which a call can be heared
     # ideally, should implement hearing threshold instead e.g. 0 or 20 dB peSPL
+CALL_DURATION = 0.01
+    # duration of the call (in seconds)
 
 # Set the simulation environment with Launcher, according to the parameters given 
 # above, and stores it into an object called env
@@ -307,7 +314,7 @@ all_bats = {}
 #all_y = {key:{0:0} for key in list(env.all_ID)}
 
 for ID in env.all_ID:
-    all_bats[int(ID)] = env.Bat_Jamming_00(ID, MOVDIRECTION,FLIGHTSPEED,INTER_PULSE_INTERVAL, MAX_HEAR_DIST)
+    all_bats[int(ID)] = env.Bat_Jamming_00(ID, MOVDIRECTION,FLIGHTSPEED,INTER_PULSE_INTERVAL, MAX_HEAR_DIST, CALL_DURATION)
         # stores all instances of the class Bat_Jamming_00 within the bat population
     all_bats[int(ID)].x = env.all_initpos[int(ID)][0]
         # initial x coordinate for each instance, taken from env
