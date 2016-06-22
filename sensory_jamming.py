@@ -266,6 +266,8 @@ def Dict_update(dict1, dict2):
             dict1[int(key)] = dict2[int(key)]
             
     return dict1
+
+### SIMULATIONS ###
         
 ### Run a multi-agents simulation and plot agents' movements.
 ###----------PARAMETERS----------###
@@ -339,10 +341,7 @@ for ID in env.all_ID:
         # sets the duration of a bat's calls
         # not necessary for now, but might become useful later
     all_bats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
-        # creates an empty list to store call times records
-    # all_x[int(ID)][0] = all_bats[int(ID)].xhistory[0]
-    # all_y[int(ID)][0] = all_bats[int(ID)].yhistory[0]
-    # all_bats[int(ID)].callshistory[all_bats[int(ID)].firstcall][0] = 1   
+        # creates an empty list to store call times records 
     
 for timestep in range(env.simduration):
     for ID in env.all_ID:
@@ -356,3 +355,32 @@ for timestep in range(env.simduration):
             # makes the instance move
         plt.plot(all_bats[int(ID)].xhistory, all_bats[int(ID)].yhistory, marker = '^')
             # plot all instances movements over time
+
+### EXPORTING DATA ###
+
+filenamesH = []
+filenamesM = []
+
+for ID in env.all_ID:
+    all_bats[ID].hearhistory = {"t": all_bats[ID].hearhistory_t, "c": all_bats[ID].hearhistory_c, "i": all_bats[ID].hearhistory_i}
+    all_bats[ID].movhistory = {"x": all_bats[ID].xhistory, "y": all_bats[ID].yhistory}
+    
+    for data_type in all_bats[ID].hearhistory.keys():
+        filenamesH.append("D:\Bat_Project\Res\Hearing\%s_hearhistory_%s.txt" % (str(ID), data_type))
+        
+        for fname in filenamesH:
+            with open("%s.txt" % fname, "w") as fp:
+                for line, value in np.ndenumerate(all_bats[ID].hearhistory[data_type]):
+                    fp.writelines('%s\t' % value)
+                    
+    for coordinate in all_bats[ID].movhistory.keys():
+        filenamesM.append("D:\Bat_Project\Res\Moving\%s_movhistory_%s.txt" % (str(ID), coordinate))
+        
+        for fname in filenamesM:
+            with open("%s.txt" % fname, "w") as fp:
+                for line, value in np.ndenumerate(all_bats[ID].movhistory[coordinate]):
+                    fp.writelines('%s\t' % value)
+                    
+    with open("D:\Bat_Project\Res\Calling\%s_callshistory.txt" % ID, "w") as fp:
+        for line, value in np.ndenumerate(all_bats[ID].callshistory):
+            fp.writelines('%s\t' % value)
