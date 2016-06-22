@@ -371,7 +371,7 @@ for ID in env.all_ID:
         for fname in filenamesH:
             with open("%s.txt" % fname, "w") as fp:
                 for line, value in np.ndenumerate(all_bats[ID].hearhistory[data_type]):
-                    fp.writelines('%s\t' % value)
+                    fp.writelines('%s\n' % value)
                     
     for coordinate in all_bats[ID].movhistory.keys():
         filenamesM.append("D:\Bat_Project\Res\Moving\%s_movhistory_%s.txt" % (str(ID), coordinate))
@@ -379,8 +379,8 @@ for ID in env.all_ID:
         for fname in filenamesM:
             with open("%s.txt" % fname, "w") as fp:
                 for line, value in np.ndenumerate(all_bats[ID].movhistory[coordinate]):
-                    fp.writelines('%s\t' % value)
+                    fp.writelines('%s\n' % value)
                     
     with open("D:\Bat_Project\Res\Calling\%s_callshistory.txt" % ID, "w") as fp:
         for line, value in np.ndenumerate(all_bats[ID].callshistory):
-            fp.writelines('%s\t' % value)
+            fp.writelines('%s\n' % value)
