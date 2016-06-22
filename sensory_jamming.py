@@ -109,11 +109,13 @@ class Launcher:
             self.ring_width = float(self.callduration * self.speedsound) 
                 # float. difference in radii of the two concentric circles 
                 # (in 2D) which form the start and the end of the bat call.
-            self.hearhistory = []
-                # empty array, dimensions 3*Number of sounds heard. Will store: 
-                # - Row 1: ID of the source agent's call
-                # - Row 2: time at which the call was emitted 
-                # - Row 3: time at which it was heard by the focal agent        
+            self.hearhistory_t = []
+            self.hearhistory_i = []
+            self.hearhistory_c = []
+                # empty arrays, length: Number of sounds heard. Will store: 
+                # - _i: ID of the source agent's call
+                # - _t: time at which the call was emitted 
+                # - _c: time at which it was heard by the focal agent        
             assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
                 # returns an error message if movdirection is not within [-pi;pi].
     
@@ -179,9 +181,12 @@ class Launcher:
                 if identity in env.callsources.keys():
                     # if the agent has ever called before: 
                     
-                    for calltime in env.callsources[int(identity)].keys():
+                    self.all_calltimes = env.callsources[int(identity)].keys()
+                    self.all_calltimes.sort()
+                    
+                    for calltime in self.all_calltimes:
                         # for each time step at which the agent previously called:
-                        self.Hearing_test(identity, calltime, self.hearhistory)
+                        self.Hearing_test(identity, calltime)
                         # identify and record calls that can be heard by focal agent
     
         def Boundaries(self, coord, coordbound):
@@ -217,14 +222,14 @@ class Launcher:
     
         def In_ring(self, callsource_x, callsource_y, dcfs, x, y):
             # function which tests if a bat is within the 'ring of sound' of a call
-            dist = m.sqrt((x - callsource_x) ** 2 + (y - callsource_y) ** 2)
+            dist = float(m.sqrt((x - callsource_x) ** 2 + (y - callsource_y) ** 2))
                 # distance between an agent and a call's source
             return dist <= dcfs and dist >= dcfs - self.ring_width
                 # boolean. Is dist within the distance travelled by the call 
                 # between the beginning (dcfs) and the end of the call 
                 # (dcfs - width)?
         
-        def Hearing_test(self, ag_id, tcall, hear_array):
+        def Hearing_test(self, ag_id, tcall):
             callcentre_x = env.callsources[int(ag_id)][int(tcall)]['xsource']
             callcentre_y = env.callsources[int(ag_id)][int(tcall)]['ysource']
             beam_radius = env.callsources[int(ag_id)][int(tcall)]['propdist']
@@ -241,11 +246,14 @@ class Launcher:
                 # if focal agent 'self.ID' can hear any call from agent 
                 # 'identity' (NB identity = ID is possible, in which case the 
                 # bat hears itself):
-                hear_array = np.append(hear_array,[self.timestep, ag_id, tcall])
-                    # store the ID of the calling bat, the time at which the 
-                    # bat called & the time when the call has been heard.
+                self.hearhistory_t = np.append(self.hearhistory_t, self.timestep)
+                    # store the time when the call has been heard                
+                self.hearhistory_c = np.append(self.hearhistory_c, tcall)
+                    # store the time at which the call has been emitted
+                self.hearhistory_i = np.append(self.hearhistory_i, ag_id)
+                    # store the ID of the calling bat 
         
-            return hear_array
+            return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i
 
 def Dict_update(dict1, dict2):
     # Updates a dictionary without over-writing the keys already stored.
@@ -340,11 +348,11 @@ for timestep in range(env.simduration):
     for ID in env.all_ID:
         all_bats[int(ID)].timestep = int(timestep)
             # indicates the current time step for each instance 
-        all_bats[int(ID)].Movement()
-            # makes the instance move
         all_bats[int(ID)].Calling()
             # makes the instance call  
         all_bats[int(ID)].Hearing()
             # makes the instance hear
+        all_bats[int(ID)].Movement()
+            # makes the instance move
         plt.plot(all_bats[int(ID)].xhistory, all_bats[int(ID)].yhistory, marker = '^')
             # plot all instances movements over time
