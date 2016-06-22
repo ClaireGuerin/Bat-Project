@@ -67,6 +67,25 @@ for (i in id_M){
 ### Sim.Step is the time step, BatX.Who is the identity of the bat heard
 ### by the X-th individual, and BatX.When is the time of call emission.
 
+H.path = "Hearing/"
+H.fileNames = dir(H.path, pattern =".txt") # alphabetical order, i.e.:
+# file names are ordered in IDs ascending order, and then: c, i, t.
+hea = as.data.frame(matrix(NA, ncol = (2/3)*length(H.fileNames)+1, nrow = SIMDUR))
+hea[,1] = 1:dim(hea)[1]
+colnames(hea) = c("Tmstp",paste("Bat",ceiling(1:((2/3)*length(H.fileNames)/2)),c(".Who",".When"), sep = ""))
+
+# WARNING: colnames does not work yet!
+
+for (i in 1:length(H.fileNames)){
+	hea = merge(hea, read.table(paste(C.path,C.fileNames[i], sep=""), header = F, sep = "\t", dec = ".")
+}
 
 
-		
+
+
+
+
+
+
+
+
