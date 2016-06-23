@@ -379,7 +379,7 @@ for ID in env.all_ID:
         
     with open("D:\Bat_Project\Res\Calling\%s_callshistory.txt" % ID, "w") as fp3:
         for value in all_bats[ID].callshistory:
-            fp3.writelines('%s\n' % value)
+            fp3.writelines('%s\n' % value[0])
     fp3.close()
 
 for fname in filenamesH:
