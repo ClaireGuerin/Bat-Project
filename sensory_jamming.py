@@ -362,25 +362,34 @@ filenamesH = []
 filenamesM = []
 
 for ID in env.all_ID:
-    all_bats[ID].hearhistory = {"t": all_bats[ID].hearhistory_t, "c": all_bats[ID].hearhistory_c, "i": all_bats[ID].hearhistory_i}
-    all_bats[ID].movhistory = {"x": all_bats[ID].xhistory, "y": all_bats[ID].yhistory}
+    tmstp = all_bats[ID].hearhistory_t
+    tcall = all_bats[ID].hearhistory_c
+    idbat = all_bats[ID].hearhistory_i
+    all_bats[ID].hearhistory = {"t": tmstp, "c": tcall, "i": idbat}
+    
+    xtrack = all_bats[ID].xhistory
+    ytrack = all_bats[ID].yhistory
+    all_bats[ID].movhistory = {"x": xtrack, "y": ytrack}
     
     for data_type in all_bats[ID].hearhistory.keys():
         filenamesH.append("D:\Bat_Project\Res\Hearing\%s_hearhistory_%s.txt" % (str(ID), data_type))
-        
-        for fname in filenamesH:
-            with open("%s.txt" % fname, "w") as fp:
-                for line, value in np.ndenumerate(all_bats[ID].hearhistory[data_type]):
-                    fp.writelines('%s\n' % value)
+
+    for fname in filenamesH:
+        with open("%s" % fname, "w") as fp1:
+            for value in all_bats[ID].hearhistory[fname[-5]]:
+                fp1.writelines('%s\n' % value)
+        fp1.close()
                     
     for coordinate in all_bats[ID].movhistory.keys():
         filenamesM.append("D:\Bat_Project\Res\Moving\%s_movhistory_%s.txt" % (str(ID), coordinate))
         
-        for fname in filenamesM:
-            with open("%s.txt" % fname, "w") as fp:
-                for line, value in np.ndenumerate(all_bats[ID].movhistory[coordinate]):
-                    fp.writelines('%s\n' % value)
+    for fname in filenamesM:
+        with open("%s" % fname, "w") as fp2:
+            for value in all_bats[ID].movhistory[fname[-5]]:
+                fp2.writelines('%s\n' % value)
+        fp2.close()
                     
-    with open("D:\Bat_Project\Res\Calling\%s_callshistory.txt" % ID, "w") as fp:
-        for line, value in np.ndenumerate(all_bats[ID].callshistory):
-            fp.writelines('%s\n' % value)
+    with open("D:\Bat_Project\Res\Calling\%s_callshistory.txt" % ID, "w") as fp3:
+        for value in all_bats[ID].callshistory:
+            fp3.writelines('%s\n' % value)
+    fp3.close()
