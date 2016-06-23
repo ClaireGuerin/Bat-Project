@@ -71,24 +71,20 @@ H.path = "Hearing/"
 H.fileNames = dir(H.path, pattern =".txt") # alphabetical order, i.e.:
 # file names are ordered in IDs ascending order, and then: c, i, t.
 hea = as.data.frame(matrix(NA, ncol = (2/3)*length(H.fileNames)+1, nrow = SIMDUR))
-hea[,1] = 1:dim(hea)[1]
+hea[,1] = 0:(dim(hea)[1]-1)
 colnames(hea) = c("Tmstp",paste("Bat",ceiling(1:((2/3)*length(H.fileNames))/2),c(".Who",".When"), sep = ""))
 
-for (i in 1:(length(H.fileNames)/3)){
-	for (j in 1:length(H.fileNames)){
-		temp1 = read.table(paste(H.path,H.fileNames[1], sep=""), header = F, sep = "\t", dec = ".")
-		temp1 = read.table(paste(H.path,H.fileNames[1], sep=""), header = F, sep = "\t", dec = ".")
-		temp1 = read.table(paste(H.path,H.fileNames[1], sep=""), header = F, sep = "\t", dec = ".")
-	hea = merge(x = hea, y = temp, by.x =
+for (i in seq(1,length(H.fileNames),3)){ 
+	tcall = read.table(paste(H.path,H.fileNames[i], sep=""), header = F, sep = "\t", dec = ".")
+	idbat = read.table(paste(H.path,H.fileNames[i+1], sep=""), header = F, sep = "\t", dec = ".")
+	tmstp = read.table(paste(H.path,H.fileNames[i+2], sep=""), header = F, sep = "\t", dec = ".")
+
+	for (j in 1:dim(tmstp)[1]){
+		hea[which(hea$Tmstp == tmstp[j,1]),2+2*((i-1)/3)] = idbat[j,1]
+		hea[which(hea$Tmstp == tmstp[j,1]),2+2*((i-1)/3)+1] = tcall[j,1]
+		# hea[,2+2*((i-1)/3)] = as.factor(hea[,2+2*((i-1)/3)])
 	}
 }
-
-
-
-
-
-
-
 
 
 
