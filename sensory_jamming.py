@@ -6,7 +6,7 @@ Created on Mon Apr 04 14:31:31 2016
 """
 
 from __future__ import division
-import random as rd
+# import random as rd
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
@@ -61,11 +61,11 @@ class Launcher:
         
         for ID in self.all_ID:
             # for each agent in the bat population:
-           self.agent_initx = rd.uniform(0, self.boxsize[0])
-               # give each agent a random coordinate on the x-axis, 
+           self.agent_initx = raw_input("Please enter bat #%s x-position in [0-%s]: " % (ID, self.boxsize[0]))
+               # ask user for a each agent's coordinate on the x-axis, 
                # within the environment boundaries
-           self.agent_inity = rd.uniform(0, self.boxsize[1])
-               # give each agent a random coordinate on the y-axis, 
+           self.agent_inity = raw_input("Please enter bat #%s y-position in [0-%s]: " % (ID, self.boxsize[1]))
+               # ask user for a each agent's coordinate on the y-axis, 
                # within the environment boundaries
            self.all_initpos[int(ID),0] = self.agent_initx
                # store the x-coordinate in an array
@@ -118,7 +118,8 @@ class Launcher:
                 # - _c: time at which it was heard by the focal agent        
             assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
                 # returns an error message if movdirection is not within [-pi;pi].
-    
+            assert self.IPI > self.t_res, "Inter-pulse interval has to be larger than the time resolution"            
+            
         def Movement(self):
             self.newx = float(self.x + self.stepsize * m.cos(self.movdirection))
                 # calculate the new x coordinate according to:
@@ -129,8 +130,8 @@ class Launcher:
                 # - the distance travelled over 1 time step.
                 # - the direction of the movement
         
-            self.x = self.Boundaries(self.newx, self.boxsize[0])
-                # verify that the new x coordinate is within boundaries
+            self.x = self.newx
+                # no closed boundaries conditions on x axis.
             self.y = self.Boundaries(self.newy, self.boxsize[1])
                 # verify that the new y coordinate is within boundaries
         
@@ -295,7 +296,7 @@ TIME_RESOLUTION = 0.002
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
-SIMDURATION = 900
+SIMDURATION = 15
 
 MOVDIRECTION = 0
     # flight direction of the agents
@@ -303,7 +304,7 @@ FLIGHTSPEED = 5.5
     # bats' flight speed in m/s. 5.5 m/s corresponds to a slow bat
     # Hayward & Davis (1964), Winter (1999).
 INTER_PULSE_INTERVAL = 0.05 
-    # IPI (ms).  
+    # IPI (s).  
 MAX_HEAR_DIST = 300 
     # maximum distance (in meters) at which a call can be heared
     # ideally, should implement hearing threshold instead e.g. 0 or 20 dB peSPL
@@ -396,4 +397,32 @@ for fname in filenamesM:
         for value in all_bats[int(fname[26:end_id])].movhistory[fname[-5]]:
             fp2.writelines('%s\n' % value)
     fp2.close()
-                    
+
+### TESTS ###
+
+x1=all_bats[0].xhistory[0]
+x2=all_bats[1].xhistory[0]
+
+y1=all_bats[0].yhistory[0]
+y2=all_bats[1].yhistory[0]
+
+b_dist = m.sqrt((x1-x2)**2+(y1-y2)**2)
+
+np.where(all_bats[0].callshistory == 1)
+np.where(all_bats[1].callshistory == 1)
+
+all_bats[0].hearhistory_t
+all_bats[0].hearhistory_i
+all_bats[0].hearhistory_c
+
+all_bats[1].hearhistory_t
+all_bats[1].hearhistory_i
+all_bats[1].hearhistory_c
+
+x11=all_bats[0].xhistory[0:5]
+x21=all_bats[0].xhistory[1:6]
+x21-x11
+
+x12=all_bats[1].xhistory[0:5]
+x22=all_bats[1].xhistory[1:6]
+x22-x12
