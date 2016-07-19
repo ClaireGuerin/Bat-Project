@@ -10,6 +10,7 @@ from __future__ import division
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as pth
 
 # import pylab
 
@@ -97,7 +98,7 @@ class Launcher:
                 # Must be between -pi and pi (asserted later).
             self.stepsize = float(flightspeed * self.t_res) 
                 # float. Distance in meters covered by the agent in 1 time step
-            self.IPI = int(float(IPI / env.t_res))
+            self.IPI = np.around(float(IPI / env.t_res),0)
                 # int. Agent's inter-pulse interval, converted in time steps.
             self.speedsound = 340.29
                 # float. Speed of sound at sea level in m/s.
@@ -213,7 +214,7 @@ class Launcher:
             return dict1
 
         def Propagation(self, dict1, tmstp):
-            self.propdist = float(self.speedsound * self.timestore * env.t_res)
+            self.propdist = float(self.speedsound * (self.timestore + 1) * env.t_res)
                 # propagation distance at timestep according to the time when 
                 # the call was emitted and the speed of sound.
             dict1[int(self.ID)][int(tmstp)]['propdist'] = self.propdist
@@ -291,12 +292,12 @@ POPSIZE = 2
 BOXSIZE = [200,200]
     # spatial boundaries (in meters) within which the agents can move
     # here, the bats can move within an area of 9 ha
-TIME_RESOLUTION = 0.002
+TIME_RESOLUTION = 0.0360
     # time resolution, i.e. time (in s) represented in 1 simulation time step.
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
-SIMDURATION = 15
+SIMDURATION = 20
 
 MOVDIRECTION = 0
     # flight direction of the agents
@@ -345,16 +346,25 @@ for ID in env.all_ID:
         # creates an empty list to store call times records 
     
 for timestep in range(env.simduration):
+    
     for ID in env.all_ID:
         all_bats[int(ID)].timestep = int(timestep)
             # indicates the current time step for each instance 
         all_bats[int(ID)].Calling()
-            # makes the instance call  
+            # makes the instance call
+        
+        for n in env.callsources[int(ID)].keys():
+            callcentre_x = env.callsources[int(ID)][n]['xsource']
+            callcentre_y = env.callsources[int(ID)][n]['ysource']
+            beam_radius = env.callsources[int(ID)][n]['propdist']
+            pth.Circle([callcentre_x,callcentre_y], beam_radius, fill = False)
+    
     for ID in env.all_ID:
         all_bats[int(ID)].timestep = int(timestep)
             # indicates the current time step for each instance
         all_bats[int(ID)].Hearing()
             # makes the instance hear
+    
     for ID in env.all_ID:
         all_bats[int(ID)].timestep = int(timestep)
             # indicates the current time step for each instance
@@ -432,3 +442,11 @@ x21-x11
 x12=all_bats[1].xhistory[0:5]
 x22=all_bats[1].xhistory[1:6]
 x22-x12
+
+
+radius = 1
+center_x = 1
+center_y = 1
+
+pth.Circle([center_x,center_y], radius)
+
