@@ -199,6 +199,7 @@ class Launcher:
             return dict1
 
         def Propagation(self, dict1, tmstp):
+            self.soundpos = dict1[int(self.ID)][int(tmstp)]['propdist'] 
             self.propdist = float(self.speedsound * (self.timestore + 1) * env.t_res)
                 # propagation distance at timestep according to the time when 
                 # the call was emitted and the speed of sound.
@@ -207,11 +208,11 @@ class Launcher:
         
             return dict1
     
-        def In_ring(self, callsource_x, callsource_y, dcfs, x, y):
+        def In_ring(self, callsource_x, callsource_y, spos, dcfs, x, y):
             # function which tests if a bat is within the 'ring of sound' of a call
             dist = float(m.sqrt((x - callsource_x) ** 2 + (y - callsource_y) ** 2))
                 # distance between an agent and a call's source
-            return dist <= dcfs and dist >= dcfs - self.ring_width
+            return dist <= dcfs and dist >= spos - self.ring_width
                 # boolean. Is dist within the distance travelled by the call 
                 # between the beginning (dcfs) and the end of the call 
                 # (dcfs - width)?
@@ -224,7 +225,7 @@ class Launcher:
             agent_ypos = all_bats[int(self.ID)].yhistory[int(self.timestep)]
             
             
-            self.ringtest = self.In_ring(callcentre_x, callcentre_y, beam_radius, agent_xpos, agent_ypos)
+            self.ringtest = self.In_ring(callcentre_x, callcentre_y, self.soundpos, beam_radius, agent_xpos, agent_ypos)
                 # boolean. Is dist within the distance travelled by the call 
                 # between the beginning (radius) and the end of the call 
                 # (radius - width)? 
@@ -295,7 +296,7 @@ INTER_PULSE_INTERVAL = 0.05
 MAX_HEAR_DIST = 300 
     # maximum distance (in meters) at which a call can be heared
     # ideally, should implement hearing threshold instead e.g. 0 or 20 dB peSPL
-CALL_DURATION = 0.008
+CALL_DURATION = 0.007
     # duration of the call (in seconds)
 
 # Set the simulation environment with Launcher, according to the parameters given 
