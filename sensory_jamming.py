@@ -5,21 +5,28 @@ Created on Mon Apr 04 14:31:31 2016
 @author: Claire
 """
 
+# %reset
+# reset the console and clears it from all previous variables that might have been stored
+# need to type "y" to confirm resetting
+
 from __future__ import division
 # import random as rd
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.spatial.dis
+tance as ssd
 
 # import pylab
 
 class Launcher:
     # Class implementation to initiate simulatory environment.
 
-    def __init__(self, popsize, all_initpos, boxsize, t_res, simduration):
+    def __init__(self, popsize, all_pos, boxsize, t_res, simduration):
         self.popsize = int(popsize)
             # integer. Size of the bat population / Number of agents
-        self.all_initpos = all_initpos
+        self.all_pos = all_pos
+        self.all_pos.flags.writeable = True
         self.t_res = float(t_res)
             # float. Time resolution, i.e. how much time (in s) 
             # is expressed in 1 simulation time step.
@@ -37,8 +44,6 @@ class Launcher:
         self.all_ID = np.empty(self.popsize, dtype = int)
             # empty array for integers, dimensions 1*popsize. Will 
             # contain the identification numbers of all the agents to be run.
-        self.all_initpos = np.empty([self.popsize,2], dtype = float)
-            # empty array of intial positions for the whole population.
         self.callsources = {}
             # empty dictionary. Will contain the sources of each calls, 
             # emitted by every agent throughout the simulation.
@@ -66,6 +71,17 @@ class Launcher:
                 # increment timecount with time resolution. 
             self.timeclock[int(iteration)] = self.realtime
                 # store the new, incremented time count in timeclock.
+            
+    def InterDist(self):
+        inter_ind_dist = ssd.pdist(self.all_pos, 'euclidean')
+            # calculates the inter-individual distances of the bats.
+        self.inter_ind_dist = ssd.squareform(inter_ind_dist)
+            # converts the distance vector to a distance matrix.
+    
+    def SoundImpact(self):
+        
+        for beamradius, soundpos in (self.all_beamradius, self.all_soundpos):
+            if #dist indiv from sound source == dist 
 
     class Bat_Jamming_00:
         # Class implementation nested into Launcher class implementation.
@@ -125,7 +141,14 @@ class Launcher:
                 # store the newly calculated x in xhistory
             self.yhistory = np.append(self.yhistory, self.y)
                 # store the newly calculated y in yhistory
-        
+            
+            env.all_pos[int(self.ID)][0] = self.x
+                # update the current position on the x-axis of the individual 
+                # in the whole population's positions matrix.
+            env.all_pos[int(self.ID)][1] = self.y
+                # update the current position on the y-axis of the individual 
+                # in the whole population's positions matrix.
+            
         def Calling(self):
             
             self.calltest = float(self.timestep-self.firstcall)/float(self.IPI)
@@ -175,6 +198,8 @@ class Launcher:
                         # for each time step at which the agent previously called:
                         self.Hearing_test(identity, calltime)
                         # identify and record calls that can be heard by focal agent
+                        
+                    
     
         def Boundaries(self, coord, coordbound):
         
@@ -208,14 +233,14 @@ class Launcher:
         
             return dict1
     
-        def In_ring(self, callsource_x, callsource_y, spos, dcfs, x, y):
+        def In_ring(self, callsource_x, callsource_y, spos, dcfs, x, y, width):
             # function which tests if a bat is within the 'ring of sound' of a call
             dist = float(m.sqrt((x - callsource_x) ** 2 + (y - callsource_y) ** 2))
                 # distance between an agent and a call's source
-            return dist <= dcfs and dist >= spos - self.ring_width
+            return dist <= dcfs and dist >= spos - width
                 # boolean. Is dist within the distance travelled by the call 
                 # between the beginning (dcfs) and the end of the call 
-                # (dcfs - width)?
+                # (dcfs - width)?            
         
         def Hearing_test(self, ag_id, tcall):
             callcentre_x = env.callsources[int(ag_id)][int(tcall)]['xsource']
@@ -224,8 +249,10 @@ class Launcher:
             agent_xpos = all_bats[int(self.ID)].xhistory[int(self.timestep)]
             agent_ypos = all_bats[int(self.ID)].yhistory[int(self.timestep)]
             
+            env.all_beamradius = np.append(env.all_beamradius, beam_radius) 
+            env.all_soundpos = np.append(env.all_soundpos, self.soundpos)
             
-            self.ringtest = self.In_ring(callcentre_x, callcentre_y, self.soundpos, beam_radius, agent_xpos, agent_ypos)
+            self.ringtest = self.In_ring(callcentre_x, callcentre_y, self.soundpos, beam_radius, agent_xpos, agent_ypos, self.ring_width)
                 # boolean. Is dist within the distance travelled by the call 
                 # between the beginning (radius) and the end of the call 
                 # (radius - width)? 
@@ -242,6 +269,12 @@ class Launcher:
                     # store the ID of the calling bat 
         
             return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i
+            
+            self.impacttest = self.In_ring(callcentre_x, callcentre_y, self.soundpos, beam_radius, agent_xpos, agent_ypos, 0)
+            
+            if self.impacttest:
+                # if a sound just impacted the bat
+                self.impacthistory = np.append(self.impacthistory, [self.timestep, self.x, self.y])
 
 def Dict_update(dict1, dict2):
     # Updates a dictionary without over-writing the keys already stored.
@@ -275,13 +308,13 @@ def Dict_update(dict1, dict2):
 
 POPSIZE = 2
     # number of agents to run in one simulation
-INITIAL_POSITIONS = np.array([[0,0], [1,1]])
+INITIAL_POSITIONS = np.array([[0.0,0.0], [1.0,1.0]], dtype = float)
 BOXSIZE = [200,200]
     # spatial boundaries (in meters) within which the agents can move
     # here, the bats can move within an area of 9 ha
 TIME_RESOLUTION = 0.002
     # time resolution, i.e. time (in s) represented in 1 simulation time step.
-    # Real duration = TIMEFACTOR * simulation duration.
+    # Real duration = TIME_RESOLUTION * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
 SIMDURATION = 20
@@ -314,11 +347,11 @@ all_bats = {}
 for ID in env.all_ID:
     all_bats[int(ID)] = env.Bat_Jamming_00(ID, MOVDIRECTION,FLIGHTSPEED,INTER_PULSE_INTERVAL, MAX_HEAR_DIST, CALL_DURATION)
         # stores all instances of the class Bat_Jamming_00 within the bat population
-    all_bats[int(ID)].x = env.all_initpos[int(ID)][0]
+    all_bats[int(ID)].x = env.all_pos[int(ID)][0]
         # initial x coordinate for each instance, taken from env
     all_bats[int(ID)].xhistory = [all_bats[int(ID)].x]
         # stores it in xhistory
-    all_bats[int(ID)].y = env.all_initpos[int(ID)][1]
+    all_bats[int(ID)].y = env.all_pos[int(ID)][1]
         # initial y coordinate for each instance, taken from env
     all_bats[int(ID)].yhistory = [all_bats[int(ID)].x]
         # stores it in yhistory
@@ -336,7 +369,10 @@ fig, ax = plt.subplots()
 colorpanel = plt.get_cmap('nipy_spectral')
 
 for timestep in range(env.simduration):
-    
+
+    env.all_beamradius = []
+    env.all_soundpos = []
+        
     for ID in env.all_ID:
         all_bats[int(ID)].timestep = int(timestep)
             # indicates the current time step for each instance
@@ -347,8 +383,8 @@ for timestep in range(env.simduration):
             callcentre_x = env.callsources[int(ID)][n]['xsource']
             callcentre_y = env.callsources[int(ID)][n]['ysource']
             beam_radius = env.callsources[int(ID)][n]['propdist']
-            ring = plt.Circle([callcentre_x,callcentre_y], beam_radius, color = colorpanel(ID*100), fill = False)
-            ax.add_artist(ring)
+            ring_out = plt.Circle([callcentre_x,callcentre_y], beam_radius, color = colorpanel(ID*100), fill = False)
+            ax.add_artist(ring_out)
             
     for ID in env.all_ID:
         all_bats[int(ID)].timestep = int(timestep)
@@ -364,9 +400,11 @@ for timestep in range(env.simduration):
         positions = plt.plot(all_bats[int(ID)].xhistory, all_bats[int(ID)].yhistory, color = colorpanel(ID*100), marker = '^')
             # plot all instances movements over time
         ax.add_artist(positions[0])
+        
+    env.SoundImpact()
 
-ax.set_xlim(-1,BOXSIZE[0])
-ax.set_ylim(-1,BOXSIZE[1])
+ax.set_xlim(-1,15)
+ax.set_ylim(-1,15)
 fig.savefig("D:\Bat_Project\Res\plot_bats_rings.png")
 plt.close()
 
@@ -462,3 +500,7 @@ x22-x12
 #ax.add_artist(circle3)
 
 #fig.savefig("D:\Bat_Project\Res\plotcircles.png")
+
+# x = np.array([[0,0],[1,1],[2,2]]) 
+# inter_ind_dist = ssd.pdist(x, 'euclidean')
+# ssd.squareform(inter_ind_dist)
