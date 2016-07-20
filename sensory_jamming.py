@@ -10,16 +10,16 @@ from __future__ import division
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 # import pylab
 
 class Launcher:
     # Class implementation to initiate simulatory environment.
 
-    def __init__(self, popsize, boxsize, t_res, simduration):
+    def __init__(self, popsize, all_initpos, boxsize, t_res, simduration):
         self.popsize = int(popsize)
-            # integer. Size of the bat population / Number of agents 
+            # integer. Size of the bat population / Number of agents
+        self.all_initpos = all_initpos
         self.t_res = float(t_res)
             # float. Time resolution, i.e. how much time (in s) 
             # is expressed in 1 simulation time step.
@@ -57,22 +57,7 @@ class Launcher:
             self.all_ID[int(agent)] = agent
                 # fill-in a list of all agents ID 
                 # from 0 to n = (population size - 1)
-            
-    def Positions(self):
-        
-        for ID in self.all_ID:
-            # for each agent in the bat population:
-           self.agent_initx = raw_input("Enter x-position of bat #%s in [0-%s]: " % (ID, self.boxsize[0]))
-               # ask user for a each agent's coordinate on the x-axis, 
-               # within the environment boundaries
-           self.agent_inity = raw_input("Enter y-position of bat #%s in [0-%s]: " % (ID, self.boxsize[1]))
-               # ask user for a each agent's coordinate on the y-axis, 
-               # within the environment boundaries
-           self.all_initpos[int(ID),0] = self.agent_initx
-               # store the x-coordinate in an array
-           self.all_initpos[int(ID),1] = self.agent_inity
-               # store the y-coordinate in an array
-    
+
     def Timeline(self):
             
         for iteration in range(self.simduration):
@@ -289,15 +274,16 @@ def Dict_update(dict1, dict2):
 
 POPSIZE = 2
     # number of agents to run in one simulation
+INITIAL_POSITIONS = np.array([[0,0], [1,1]])
 BOXSIZE = [200,200]
     # spatial boundaries (in meters) within which the agents can move
     # here, the bats can move within an area of 9 ha
-TIME_RESOLUTION = 0.0360
+TIME_RESOLUTION = 0.002
     # time resolution, i.e. time (in s) represented in 1 simulation time step.
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
-SIMDURATION = 30
+SIMDURATION = 20
 
 MOVDIRECTION = 0
     # flight direction of the agents
@@ -309,15 +295,14 @@ INTER_PULSE_INTERVAL = 0.05
 MAX_HEAR_DIST = 300 
     # maximum distance (in meters) at which a call can be heared
     # ideally, should implement hearing threshold instead e.g. 0 or 20 dB peSPL
-CALL_DURATION = 0.01
+CALL_DURATION = 0.008
     # duration of the call (in seconds)
 
 # Set the simulation environment with Launcher, according to the parameters given 
 # above, and stores it into an object called env
 # Run the functions contained in the Launcher class
-env = Launcher(POPSIZE, BOXSIZE, TIME_RESOLUTION, SIMDURATION)
+env = Launcher(POPSIZE, INITIAL_POSITIONS, BOXSIZE, TIME_RESOLUTION, SIMDURATION)
 env.Identification()
-env.Positions()
 env.Timeline()
 
 all_bats = {}
@@ -334,7 +319,7 @@ for ID in env.all_ID:
         # stores it in xhistory
     all_bats[int(ID)].y = env.all_initpos[int(ID)][1]
         # initial y coordinate for each instance, taken from env
-    all_bats[int(ID)].yhistory = [all_bats[int(ID)].y]
+    all_bats[int(ID)].yhistory = [all_bats[int(ID)].x]
         # stores it in yhistory
     all_bats[int(ID)].firstcall = int(0)   
         # time step for initiating the first call 
@@ -385,12 +370,12 @@ fig.savefig("D:\Bat_Project\Res\plot_bats_rings.png")
 plt.close()
 
 for ID in env.all_ID:
-    all_bats[ID].xhistory = all_bats[ID].xhistory[:-1]
-    all_bats[ID].yhistory = all_bats[ID].yhistory[:-1]
-# Need to remove the last coordinate information for every
-# individual, because due to algorithm constraints, the 
-# movement function calculates one more position data once the 
-# simulation has already stopped.
+    all_bats[ID].xhistory = np.delete(all_bats[ID].xhistory, 0)
+        # remove initial x positions, which were use din the algorithm but are 
+        # not integrated into movement
+    all_bats[ID].yhistory = np.delete(all_bats[ID].yhistory, 0)
+        # remove initial y positions, which were use din the algorithm but are 
+        # not integrated into movement
 
 ### EXPORTING DATA ###
 
