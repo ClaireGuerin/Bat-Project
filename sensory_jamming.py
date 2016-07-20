@@ -61,10 +61,10 @@ class Launcher:
         
         for ID in self.all_ID:
             # for each agent in the bat population:
-           self.agent_initx = raw_input("Please enter bat #%s x-position in [0-%s]: " % (ID, self.boxsize[0]))
+           self.agent_initx = raw_input("Enter x-position of bat #%s in [0-%s]: " % (ID, self.boxsize[0]))
                # ask user for a each agent's coordinate on the x-axis, 
                # within the environment boundaries
-           self.agent_inity = raw_input("Please enter bat #%s y-position in [0-%s]: " % (ID, self.boxsize[1]))
+           self.agent_inity = raw_input("Enter y-position of bat #%s in [0-%s]: " % (ID, self.boxsize[1]))
                # ask user for a each agent's coordinate on the y-axis, 
                # within the environment boundaries
            self.all_initpos[int(ID),0] = self.agent_initx
@@ -296,7 +296,7 @@ TIME_RESOLUTION = 0.002
     # Real duration = TIMEFACTOR * simulation duration.
     # allows to keep a sensible ratio & time resolution between pseudo real time and 
     # number of iterations
-SIMDURATION = 15
+SIMDURATION = 30
 
 MOVDIRECTION = 0
     # flight direction of the agents
@@ -347,15 +347,32 @@ for ID in env.all_ID:
 for timestep in range(env.simduration):
     for ID in env.all_ID:
         all_bats[int(ID)].timestep = int(timestep)
-            # indicates the current time step for each instance 
+            # indicates the current time step for each instance
         all_bats[int(ID)].Calling()
-            # makes the instance call  
+            # makes the instance call
+    for ID in env.all_ID:
+        all_bats[int(ID)].timestep = int(timestep)
+            # indicates the current time step for each instance  
         all_bats[int(ID)].Hearing()
             # makes the instance hear
+    for ID in env.all_ID:
+        all_bats[int(ID)].timestep = int(timestep)
+            # indicates the current time step for each instance 
         all_bats[int(ID)].Movement()
             # makes the instance move
+    for ID in env.all_ID:
+        all_bats[int(ID)].timestep = int(timestep)
+            # indicates the current time step for each instance 
         plt.plot(all_bats[int(ID)].xhistory, all_bats[int(ID)].yhistory, marker = '^')
             # plot all instances movements over time
+
+for ID in env.all_ID:
+    all_bats[ID].xhistory = all_bats[ID].xhistory[:-1]
+    all_bats[ID].yhistory = all_bats[ID].yhistory[:-1]
+# Need to remove the last coordinate information for every
+# individual, because due to algorithm constraints, the 
+# movement function calculates one more position data once the 
+# simulation has already stopped.
 
 ### EXPORTING DATA ###
 
