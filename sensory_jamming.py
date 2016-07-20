@@ -10,7 +10,7 @@ from __future__ import division
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as pth
+import matplotlib.patches as mpatches
 
 # import pylab
 
@@ -345,6 +345,10 @@ for ID in env.all_ID:
     all_bats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
         # creates an empty list to store call times records 
     
+fig, ax = plt.subplots()
+    # creates the figure where rings of sound will be drawn & bats positions will be plotted
+colorpanel = plt.get_cmap('nipy_spectral')
+
 for timestep in range(env.simduration):
     
     for ID in env.all_ID:
@@ -357,8 +361,9 @@ for timestep in range(env.simduration):
             callcentre_x = env.callsources[int(ID)][n]['xsource']
             callcentre_y = env.callsources[int(ID)][n]['ysource']
             beam_radius = env.callsources[int(ID)][n]['propdist']
-            pth.Circle([callcentre_x,callcentre_y], beam_radius, fill = False)
-    
+            ring = plt.Circle([callcentre_x,callcentre_y], beam_radius, color = colorpanel(ID*100), fill = False)
+            ax.add_artist(ring)
+            
     for ID in env.all_ID:
         all_bats[int(ID)].timestep = int(timestep)
             # indicates the current time step for each instance
@@ -370,8 +375,14 @@ for timestep in range(env.simduration):
             # indicates the current time step for each instance
         all_bats[int(ID)].Movement()
             # makes the instance move
-        plt.plot(all_bats[int(ID)].xhistory, all_bats[int(ID)].yhistory, marker = '^')
+        positions = plt.plot(all_bats[int(ID)].xhistory, all_bats[int(ID)].yhistory, color = colorpanel(ID*100), marker = '^')
             # plot all instances movements over time
+        ax.add_artist(positions[0])
+
+ax.set_xlim(-1,BOXSIZE[0])
+ax.set_ylim(-1,BOXSIZE[1])
+fig.savefig("D:\Bat_Project\Res\plot_bats_rings.png")
+plt.close()
 
 for ID in env.all_ID:
     all_bats[ID].xhistory = all_bats[ID].xhistory[:-1]
@@ -451,10 +462,17 @@ x12=all_bats[1].xhistory[0:5]
 x22=all_bats[1].xhistory[1:6]
 x22-x12
 
+#circle1 = mpatches.Circle((0, 0), 0.2, color='r')
+#circle2 = plt.Circle((0.5, 0.5), 0.2, color='blue')
+#circle3 = plt.Circle((1, 1), 0.2, color='g', clip_on=False)
 
-radius = 1
-center_x = 1
-center_y = 1
+#fig, ax = plt.subplots()
+# (or if you have an existing figure)
+# fig = plt.gcf()
+# ax = fig.gca()
 
-pth.Circle([center_x,center_y], radius)
+#ax.add_artist(circle1)
+#ax.add_artist(circle2)
+#ax.add_artist(circle3)
 
+#fig.savefig("D:\Bat_Project\Res\plotcircles.png")
