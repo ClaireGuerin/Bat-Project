@@ -168,6 +168,19 @@ class Launcher:
                         
                         for identity in self.all_ident:
                             self.Sound_update(env.callsources[self.ID][int(calltime)]['echo'], identity)
+                            
+            all_emittors = env.callsources.keys()
+            all_emittors.sort()
+            
+            for emittor in all_emittors:
+                
+                if emittor != self.ID:
+                    
+                    all_calltimes = env.callsources[emittor].keys()
+                    all_calltimes.sort()
+                    
+                    for calltime in all_calltimes:
+                        self.Impact_test(emittor, calltime)
                     
                     
         def Hearing(self):
@@ -300,8 +313,7 @@ class Launcher:
             return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i, self.hearhistory_s
                
         def Impact_test(self, ag_id, tcall):
-            
-            if ag_id != self.ID:
+
                 callcentre_x = env.callsources[int(ag_id)][int(tcall)]['xsource']
                 callcentre_y = env.callsources[int(ag_id)][int(tcall)]['ysource']
                 beam_radius = env.callsources[int(ag_id)][int(tcall)]['propdist']
@@ -366,8 +378,10 @@ MOVDIRECTION = 0
 FLIGHTSPEED = 5.5   
     # bats' flight speed in m/s. 5.5 m/s corresponds to a slow bat
     # Hayward & Davis (1964), Winter (1999).
-INTER_PULSE_INTERVAL = 0.05 
+INTER_PULSE_INTERVAL = 0.05
     # IPI (s).  
+DUTY_CALL = 0
+    # duty call (s) 
 MAX_HEAR_DIST = 300 
     # maximum distance (in meters) at which a call can be heared
     # ideally, should implement hearing threshold instead e.g. 0 or 20 dB peSPL
