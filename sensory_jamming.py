@@ -459,7 +459,7 @@ for timestep in range(env.simduration):
 
 ax.set_xlim(-1,15)
 ax.set_ylim(-1,15)
-fig.savefig('D:\Bat_Project\Res\plot_bats_rings.png')
+fig.savefig('D:\Bat_Project\Res\plot_bats_rings.pdf')
 plt.close()
 
 for ID in env.all_ID:
