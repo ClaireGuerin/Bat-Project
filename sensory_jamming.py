@@ -14,8 +14,7 @@ from __future__ import division
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.spatial.dis
-tance as ssd
+import scipy.spatial.distance as ssd
 
 # import pylab
 
@@ -77,11 +76,6 @@ class Launcher:
             # calculates the inter-individual distances of the bats.
         self.inter_ind_dist = ssd.squareform(inter_ind_dist)
             # converts the distance vector to a distance matrix.
-    
-    def SoundImpact(self):
-        
-        for beamradius, soundpos in (self.all_beamradius, self.all_soundpos):
-            if #dist indiv from sound source == dist 
 
     class Bat_Jamming_00:
         # Class implementation nested into Launcher class implementation.
@@ -160,7 +154,7 @@ class Launcher:
                 # natural number:
                 self.callshistory[int(self.timestep)] = 1
                     # add a new call (accounted for with a 1) 
-                Dict_update(env.callsources, {self.ID:{self.timestep:{'xsource': self.xhistory[self.timestep], 'ysource': self.yhistory[self.timestep], 'propdist':0}}})
+                Dict_update(env.callsources, {self.ID:{self.timestep:{'xsource': self.xhistory[self.timestep], 'ysource': self.yhistory[self.timestep], 'propdist':0.0}}})
                     # store the position of the bat at the time of calling into 
                     # a dictionary of the form: 
                     # {bat:{time of calling:[x,y,propdist]}}
@@ -230,6 +224,14 @@ class Launcher:
                 # the call was emitted and the speed of sound.
             dict1[int(self.ID)][int(tmstp)]['propdist'] = self.propdist
                 # update the propagation distance in dict1
+            
+            if 'echo' in dict1[int(self.ID)][int(tmstp)]:
+                
+                for identity in dict1[int(self.ID)][int(tmstp)]['echo'].keys():
+                    for timestep in dict1[int(self.ID)][int(tmstp)]['echo'][identity].keys():
+                        reflection_delay = float(self.timestep - dict1[int(self.ID)][int(tmstp)]['echo'][identity][timestep]) 
+                        self.echoprop = float(self.speedsound * (reflection_delay + 1) * env.t_res)
+                        dict1[int(self.ID)][int(tmstp)]['echo'][identity][timestep] = self.echoprop
         
             return dict1
     
@@ -249,9 +251,6 @@ class Launcher:
             agent_xpos = all_bats[int(self.ID)].xhistory[int(self.timestep)]
             agent_ypos = all_bats[int(self.ID)].yhistory[int(self.timestep)]
             
-            env.all_beamradius = np.append(env.all_beamradius, beam_radius) 
-            env.all_soundpos = np.append(env.all_soundpos, self.soundpos)
-            
             self.ringtest = self.In_ring(callcentre_x, callcentre_y, self.soundpos, beam_radius, agent_xpos, agent_ypos, self.ring_width)
                 # boolean. Is dist within the distance travelled by the call 
                 # between the beginning (radius) and the end of the call 
@@ -269,12 +268,24 @@ class Launcher:
                     # store the ID of the calling bat 
         
             return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i
+                
+        def Echo_test(self, ag_id, tcall):
             
+            callcentre_x = env.callsources[int(ag_id)][int(tcall)]['xsource']
+            callcentre_y = env.callsources[int(ag_id)][int(tcall)]['ysource']
+            beam_radius = env.callsources[int(ag_id)][int(tcall)]['propdist']
+            agent_xpos = all_bats[int(self.ID)].xhistory[int(self.timestep)]
+            agent_ypos = all_bats[int(self.ID)].yhistory[int(self.timestep)]
+            
+            env.all_beamradius = np.append(env.all_beamradius, beam_radius) 
+            env.all_soundpos = np.append(env.all_soundpos, self.soundpos)
+
             self.impacttest = self.In_ring(callcentre_x, callcentre_y, self.soundpos, beam_radius, agent_xpos, agent_ypos, 0)
             
             if self.impacttest:
-                # if a sound just impacted the bat
-                self.impacthistory = np.append(self.impacthistory, [self.timestep, self.x, self.y])
+                # if a sound just impacted the focal bat
+                Dict_update(env.callsources[int(ag_id)][int(tcall)], {'echo':{self.ID:{self.timestep:{'ximpact':self.x, 'yimpact':self.y, 'echoprop':0.0}}}})
+            
 
 def Dict_update(dict1, dict2):
     # Updates a dictionary without over-writing the keys already stored.
@@ -400,8 +411,6 @@ for timestep in range(env.simduration):
         positions = plt.plot(all_bats[int(ID)].xhistory, all_bats[int(ID)].yhistory, color = colorpanel(ID*100), marker = '^')
             # plot all instances movements over time
         ax.add_artist(positions[0])
-        
-    env.SoundImpact()
 
 ax.set_xlim(-1,15)
 ax.set_ylim(-1,15)
