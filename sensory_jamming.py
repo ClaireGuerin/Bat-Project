@@ -15,7 +15,7 @@ import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
 # import scipy.spatial.distance as ssd
-from nested_lookup import nested_lookup
+# from nested_lookup import nested_lookup
 
 # import pylab
 
@@ -301,20 +301,21 @@ class Launcher:
                
         def Impact_test(self, ag_id, tcall):
             
-            callcentre_x = env.callsources[int(ag_id)][int(tcall)]['xsource']
-            callcentre_y = env.callsources[int(ag_id)][int(tcall)]['ysource']
-            beam_radius = env.callsources[int(ag_id)][int(tcall)]['propdist']
-            agent_xpos = all_bats[int(self.ID)].xhistory[int(self.timestep)]
-            agent_ypos = all_bats[int(self.ID)].yhistory[int(self.timestep)]
+            if ag_id != self.ID:
+                callcentre_x = env.callsources[int(ag_id)][int(tcall)]['xsource']
+                callcentre_y = env.callsources[int(ag_id)][int(tcall)]['ysource']
+                beam_radius = env.callsources[int(ag_id)][int(tcall)]['propdist']
+                agent_xpos = all_bats[int(self.ID)].xhistory[int(self.timestep)]
+                agent_ypos = all_bats[int(self.ID)].yhistory[int(self.timestep)]
             
-            env.all_beamradius = np.append(env.all_beamradius, beam_radius) 
-            env.all_soundpos = np.append(env.all_soundpos, self.soundpos)
+                env.all_beamradius = np.append(env.all_beamradius, beam_radius) 
+                env.all_soundpos = np.append(env.all_soundpos, self.soundpos)
 
-            self.impacttest = self.In_ring(callcentre_x, callcentre_y, self.soundpos, beam_radius, agent_xpos, agent_ypos, 0)
+                self.impacttest = self.In_ring(callcentre_x, callcentre_y, self.soundpos, beam_radius, agent_xpos, agent_ypos, 0)
             
-            if self.impacttest:
-                # if a sound just impacted the focal bat
-                Dict_update(env.callsources[int(ag_id)][int(tcall)], {'echo':{self.ID:{self.timestep:{'xsource':agent_xpos, 'ysource':agent_ypos, 'propdist':0.0}}}})
+                if self.impacttest:
+                    # if a sound just impacted the focal bat
+                    Dict_update(env.callsources[int(ag_id)][int(tcall)], {'echo':{self.ID:{self.timestep:{'xsource':agent_xpos, 'ysource':agent_ypos, 'propdist':0.0}}}})
             
 
 def Dict_update(dict1, dict2):
