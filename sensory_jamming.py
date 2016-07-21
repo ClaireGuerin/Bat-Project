@@ -14,7 +14,7 @@ from __future__ import division
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.spatial.distance as ssd
+# import scipy.spatial.distance as ssd
 
 # import pylab
 
@@ -70,12 +70,6 @@ class Launcher:
                 # increment timecount with time resolution. 
             self.timeclock[int(iteration)] = self.realtime
                 # store the new, incremented time count in timeclock.
-            
-    def InterDist(self):
-        inter_ind_dist = ssd.pdist(self.all_pos, 'euclidean')
-            # calculates the inter-individual distances of the bats.
-        self.inter_ind_dist = ssd.squareform(inter_ind_dist)
-            # converts the distance vector to a distance matrix.
 
     class Bat_Jamming_00:
         # Class implementation nested into Launcher class implementation.
@@ -136,13 +130,6 @@ class Launcher:
             self.yhistory = np.append(self.yhistory, self.y)
                 # store the newly calculated y in yhistory
             
-            env.all_pos[int(self.ID)][0] = self.x
-                # update the current position on the x-axis of the individual 
-                # in the whole population's positions matrix.
-            env.all_pos[int(self.ID)][1] = self.y
-                # update the current position on the y-axis of the individual 
-                # in the whole population's positions matrix.
-            
         def Calling(self):
             
             self.calltest = float(self.timestep-self.firstcall)/float(self.IPI)
@@ -192,8 +179,7 @@ class Launcher:
                         # for each time step at which the agent previously called:
                         self.Hearing_test(identity, calltime)
                         # identify and record calls that can be heard by focal agent
-                        
-                    
+                        self.Echo_test(identity, calltime)
     
         def Boundaries(self, coord, coordbound):
         
@@ -229,7 +215,7 @@ class Launcher:
                 
                 for identity in dict1[int(self.ID)][int(tmstp)]['echo'].keys():
                     for timestep in dict1[int(self.ID)][int(tmstp)]['echo'][identity].keys():
-                        reflection_delay = float(self.timestep - dict1[int(self.ID)][int(tmstp)]['echo'][identity][timestep]) 
+                        reflection_delay = float(self.timestep - timestep) 
                         self.echoprop = float(self.speedsound * (reflection_delay + 1) * env.t_res)
                         dict1[int(self.ID)][int(tmstp)]['echo'][identity][timestep] = self.echoprop
         
@@ -293,9 +279,9 @@ def Dict_update(dict1, dict2):
     for key in dict2:
         
         if key in dict1:
-            dict1[int(key)].update(dict2[int(key)])
+            dict1[key].update(dict2[key])
         else:
-            dict1[int(key)] = dict2[int(key)]
+            dict1[key] = dict2[key]
             
     return dict1
 
