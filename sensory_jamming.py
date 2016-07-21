@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 Created on Mon Apr 04 14:31:31 2016
 
 @author: Claire
-"""
+'''
 
 # %reset
 # reset the console and clears it from all previous variables that might have been stored
-# need to type "y" to confirm resetting
+# need to type 'y' to confirm resetting
 
 from __future__ import division
 # import random as rd
@@ -15,6 +15,7 @@ import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
 # import scipy.spatial.distance as ssd
+from nested_lookup import nested_lookup
 
 # import pylab
 
@@ -51,7 +52,7 @@ class Launcher:
             # move, defined by the lengths of edges in meters. 
             # Has to be of the form [x,y], which is asserted below:
         
-        assert isinstance(self.boxsize, list) and len(self.boxsize) == 2, "'boxsize' must be a list of 2 elements." 
+        assert isinstance(self.boxsize, list) and len(self.boxsize) == 2, '"boxsize" must be a list of 2 elements.' 
             # returns error if boxsize is not of the right format, i.e. [x,y]
         
     def Identification(self):
@@ -102,13 +103,15 @@ class Launcher:
             self.hearhistory_t = []
             self.hearhistory_i = []
             self.hearhistory_c = []
+            self.hearhistory_s = []
                 # empty arrays, length: Number of sounds heard. Will store: 
                 # - _i: ID of the source agent's call
                 # - _t: time at which the call was emitted 
-                # - _c: time at which it was heard by the focal agent        
-            assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), "'movdirection' must be in radians & comprised between -pi & pi."
+                # - _c: time at which it was heard by the focal agent
+                # - _s: type of sound that is heard (simple call or echo, i.e. reflection of a call)
+            assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), '"movdirection" must be in radians & comprised between -pi & pi.'
                 # returns an error message if movdirection is not within [-pi;pi].
-            assert self.IPI > self.t_res, "Inter-pulse interval has to be larger than the time resolution"            
+            assert self.IPI > self.t_res, 'Inter-pulse interval must be larger than the time resolution'            
             
         def Movement(self):
             self.newx = float(self.x + self.stepsize * m.cos(self.movdirection))
@@ -148,21 +151,24 @@ class Launcher:
                 
             else:
                 self.callshistory[int(self.timestep)] = 0
-                    # add a "no new call" (accounted for with 0)
-
-
+                    # add a 'no new call' (accounted for with 0)
+            
             if self.ID in env.callsources.keys():
-                # if the agent has ever called before: 
-        
-                for calltime in env.callsources[int(self.ID)].keys():
-                    # for each time step at which a call was emitted:
-                    self.Data_storage(env.callsources, calltime)
-                        # erase calls that are too old to be heared anymore
-                    if calltime in env.callsources[int(self.ID)].keys():
-                        # if the call is still in the dictionary:
-                        self.Propagation(env.callsources, calltime)
-                            # update its propagation distance accordingly
-
+                self.Sound_update(env.callsources, self.ID)
+                
+                self.all_callt = env.callsources[self.ID].keys()
+                self.all_callt.sort()
+                
+                for calltime in self.all_callt:
+                    
+                    if 'echo' in env.callsources[self.ID][int(calltime)]:
+                        
+                        self.all_ident = env.callsources[self.ID][int(calltime)]['echo'].keys()
+                        self.all_ident.sort()
+                        
+                        for identity in self.all_ident:
+                            self.Sound_update(env.callsources[self.ID][int(calltime)]['echo'], identity)
+                    
                     
         def Hearing(self):
             
@@ -177,9 +183,20 @@ class Launcher:
                     
                     for calltime in self.all_calltimes:
                         # for each time step at which the agent previously called:
-                        self.Hearing_test(identity, calltime)
+                        self.Impact_test(identity, calltime)
+                        self.Hearing_test(env.callsources, identity, calltime, 'call')
                         # identify and record calls that can be heard by focal agent
-                        self.Echo_test(identity, calltime)
+                        
+                        if 'echo' in env.callsources[identity][calltime]:
+                            
+                            if identity in env.callsources[identity][calltime]['echo'].keys():
+                                
+                                self.all_timpact = env.callsources[identity][calltime]['echo'][int(identity)].keys()
+                                self.all_timpact.sort()
+                                
+                                for impact_time in self.all_timpact:
+                                    echosources = env.callsources[identity][calltime]['echo']
+                                    self.Hearing_test(echosources, identity, impact_time, 'echo')                                
     
         def Boundaries(self, coord, coordbound):
         
@@ -190,6 +207,21 @@ class Launcher:
             else:
                 return float(0)
                     # reset the coordinate to the beginning of the space frame.
+        
+        def Sound_update(self, dict1, identity):
+            
+            all_soundtimes = dict1[identity].keys()
+            all_soundtimes.sort()
+            
+            for soundtime in all_soundtimes:
+                # for each time step at which a sound was emitted/reflected:
+                self.Data_storage(dict1, int(soundtime))
+                    # erase sounds that are too old to be heared anymore
+                
+                if soundtime in dict1[identity].keys():
+                    # if the sound is still in the dictionary:
+                    self.Propagation(dict1, int(soundtime), identity)
+                        # update its propagation distance accordingly            
         
         def Data_storage(self, dict1, tcall):
             self.timestore = self.timestep - tcall
@@ -203,21 +235,31 @@ class Launcher:
         
             return dict1
 
-        def Propagation(self, dict1, tmstp):
-            self.soundpos = dict1[int(self.ID)][int(tmstp)]['propdist'] 
+        def Propagation(self, dict1, tmstp, identity):
+            
+            dictionary = dict1[identity][int(tmstp)]
+            
+            self.soundpos = dictionary['propdist'] 
             self.propdist = float(self.speedsound * (self.timestore + 1) * env.t_res)
                 # propagation distance at timestep according to the time when 
                 # the call was emitted and the speed of sound.
-            dict1[int(self.ID)][int(tmstp)]['propdist'] = self.propdist
+            dictionary['propdist'] = self.propdist
                 # update the propagation distance in dict1
             
-            if 'echo' in dict1[int(self.ID)][int(tmstp)]:
+            if 'echo' in dictionary:
                 
-                for identity in dict1[int(self.ID)][int(tmstp)]['echo'].keys():
-                    for timestep in dict1[int(self.ID)][int(tmstp)]['echo'][identity].keys():
+                all_echoesid = dictionary['echo'].keys()
+                all_echoesid.sort()
+                
+                for ident in all_echoesid:
+                    
+                    all_echoestimes = dictionary['echo'][int(ident)].keys()
+                    all_echoestimes.sort()
+                    
+                    for timestep in all_echoestimes:
                         reflection_delay = float(self.timestep - timestep) 
                         self.echoprop = float(self.speedsound * (reflection_delay + 1) * env.t_res)
-                        dict1[int(self.ID)][int(tmstp)]['echo'][identity][timestep] = self.echoprop
+                        dictionary['echo'][ident][timestep]['propdist'] = self.echoprop
         
             return dict1
     
@@ -230,10 +272,11 @@ class Launcher:
                 # between the beginning (dcfs) and the end of the call 
                 # (dcfs - width)?            
         
-        def Hearing_test(self, ag_id, tcall):
-            callcentre_x = env.callsources[int(ag_id)][int(tcall)]['xsource']
-            callcentre_y = env.callsources[int(ag_id)][int(tcall)]['ysource']
-            beam_radius = env.callsources[int(ag_id)][int(tcall)]['propdist']
+        def Hearing_test(self, dict1, ag_id, tcall, sound_type):
+            
+            callcentre_x = dict1[int(ag_id)][int(tcall)]['xsource']
+            callcentre_y = dict1[int(ag_id)][int(tcall)]['ysource']
+            beam_radius = dict1[int(ag_id)][int(tcall)]['propdist']
             agent_xpos = all_bats[int(self.ID)].xhistory[int(self.timestep)]
             agent_ypos = all_bats[int(self.ID)].yhistory[int(self.timestep)]
             
@@ -252,10 +295,11 @@ class Launcher:
                     # store the time at which the call has been emitted
                 self.hearhistory_i = np.append(self.hearhistory_i, ag_id)
                     # store the ID of the calling bat 
-        
-            return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i
+                self.hearhistory_s = np.append(self.hearhistory_s, sound_type)
                 
-        def Echo_test(self, ag_id, tcall):
+            return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i, self.hearhistory_s
+               
+        def Impact_test(self, ag_id, tcall):
             
             callcentre_x = env.callsources[int(ag_id)][int(tcall)]['xsource']
             callcentre_y = env.callsources[int(ag_id)][int(tcall)]['ysource']
@@ -270,7 +314,7 @@ class Launcher:
             
             if self.impacttest:
                 # if a sound just impacted the focal bat
-                Dict_update(env.callsources[int(ag_id)][int(tcall)], {'echo':{self.ID:{self.timestep:{'ximpact':self.x, 'yimpact':self.y, 'echoprop':0.0}}}})
+                Dict_update(env.callsources[int(ag_id)][int(tcall)], {'echo':{self.ID:{self.timestep:{'xsource':agent_xpos, 'ysource':agent_ypos, 'propdist':0.0}}}})
             
 
 def Dict_update(dict1, dict2):
@@ -293,7 +337,7 @@ def Dict_update(dict1, dict2):
 ### POPSIZE: size of the population of bats you want to simulate
 ### BOXSIZE: space within which the bats are moving
 ### SIMDURATION: duration of the simulation you want to run
-### REALDURATION: duration of the simulation in "real" time
+### REALDURATION: duration of the simulation in 'real' time
 ###     e.g. you can run the simulation for say,
 ###     100 iterations, corresponding to a total of 1000 milliseconds.
 ### MOVDIRECTION: direction of the movement of the bat.
@@ -400,7 +444,7 @@ for timestep in range(env.simduration):
 
 ax.set_xlim(-1,15)
 ax.set_ylim(-1,15)
-fig.savefig("D:\Bat_Project\Res\plot_bats_rings.png")
+fig.savefig('D:\Bat_Project\Res\plot_bats_rings.png')
 plt.close()
 
 for ID in env.all_ID:
@@ -420,25 +464,26 @@ for ID in env.all_ID:
     tmstp = all_bats[ID].hearhistory_t
     tcall = all_bats[ID].hearhistory_c
     idbat = all_bats[ID].hearhistory_i
-    all_bats[ID].hearhistory = {"t": tmstp, "c": tcall, "i": idbat}
+    sound = all_bats[ID].hearhistory_s
+    all_bats[ID].hearhistory = {'t': tmstp, 'c': tcall, 'i': idbat, 's': sound}
     
     xtrack = all_bats[ID].xhistory
     ytrack = all_bats[ID].yhistory
-    all_bats[ID].movhistory = {"x": xtrack, "y": ytrack}
+    all_bats[ID].movhistory = {'x': xtrack, 'y': ytrack}
     
     for data_type in all_bats[ID].hearhistory.keys():
-        filenamesH.append("D:\Bat_Project\Res\Hearing\%s_hearhistory_%s.txt" % (str(ID), data_type))
+        filenamesH.append('D:\Bat_Project\Res\Hearing\%s_hearhistory_%s.txt' % (str(ID), data_type))
     
     for coordinate in all_bats[ID].movhistory.keys():
-        filenamesM.append("D:\Bat_Project\Res\Moving\%s_movhistory_%s.txt" % (str(ID), coordinate))
+        filenamesM.append('D:\Bat_Project\Res\Moving\%s_movhistory_%s.txt' % (str(ID), coordinate))
         
-    with open("D:\Bat_Project\Res\Calling\%s_callshistory.txt" % ID, "w") as fp3:
+    with open('D:\Bat_Project\Res\Calling\%s_callshistory.txt' % ID, 'w') as fp3:
         for value in all_bats[ID].callshistory:
             fp3.writelines('%s\n' % value[0])
     fp3.close()
 
 for fname in filenamesH:
-    with open("%s" % fname, "w") as fp1:
+    with open('%s' % fname, 'w') as fp1:
         end_id = [n for n in xrange(len(fname)) if fname.find('_', n) == n][1]
         for value in all_bats[int(fname[27:end_id])].hearhistory[fname[-5]]:
             fp1.writelines('%s\n' % value)
@@ -446,7 +491,7 @@ for fname in filenamesH:
 
         
 for fname in filenamesM:
-    with open("%s" % fname, "w") as fp2:
+    with open('%s' % fname, 'w') as fp2:
         end_id = [n for n in xrange(len(fname)) if fname.find('_', n) == n][1]
         for value in all_bats[int(fname[26:end_id])].movhistory[fname[-5]]:
             fp2.writelines('%s\n' % value)
@@ -494,7 +539,7 @@ x22-x12
 #ax.add_artist(circle2)
 #ax.add_artist(circle3)
 
-#fig.savefig("D:\Bat_Project\Res\plotcircles.png")
+#fig.savefig('D:\Bat_Project\Res\plotcircles.png')
 
 # x = np.array([[0,0],[1,1],[2,2]]) 
 # inter_ind_dist = ssd.pdist(x, 'euclidean')
