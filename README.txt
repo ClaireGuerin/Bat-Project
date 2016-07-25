@@ -1,207 +1,200 @@
-#########################################################################################
-### 																				  ###
-### Documentation for bat_class program (need to change the name of the programme btw ###
-###																					  ###
-#########################################################################################
+########################################################
+###													 ###
+### 		Documentation for sensory_jamming		 ###
+###													 ###
+########################################################
 
 ###----------LAUNCHER----------###
-### Class implementation to launch the simulation environment.
-### By convention, an object of class Launcher() is stored under the name env (stands for environment)
-### Initiating inputs: popsize, boxsize, simduration, realduration, all_ID, all_initpos, timecount, timeclock, timeresolution, callsources
-### popsize: positive integer. number of agents to simulate i.e. size of the bat group.
-### boxsize: list of 2 elements. Cartesian space within which the agents can move
-### simduration: positive integer. Duration of simulation 
-### ### sim stands for simulation throughout code
-### realduration: positive integer. "Real" duration the simulation is supposed to reflect. 
-### all_ID: empty list of dimensions 1x(n=popsize elements). 
-### all_initpos: empty array of n=popsize lists of 2 elements each. 
-### ### init & pos respectively stand for initial and position throughout the code
-### timecount: positive integer. Timing of simulation iteration.
-### timeclock: array of dimension 1 x simduration. 
-### timeresolution: positive float. Resolution of the time simulated.
-### callsources: dictionary. Keeps track of the coordinates of all calls emitted by 
-###     every agent, at each timestep, as well as the updated propagation distance from the 
-###     source at the current time
+### Class implementation to initiate simulatory environment.
+### Inputs: popsize, boxsize, d_t, simduration
+### popsize: integer. Size of the bat population / Number of agents to run
+### boxsize: list of 2 integers. Area (rectangle) within which the agents can move, 
+### ### defined by the lengths of edges in meters.
+### d_t: float. Time resolution in milliseconds.
+### simduration: integer. Total number of time steps to be run in the simulation. 
+
+### Once initiated, a Launcher object also contains:
+### d_t: updated d_t so that the unit is in seconds (for homogeneisation in the program)
+### realtime: time of the simulation, in seconds. Initially set at 0.
+### timeclock: empty array for floats, dimensions 1*simduration. Will contain all the
+### ### times in seconds for each time step in the simulation.
+### realduration: duration of the simulation in seconds.
+### all_ID: empty array for integers, dimensions 1*popsize. Will contain the 
+### ### identification numbers of all the agents to be run in the simulation.
+### all_initpos: empty array for floats, dimensions 2*popsize. Will contain the initial 
+### ### positions of all the agents to be run in the simulation. 
+### callsources: empty dictionary. Will contain the sources of every calls, emitted by 
+### ### every agent throughout the simulation.
 
 #----------IDENTIFICATION----------#
-# Function listing the agents by ID, from 0 to popsize-1.
-# Inputs: popsize taken from __init__ method.
+# function that assigns an identification number to every agent/bat to be considered
+# in the simulation, starting from 0.
+# Inputs: popsize & all_ID, taken from the method __init__
 
 #----------OUTPUTS----------#
-# all_ID: array of dimensions 1 x (n=popsize). ID of each agent from 0 to n-1.
-#----------end of documentation for IDENTIFICATION----------#
+# all_ID: updated all_ID list with all the agents' identification numbers.
+#----------End of Documentation for Identification----------#
 
-#----------POSITIONS--------#
-# Function randomly attributing initial positions to each agent
-# Inputs: all_ID taken from Identification method.
-
-#----------OUPTPUTS----------#
-# all_initpos: updated all_initpos. Contains initial position(s) of agent(s)
-#----------end of documentation for POSITIONS----------#
-
-#----------TIMELINE----------#
-# Function drawing the timeline of the simulation
-# Inputs: taken from __init__ method
+#----------POSITIONS----------#
+# Function that randomly assigns an initial position to each agent on the grid.
+# Inputs: all_ID, boxsize & all_initpos taken from the method __init__
 
 #----------OUTPUTS----------#
-# timecount: updated timecount. At the end of the simulation, timecount = simduration / timeresolution
-# timeclock: array of dimensions 1xsimduration. Updated timeclock with "Real times" corresponding to each simulation iteration
-#----------end of documentation for TIMELINE----------#
-###----------end of documentation for LAUNCHER----------#  
+# agent_initx: float. Randomly attributed abscissae of an agent 
+# agent_inity: float. Randomly attributed ordinate of an agent
+# all_initpos: updated all_initpos array with the intial coordinates of every agent.
+#----------End of Documentation for Positions----------#
+
+#----------Timeline----------#
+# Function that creates a time line of the whole simulation in seconds, with the 
+# interval defined by time resolution.
+# Inputs: simduration, realtime & timeclock, taken from the method __init__
+
+#----------OUTPUTS----------#
+# realtime: float. Iterated with the time resolution d_t. /!\ Timeline creates a clock in terms of real time. 
+# 	As 1 simulation iteration is ran, there is simduration/realduration time spent "for real", = time resolution. 
+# 	Timecount corresponds to the "actual" time (in sec), as opposed to simulation time (in time steps).
+# timeclock: updated timeclock list with all the times in seconds corresponding to every
+#   time step in the simulation.
+#----------End of Documentation for Timeline----------#
 
 ###----------BAT_JAMMING_00----------###
-### Class implementation nested into Launcher class for agents jamming:
-### - within defined boundaries;
-### - in a straight direction;
-### - while calling at regular IPI;
-### - only timing of sound taken into account;
-### - without echoes.
-### Initiating Inputs: ID, movdirection, stepsize, IPI, boxsize, simduration, initpos, x, y, callstarttime, xhistory, yhistory, callshistory, hearhistory
-### ID: positive integer. ID of the agent.
-### movdirection: integer within [-pi;pi]. Angle (in RADIANS) of the agent's direction along the plane. 
-### ### mov stands for movement throughout the code.
-### stepsize: positive integer. Distance covered by the agent in a single iteration. 
-### ### iter & dist respectively stand for iteration & distance throughout the code.
-### IPI: inter-pulse interval
-### boxsize: list of 2 elements. Extracted from env.boxsize (env: Launcher-class object).
-### simduration: positive integer. Extracted from env.simduration (env: Launcher-class object).
-### initpos: list of 2 elements. Extracted from env.all_initpos (env: Launcher-class object).
-### ### init & pos respectively stand for initial & position throughout the code.
-### x: positive integer. Initial abscissa of the agent
-### y: positive integer. Initial ordinate of the agent
-### callstarttime: positive integer. Starting time within the simulation for the agent's first call
-### xhistory: list of length 1 x simduration. All abscissae of the agent through time. Initially, xhistory = x
-### yhistory: list of length 1 x simduration. All ordinates of the agent through time. Initially, yhistory = y
-### callshistory: array of dimensions 1 x number of calls. All calls' starting times of the agent through time.
-### hearhistory: numpy array of dimensions n * 4. Reports when an agent heard a sound.
-### ### Data provided is, in order: 
-### ### - ID of the hearing agent
-### ### - time of hearing
-### ### - ID of the calling agent = source identification
-### ### - time at which the source called
+### Class implementation nested into Launcher class implementation.
+### By convention, Launcher class implementations are named env, therefore in
+### order to call parameters stored in the Launcher, Bat_Jamming_00 class objects
+### refer to them as env.[parameter]
+### Makes an agent in a simulation move, call and hear "independently" from the others
+### Inputs: ID, movdirection, flightspeed, IPI, max_hear_dist
+### ID: integer. Identification number of the focal agent
+### movdirection: float. Direction (in radians) towards which the agent is flying
+### ### Must be between -pi and pi. Angle relative to the x-axis
+### flightspeed: float. Speed, in m/s, at which the agent flies
+### IPI: float. Inter-pulse interval, i.e. time interval between each call emitted
+### ### by the agent.
+### max_hear_dist: float. Distance maximal that a sound can travel before its intensity
+### ### passes below the hearing threshold of the agent
+
+### Once initiated, a Bat_Jamming_00 object also contains: 
+### boxsize: list of 2 elements, taken from env
+### d_t: float, taken from env
+### stepsize: float. Distance in meters covered by the agent in 1 timestep
+### speedsound: float. Speed of sound at sea level i.e. 340.29
+### max_timestore: float. Time maximal, in seconds, during which a sound can travel,
+### ### before its intensity passes below the hearing threshold of the agent.
+### ring_width: float. Width in meters of the acoustic ring / "doughnut", i.e. spatial 
+### ### distribution of a propagating call. Set to 1 meters.
+### hearhistory: empty array, dimensions 3*unknown. Will store the identification number 
+### ### of the agent who's call has been heard by the focal bat; the time at which the 
+### call was emitted, and the time at which it has been heard by the focal agent.
 
 #----------MOVEMENT----------#
-# Function changing agent's position over time. Straight line with a direction set by movdirection.
-# Inputs: x, y, stepsize, movdirection taken from __init___ method
+# Function that makes the focal agent move over 1 time step
+# Inputs: stepsize & movdirection taken from the method __init__
 
-#---------OUTPUTS----------#
-# newx: new coordinate of the agent on the x-axis at iteration i+1
-# newy: new coordinate of the agent on the y-axis at iteration i+1
-# xhistory: list. updated record of agent's all past positions on the x-axis
-# yhistory: list. updated record of agent's all past positions on the y-axis
-#----------end of documentation for MOVEMENT----------#
+#----------OUTPUTS----------#
+# newx: float. New abscissa of the focal agent after 1 time step is spent
+# newy: float. New ordinate of the focal agent after 1 time step is spent
+# x: float. Updated current abscissa, checked for being within the spatial boundaries
+# y: float. Updated current ordinate, checked for being within the spatial boundaries
+# xhistory: list of n=simduration floats. Will contain the abscissae of the focal agent
+# 	for every time step in the simulation.
+# yhistory: list of n=simduration floats. Will contain the ordinates of the focal agent
+# 	for every time step in the simulation.
+#----------End of Documentation for Movement----------#
 
 #----------CALLING----------#
-# Inputs: simduration, callstarttime, IPI taken from __init__ method.
+# Function that makes the focal agent call over 1 time step; stores the call and its 
+# sources information (identification number of the agent, position when call is emitted);
+# updates the propagation information of every other call; 
+# and clears the history of too old calls.
+# Inputs: timestep, callstarttime, callshistory. IPI, xhistory & 
+# 	yhistory are taken from the __init__ method;
+# 	callsources is taken from env.
+# timestep: integer. Current time step in the simulation
+# callstarttime: float. Time of first call of the agent
+# callshistory: numpy array of booleans, dimensions 1*simduration. The   
 
 #----------OUTPUTS----------#
-# callshistory: array. Updated records of calls. 
-# For each iteration, the output is 1 if the agent calls, and 0 otherwise.
+# calltest: float. Number of calls emitted by the focal agent since the 
+# beginning, according to the current time and the bat's own IPI
+# callshistory: updated callshistory list with the new call if one has just been emitted.
+# callsources: updated callsources in env, with the new calls emitted by the focal agent
+# 	 and without the outdated / too faint calls.
+#----------End of Documentation for Calling----------#
 
-#----------BOUNDARIES----------#
-# Function keeping agent within defined boundaries; 
-# when agent goes out of the boundaries, it is set back to the beginning.
+#----------Hearing----------#
+# Function that makes the focal agent listen to the soundscape & register the sounds it hears.
+# Inputs: all_ID, callsources taken from env, hearhistory taken from __init__ method
+
+#----------OUTPUTS----------#
+# hearhistory: Updated hearhistory numpy array with information (time, origin) on the new sound heard, if any
+#----------End of documentation for Hearing----------#
+
+#----------Boundaries---------#
+# Function that checks if the coordinates of an individual are within the defined boundaries
 # Inputs: coord, coordbound
-# coord: coordinate (x or y) to be checked for i.e. position of the agent
-# coordbound: boundaries for agent flow
 
 #----------OUTPUTS----------#
-# coord or Repositionned coord of the agent
-#----------end of documentation for BOUNDARIES----------#
-### Class implementation for agents hearing:
-### - calls from the others and themselves;
-### - considering sound propagates in a ring shape, towards all directions
-### Initiating inputs: ID, timestep, max_timestore
-### ID: integer. Focal bat/agent identification number for which sound hearing is recorded
-### timestep: integer. Simulation time step at which the bat is hearing
-### max_timestore: integer. Maximum time for storing the data, in simulation steps.
-###     Corresponds to the time after which the intensity of the call is considered too low to be heard anymore.
-###     Ideally, should implement hearing threshold instead e.g. 20 (pe)SPL
-
-#----------TOA----------#
-# Function recording the calls heard by a specific agent, at a soecific time.
-# Inputs: ID, timestep, max_timestore, callsources, hearhistory taken from __init__ method
-
-#----------OUTPUTS----------#
-# callsources: dictionary. Updated record of all calls sources
-# callshearing: numpy array. Updated record of all heard calls
-#----------End of documentation for TOA----------#
+coord: Updated coordinate or original coordinate, depending whether it was orginally within boundaries
+#----------End of Documentation for Boundaries----------#
 
 #----------DATA_STORAGE----------#
-# Function applying a time limit for storing keys in dictionary 
-# It is meant for callsources in TOA function, each sources must be deleted when the 
-# call is supposedly not likely to be heard anymore for it was emitted too long ago to 
-# show a significant intensity of call
-# Inputs taken from __init__ method: ID, timestep, max_timestore
+# Function that erases call information when the call is too old to be heard anymore
 # Inputs: dict1, tcall
-# dict1: dictionary to be scrutinized for "out-of-date" calls. Here, dict1 will be callsources
-# tcall: integer. Time at which the call was emitted
-
-#----------OUPUTS----------#
-# timestore: integer. Time since when the call information has been stored in the dictionary
-#   (callsources) in timesteps of simulation
-# dict1: dictionary. Updated such as tcalls > maximum time of storage have been deleted
-#----------End of documentation for DATA_STORAGE----------#  
-
-#----------MIN_CIRCLE----------#
-# Function defining the inside concentric circle of the ring of propagation of a call
-# and checking if a specific point is outside the circle. Returns a boolean.
-# NB: x and y have to be int or np.arrays for this function to work
-# Inputs: center_x, center_y, radius, x, y 
-# center_x: integer. Abscissa of the center of the circle (i.e. source)
-# center_y: integer. Ordinate of the center of the circle (i.e. source)
-# radius: integer. radius of the circle
-# x: integer. Abscissa of the point to be checked for
-# y: integer. Ordinate of the point to be checked for
+# dict1: dictionary. Contains the call to be checked for
+# tcall: time at which the call was emitted
 
 #----------OUTPUTS----------#
-# dist: integer. Distance of the specific point to the center of the circle.
-# If dist is more than radius, the function returns TRUE.
-#----------End of documentation for MIN_CIRCLE----------#
+# dict1: Updated dict1 dictionary, where the call has been erased if too old
+#----------End of Documentation for Data_storage----------#
 
-#----------MAX_CIRCLE----------#
-# Function defining the outside concentric circle of the ring of propagation of a call
-# and checking if a specific point is inside the circle. Returns a boolean.
-# NB: x and y have to be int or np.arrays for this function to work
-# Inputs: center_x, center_y, radius, x, y 
-# center_x: integer. Abscissa of the center of the circle (i.e. source)
-# center_y: integer. Ordinate of the center of the circle (i.e. source)
-# radius: integer. radius of the circle
-# x: integer. Abscissa of the point to be checked for
-# y: integer. Ordinate of the point to be checked for
+#----------Propagation----------#
+# Function that increments the distance of propagation of a call with time
+# Inputs:  dict1, tmstp
+# dict1: dictionary. Contains the distance information to be updated
+# tmstp: time at which the call was emitted
 
 #----------OUTPUTS----------#
-# dist: integer. Distance of the specific point to the center of the circle.
-# If dist is less than radius, the function returns TRUE.
-#----------End of documentation for MAX_CIRCLE----------#
+# dict1: Updated dict1 dictionary, with the incremented value of propagation distance
+#----------End of Documentation for Propagation----------#
 
-#----------PROPAGATION----------#
-# Function for calculation of the distance of the sound from its source as it propagates
-# Inputs taken from __init__ method: ID, timestep
-# Inputs: dict1
-# Other inputs: timestore taken from data_storage method
-# dict1: dictionary (here, callsource) from which the propagation distance is extracted
+#----------IN_RING----------#
+# Function that tests whether a certain point (agent) is on the ring of sound.
+# Inputs: center_x, center_y, radius, x, y
+# callsource_x: float. Abscissa of the source of the call
+# callsource_y: float. Ordinate of the source of the call
+# dcfs: float. Stands for Distance of Call from Source. Distance of the propagated call from its source 
+# x: float. Abscissa of the object / point to be checked for
+# y: float. Ordinate of the object / point to be checked for
 
 #----------OUTPUTS----------#
-# propdist: integer. Distance of propagation of the sound from its source
-# dict1: dictionary. callsource dictionary with updated propagation distances
-#----------End of documentation for PROPAGATION----------#
+# dist: distance between an agent and a call source
+# This functions returns a boolean. If TRUE, the agent is on the ring
+#----------End of Documentation for In_ring----------#
 
 #----------HEARING_TEST----------#
-# Function that checks, for a given call, whether the focal bat/agent is able to hear it
-# The agent can hear a call if and only if both conditions Min_circle and Max_circle are
-# met. In other words, if the focal bat is located in between the two circles determining
-# the ring of sound propagated from a call source at a specific time.
-# Inputs taken from __init__ method: callsources, ring_dev, timestep, ID
-# Inputs: ag_id, tcall, nparray
-# ag_id: integer. Identification number of the focal agent
-# tcall: integer. time at which a given call was emitted
-# nparray: numpy array. Meant to be hearhistory
+# Function that stores information (time, origin) of a call if heard by the focal agent
+# Inputs: ag_id, tcall, hear_array
+# ag_id: integer. Identification number of any agent in the simulation7
+# tcall: float. Time at which the agent (referred to as ag_id) called
+# hear_array: numpy array. Contains the call information (time, origin) of calls heard by the focal agent
 
 #----------OUTPUTS----------#
-# mintest: boolean. Is the bat out of the inside circle of the ring of sound?
-# maxtest: boolean. Is the bat in the outside circle of the ring of sound?
-# nparray: numpy array. Updated (hearhistory) with the call and hearing times, if the 
-# call is indeed heard by the focal agent/bat
-#----------End of documentation for HEARING_TEST----------#
-###----------end of documentation for BAT_JAMMING_00----------###
+# ringtest: boolean. TRUE if the focal agent heard the call emitted at tcall by ag_id
+# 	FALSE else.
+# hear_array: Updated hear_array numpy array with the call information (time, origin) if heard.
+#----------End of Documentation for Hearing_test----------#
+###----------End of Documentation for Bat_Jamming_00----------###
+###----------End of Documentation for Launcher----------###
+
+#----------Dict_update----------#
+# Function for updating a dictionary without over-writing the keys already 
+# stored in the dictionary.
+# Inputs: dict1, dict2
+# dict1: original dictionary to be updated.
+# dict2: dictionary to add to dict1. NB: has to be of the same format as dict1.
+
+#----------OUTPUTS----------#
+# dict1: updated dictionary (new key is added to the already existing keys in the 
+#   dictionary, instead of replacing them) 
+#----------End of documentation for DICT_UPDATE----------#
