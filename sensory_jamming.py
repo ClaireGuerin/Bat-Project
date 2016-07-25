@@ -76,16 +76,17 @@ class Launcher:
         # Class implementation nested into Launcher class implementation.
         # Sets an agent's movement, calling and hearing rules.
     
-        def __init__(self, ID, movdirection, flightspeed, IPI, max_hear_dist, callduration):
+        def __init__(self, ID, movangle, flightspeed, IPI, max_hear_dist, callduration):
             self.ID = int(ID)
                 # integer. Identification number of the focal agent.
             self.boxsize = env.boxsize
                 # takes boxsize from env (class Launcher).
             self.t_res = env.t_res
                 # takes t_res from env (class Launcher).
-            self.movdirection = float(movdirection)
+            self.movangle = m.radians(float(movangle))
                 # float. Direction (in radians) towards which the agent flies.
                 # Must be between -pi and pi (asserted later).
+            self.movslope = m.tan(self.movangle)
             self.stepsize = float(flightspeed * self.t_res) 
                 # float. Distance in meters covered by the agent in 1 time step
             self.IPI = np.around(float(IPI / env.t_res),0)
@@ -109,16 +110,15 @@ class Launcher:
                 # - _t: time at which the call was emitted 
                 # - _c: time at which it was heard by the focal agent
                 # - _s: type of sound that is heard (simple call or echo, i.e. reflection of a call)
-            assert self.movdirection <= m.pi and self.movdirection >= -(m.pi), '"movdirection" must be in radians & comprised between -pi & pi.'
-                # returns an error message if movdirection is not within [-pi;pi].
+            assert MOVANGLE >= 0 and MOVANGLE < 360, "Enter movement angle between 0 and 360 degrees"
             assert self.IPI > self.t_res, 'Inter-pulse interval must be larger than the time resolution'            
             
         def Movement(self):
-            self.newx = float(self.x + self.stepsize * m.cos(self.movdirection))
+            self.newx = float(self.x + self.stepsize * m.cos(self.movangle))
                 # calculate the new x coordinate according to:
                 # - the distance travelled over 1 time step.
                 # - the direction of the movement
-            self.newy = float(self.y + self.stepsize * m.sin(self.movdirection))
+            self.newy = float(self.y + self.stepsize * m.sin(self.movangle))
                 # calculate the new y coordinate according to:
                 # - the distance travelled over 1 time step.
                 # - the direction of the movement
@@ -325,7 +325,7 @@ class Launcher:
 
                 self.impacttest = self.In_ring(callcentre_x, callcentre_y, self.soundpos, beam_radius, agent_xpos, agent_ypos, 0)
             
-                if self.impacttest:
+                if self.impacttest and ag_id != self.ID:
                     # if a sound just impacted the focal bat
                     Dict_update(env.callsources[int(ag_id)][int(tcall)], {'echo':{self.ID:{self.timestep:{'xsource':agent_xpos, 'ysource':agent_ypos, 'propdist':0.0}}}})
             
@@ -373,8 +373,9 @@ TIME_RESOLUTION = 0.002
     # number of iterations
 SIMDURATION = 20
 
-MOVDIRECTION = 0
-    # flight direction of the agents
+MOVANGLE = 90
+    # flight direction of the agents (angle in degrees, relative to the x-axis)
+    # PLEASE ENTER ANGLE VALUE BETWEEN 0 & 360 ONLY
 FLIGHTSPEED = 5.5   
     # bats' flight speed in m/s. 5.5 m/s corresponds to a slow bat
     # Hayward & Davis (1964), Winter (1999).
@@ -401,7 +402,7 @@ all_bats = {}
 #all_y = {key:{0:0} for key in list(env.all_ID)}
 
 for ID in env.all_ID:
-    all_bats[int(ID)] = env.Bat_Jamming_00(ID, MOVDIRECTION,FLIGHTSPEED,INTER_PULSE_INTERVAL, MAX_HEAR_DIST, CALL_DURATION)
+    all_bats[int(ID)] = env.Bat_Jamming_00(ID, MOVANGLE,FLIGHTSPEED,INTER_PULSE_INTERVAL, MAX_HEAR_DIST, CALL_DURATION)
         # stores all instances of the class Bat_Jamming_00 within the bat population
     all_bats[int(ID)].x = env.all_pos[int(ID)][0]
         # initial x coordinate for each instance, taken from env
