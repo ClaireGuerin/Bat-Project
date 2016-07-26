@@ -14,16 +14,17 @@ setwd("D:/Bat_Project/Res")
 # to analyse are stored. Should be a directory in Res, and contain 3
 # directories: Calling, Moving, Hearing containing the corresponding data
 
-SIMDUR = 900
-# NB: duration of the simulation must be known beforehand in order 
-# for the script to work
+SIMDURATION <- as.numeric(readline("Duration of simulation: ")) # iterations
+TIMERESOLUTION <- as.numeric(readline("Time resolution of the simulation: ")) # seconds per iteration
+FLIGHTSPEED <- as.numeric(readline("Velocity of flight for all bats: ")) # m/s
+VSOUND <- 340.29 # m/s
 
 ### Calling ###
 
 C.path = "Calling/"
 C.fileNames = dir(C.path, pattern =".txt") # alphabetical order, i.e.:
 # file names are ordered in IDs ascending order
-cal = as.data.frame(matrix(NA, ncol = length(C.fileNames), nrow = SIMDUR))
+cal = as.data.frame(matrix(NA, ncol = length(C.fileNames), nrow = SIMDURATION))
 
 for (i in 1:length(C.fileNames)){
 	cal[,i] = read.table(paste(C.path,C.fileNames[i], sep=""), header = F, sep = "\t", dec = ".")
@@ -35,7 +36,7 @@ for (i in 1:length(C.fileNames)){
 M.path = "Moving/"
 M.fileNames = dir(M.path, pattern =".txt") # alphabetical order, i.e.:
 # file names are ordered in IDs ascending order, x first and y second.
-mov = as.data.frame(matrix(NA, ncol = length(M.fileNames), nrow = SIMDUR+1))
+mov = as.data.frame(matrix(NA, ncol = length(M.fileNames), nrow = SIMDURATION))
 id_M = ceiling(1:length(M.fileNames)/2)
 colnames(mov) = paste("Bat",id_M,c(".X",".Y"), sep = "")
 
@@ -43,6 +44,19 @@ for (i in id_M){
 	mov[,1+2*(i-1)] = read.table(paste(M.path,M.fileNames[1+2*(i-1)], sep=""), header = F, sep = "\t", dec = ".")
 	mov[,2+2*(i-1)] = read.table(paste(M.path,M.fileNames[2+2*(i-1)], sep=""), header = F, sep = "\t", dec = ".")
 }
+
+# From this, we extract the inter-individual distances...
+batPop = (1:(dim(mov)[2]/2))
+Column = seq(1,dim(mov)[2], 2)
+x = as.vector(rep(NA,dim(mov)[2]/2))
+y = as.vector(rep(NA,dim(mov)[2]/2))
+
+for (i in batPop){
+	x[i] = mov[1,Column[i]]
+	y[i] = mov[1,Column[i]+1]
+}
+
+IID = dist(cbind(x,y)) # Matrix of IID
 
 ### Hearing ###
 
@@ -63,31 +77,30 @@ H.path = "Hearing/"
 H.fileNames = dir(H.path, pattern =".txt") # alphabetical order, i.e.:
 # file names are ordered in IDs ascending order, and then: c, i, t.
 
-for (i in seq(1,length(H.fileNames),3)){ 
+for (i in seq(1,length(H.fileNames),3)){
+   	
+	ownID = (ceiling(1:length(H.fileNames)/3)-1)[i]
 	tcall = read.table(paste(H.path,H.fileNames[i], sep=""), header = F, sep = "\t", dec = ".")
 	idbat = read.table(paste(H.path,H.fileNames[i+1], sep=""), header = F, sep = "\t", dec = ".")
 	tmstp = read.table(paste(H.path,H.fileNames[i+2], sep=""), header = F, sep = "\t", dec = ".")
 
-	for (j in 1:dim(tmstp)[1]){
-		hea[which(hea$Tmstp == tmstp[j,1]),2+2*((i-1)/3)] = idbat[j,1]
-		hea[which(hea$Tmstp == tmstp[j,1]),2+2*((i-1)/3)+1] = tcall[j,1]
-		# hea[,2+2*((i-1)/3)] = as.factor(hea[,2+2*((i-1)/3)])	 
+	temp = as.data.frame(matrix(NA, ncol = 3, nrow = dim(tcall)[1]))
+	colnames(temp) = c("Time_R","ID_E","Time_E")
+	temp$Time_R = tmstp[,1]
+	temp$ID_E = idbat[,1]
+	temp$Time_E = tcall[,1]
+	own_temp = temp[which(temp$ID_E == ownID),]
+	other_temp = temp[-which(temp$ID_E == ownID),]
+	D_E_R = (other_temp$Time_R - other_temp$Time_E)*TIMERESOLUTION*VSOUND
+	other_temp_bis = cbind(other_temp, D_E_R)
+	assign(paste("calls_self",ownID,sep=""),own_temp)
+	assign(paste("calls_others",ownID,sep=""),other_temp)
+}
+
+# Echoes from Time_R and Time_E
+# Calculate IID
+# Calculate distance between call source of any other bat and position where focal bat registered the sound
+# Calculate distance travelled by bats in the mean time
 
 
-hea = as.data.frame(matrix(NA, ncol = (2/3)*length(H.fileNames)+1, nrow = SIMDUR))
-hea[,1] = 0:(dim(hea)[1]-1)
-colnames(hea) = c("Tmstp",paste("Bat",ceiling(1:((2/3)*length(H.fileNames))/2),c(".Who",".When"), sep = ""))
 
-for (i in seq(1,length(H.fileNames),3)){ 
-	tcall = read.table(paste(H.path,H.fileNames[i], sep=""), header = F, sep = "\t", dec = ".")
-	idbat = read.table(paste(H.path,H.fileNames[i+1], sep=""), header = F, sep = "\t", dec = ".")
-	tmstp = read.table(paste(H.path,H.fileNames[i+2], sep=""), header = F, sep = "\t", dec = ".")
-
-	for (j in 1:dim(tmstp)[1]){
-		hea[which(hea$Tmstp == tmstp[j,1]),2+2*((i-1)/3)] = idbat[j,1]
-		hea[which(hea$Tmstp == tmstp[j,1]),2+2*((i-1)/3)+1] = tcall[j,1]
-		# hea[,2+2*((i-1)/3)] = as.factor(hea[,2+2*((i-1)/3)])
-	}
-
-# WARNING: Does not do what it's supposed to: some data is being skipped
-# --> see merging
