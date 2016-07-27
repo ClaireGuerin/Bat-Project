@@ -8,117 +8,159 @@
 ### Author: Claire
 
 rm(list = ls())
-# clear workspace
+# clear current workspace
 setwd("D:/Bat_Project/Res")
 # Change this to the directory where the specific results that you want
-# to analyse are stored. Should be a directory in Res, and contain 3
-# directories: Calling, Moving, Hearing containing the corresponding data
+# to analyse are stored. Should be a folder containing 3 sub-folders:
+# Calling, Moving, Hearing, with the corresponding data
 
-SIMDURATION <- 20
-# as.numeric(readline("Duration of simulation: ")) # iterations
-TIMERESOLUTION <- 0.002
-# as.numeric(readline("Time resolution of the simulation: ")) # seconds per iteration
-FLIGHTSPEED <- 5.5 
-# as.numeric(readline("Velocity of flight for all bats: ")) # m/s
+#---------- PARAMETERS OF THE SIMULATION ----------#
+# This section should be modified for each data, extracted from
+# a new simulation, that is to be analysed. If the parameters below 
+# are not entered accordingly to the simulation parameters
+# corresponding to the data, the script will not work.
+
+SIMDURATION <- 20 # duration of the simulation iterations
+TIMERESOLUTION <- 0.002 # time resolution, in seconds per iteration
+FLIGHTSPEED <- 5.5 # speed of flight of the bats, in m/s
 VSOUND <- 340.29 # m/s
-TETA = 0 # bat movement angle, in radians
+TETA <- 0 # bat movement angle, in radians
 
-### Calling ###
+#---------- End of SIMULATION PARAMETERS ----------#
 
-C.path = "Calling/"
-C.fileNames = dir(C.path, pattern =".txt") # alphabetical order, i.e.:
-# file names are ordered in IDs ascending order
+
+#---------- DATA IMPORT & RESHAPE ----------#
+# This section imports the data from the simulation 
+# ran under python with the sensory_jamming.py program.
+# It also reshapes the data into a R-friendly data format.
+
+### CALLING ###
+
+C.path = "Calling/" # set path to the Calling folder.
+C.fileNames = dir(C.path, pattern =".txt") 
+# names of all files in the folder in alphabetical order, 
+# i.e.: file names are ordered in IDs ascending order.
+
 cal = as.data.frame(matrix(NA, ncol = length(C.fileNames), nrow = SIMDURATION))
+# empty data frame of dimensions simulation duration * number of bats.
 
-for (i in 1:length(C.fileNames)){
+for (i in 1:length(C.fileNames)){ 
+# for every file in the Calling folder
 	cal[,i] = read.table(paste(C.path,C.fileNames[i], sep=""), header = F, sep = "\t", dec = ".")
-	colnames(cal)[i] = paste("B_",i, sep="")
+	# import data into the data frame
+	colnames(cal)[i] = paste("Bat",i, sep="")
+	# calling information: 1 column per bat x, named Batx
 }
 
-### Moving ###
+### MOVING ###
 
-M.path = "Moving/"
-M.fileNames = dir(M.path, pattern =".txt") # alphabetical order, i.e.:
-# file names are ordered in IDs ascending order, x first and y second.
+M.path = "Moving/" # set path to the Moving folder.
+M.fileNames = dir(M.path, pattern =".txt") 
+# names of all files in the folder in alphabetical order, 
+# i.e.: file names are ordered in IDs ascending order, with
+# x-coordinates data first and y-coordinates second.
+
 mov = as.data.frame(matrix(NA, ncol = length(M.fileNames), nrow = SIMDURATION))
-id_M = ceiling(1:length(M.fileNames)/2)
+# empty data frame of dimensions simulation duration * (2*number of bats).
+id_M = ceiling(1:length(M.fileNames)/2) # bat identification per column 
 colnames(mov) = paste("Bat",id_M,c(".X",".Y"), sep = "")
+# calling information: 2 column per bat x, named Batx.X, Batx.Y 
 
 for (i in id_M){
+# for every file in the Moving folder
 	mov[,1+2*(i-1)] = read.table(paste(M.path,M.fileNames[1+2*(i-1)], sep=""), header = F, sep = "\t", dec = ".")
+	# import x-coordinate data into the data frame
 	mov[,2+2*(i-1)] = read.table(paste(M.path,M.fileNames[2+2*(i-1)], sep=""), header = F, sep = "\t", dec = ".")
+	# import y-coordinate data into the data frame
 }
 
-# From this, we extract the inter-individual distances...
-batPop = (1:(dim(mov)[2]/2))
-Column = seq(1,dim(mov)[2], 2)
-x = as.vector(rep(NA,dim(mov)[2]/2))
-y = as.vector(rep(NA,dim(mov)[2]/2))
+### HEARING ###
 
-for (i in batPop){
-	x[i] = mov[1,Column[i]]
-	y[i] = mov[1,Column[i]+1]
-}
-
-IID = dist(cbind(x,y)) # Matrix of IID
-
-### Hearing ###
-
-# Data format I'm trying to acheive:
-
-# Sim.Step	Bat.R		Bat.E		t_E
-# 0		0		0		0
-# 0		1		1		0
-# 1		1		0		0
-# 1		1		1		0...
-
-# Sim.Step is the time step,  
-# Bat.R is the ID of the bat who heard a sound (R stands for receptor, 
-# Bat.E is the ID of the bat who produced the sound (E stands for emitter),
-# t_E is the time at which the sound was emitted
-
-H.path = "Hearing/"
-H.fileNames = dir(H.path, pattern =".txt") # alphabetical order, i.e.:
-# file names are ordered in IDs ascending order, and then: c, i, t.
+H.path = "Hearing/" # set path to the Hearing folder.
+H.fileNames = dir(H.path, pattern =".txt")
+# names of all files in the folder in alphabetical order, 
+# i.e.: file names are ordered in IDs ascending order, with
+# c-data first, i-data second and t-data last.
+# See README.txt for information on c, i & t-data.
 
 for (i in seq(1,length(H.fileNames),3)){
+# for every bat in the simulation 
    	
-	ownID = (ceiling(1:length(H.fileNames)/3)-1)[i]
-	tcall = read.table(paste(H.path,H.fileNames[i], sep=""), header = F, sep = "\t", dec = ".")
-	idbat = read.table(paste(H.path,H.fileNames[i+1], sep=""), header = F, sep = "\t", dec = ".")
-	tmstp = read.table(paste(H.path,H.fileNames[i+2], sep=""), header = F, sep = "\t", dec = ".")
+	ownID = (ceiling(1:length(H.fileNames)/3)-1)[i] # ID of the bat
+	tcall = read.table(paste(H.path,H.fileNames[i], sep=""), header = F, sep = "\t", dec = ".") # import c-data
+	idbat = read.table(paste(H.path,H.fileNames[i+1], sep=""), header = F, sep = "\t", dec = ".") # import i-data
+	tmstp = read.table(paste(H.path,H.fileNames[i+2], sep=""), header = F, sep = "\t", dec = ".") # import t-data
 
 	temp = as.data.frame(matrix(NA, ncol = 3, nrow = dim(tcall)[1]))
+	# temporary empty data frame to store data, of dimensions number of heared items * 3
 	colnames(temp) = c("Time_R","ID_E","Time_E")
-	temp$Time_R = tmstp[,1]
-	temp$ID_E = idbat[,1]
-	temp$Time_E = tcall[,1]
-	own_temp = temp[which(temp$ID_E == ownID),]
+	# 3 columns corresponding to the 3 data types c, i and t.
+	temp$Time_R = tmstp[,1] # transfer t-data into temp
+	temp$ID_E = idbat[,1] # transfer i-data into temp
+	temp$Time_E = tcall[,1] # transfer c-data into temp
+	own_temp = temp[which(temp$ID_E == ownID),] 
+	# extract sounds heard, which were originally emitted by the bat itself
 	other_temp = temp[-which(temp$ID_E == ownID),]
-	D_E_R = (other_temp$Time_R - other_temp$Time_E)*TIMERESOLUTION*VSOUND
-	other_temp_bis = cbind(other_temp, D_E_R)
-	assign(paste("calls.self",ownID,sep=""),own_temp)
-	assign(paste("calls.others",ownID,sep=""),other_temp)
+	# extract sounds heard, which were originally emitted by other bats
+	assign(paste("calls.self",ownID,sep=""),own_temp) 
+	# name of object: calls.selfx for bat x
+	assign(paste("calls.others",ownID,sep=""),other_temp) 
+	# name of object: calls.othersx for bat x
 }
 
-# Echoes from Time_R and Time_E
-# Calculate IID
-# Calculate distance between call source of any other bat and position where focal bat registered the sound
-# Calculate distance travelled by bats in the mean time
+#---------- End of DATA IMPORT & RESHAPE ----------#
 
-R.dist = function(expl.t){
+#---------- ECHOES CALCULATION ----------#
+# Calculate the time of arrival of primary echoes.
+# Calculations of time of reception of the echo are only made 
+# for echoes from calls that were produced by the bat itself.
+
+### R.DIST FUN ###
+# Function calculating the time at which the travelling sound,
+# which bounces-off after reaching another individual than the 
+# emittor (i.e. the bat who called in the first place), "collides" with
+# each other of the moving bats.
+
+R.dist = function(expl.t){ 
+# R.dist depends on a unique variable: time.
+# expl.t stands for exploratory time. expl.t is typically a vector of 
+# time delays, for which possible bat-sound "collisions" are tested.
+# expl.t is typically comprised between 0 and the time that was needed
+# for the call to travel from its source to the bat on which
+# it has bounced-off, thus producing an echo.
+
 	new.x = init.x + FLIGHTSPEED * expl.t * cos(TETA)
+	# new position of the moving bat on the x-axis, after delta t = expl.t time
 	new.y = init.y + FLIGHTSPEED * expl.t * sin(TETA)
+	# new position of the moving bat on the y-axis, after delta t = expl.t time
 	R.t.sq = (new.x - X.SOURCE) ** 2 + (new.y - Y.SOURCE) ** 2
+	# R.t.sq stands for R(t)². Distance between the moving bat, which
+	# originally emitted the sound, and the position where the echo 
+	# bounced-off, otherwise called "source" as in source of the echo.
+	# R(t)² slowly decreases, then increases with time.
 	r.t.sq = (VSOUND * expl.t) ** 2
+	# r.t.sq stands for r(t)². Radius of the sound as it propagates,
+	# i.e. distance between the source of the echo and its current
+	# position in space. r(t)² increases with time.
 		
 	collision = which(R.t.sq <= r.t.sq)
-	impact.t = collision[length(collision)]		
+	# WARNING: THIS IS TO BE CHECKED!!!
+	# a bat-sound collision occurs as soon as R(t)² <= r(t)²
+	impact.t = collision[length(collision)]
+	# Exact time of impact
 	return(impact.t)
 }
 
 echo = as.data.frame(matrix(NA, ncol = 5, nrow = dim(call.rec)[1] * dim(cal)[2]))
+# Empty data frame to store Echo data, of dimensions: 
+# number of timesteps at which echoes are heard * 5
 colnames(echo) = c("id.E","time.E","time.C","id.C","time.D")
+# Columns: 
+# - ID of the bat who emitted the call and obtained an echo in return
+# - Time at which the call was emitted
+# - Time at which the call's sound bounced off another bat
+# - ID of the bat on which the sound bounced-off
+# - Time at which the echo reached the call's emitter back.
 meter = 0
 
 for (i in 0:(dim(cal)[2]-1)){
@@ -131,9 +173,9 @@ for (i in 0:(dim(cal)[2]-1)){
 		id.em = call.rec$ID_E[j]
 
 		X.SOURCE = mov[firstcol[i+1],j]
-		Y.SOURCE = mov[firstcol[i+2],j]
-		init.x = mov[firstcol[id.em],j]
-		init.y = mov[firstcol[id.em+1],j]
+		Y.SOURCE = mov[firstcol[i+1]+1,j]
+		init.x = mov[firstcol[id.em+1],j]
+		init.y = mov[firstcol[id.em+1]+1,j]
 		
 		echo$time.D[meter+j] = R.dist(0:(time.R - time.E))
 		echo$id.C[meter+j] = i
