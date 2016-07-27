@@ -45,6 +45,7 @@ class Launcher:
         self.callsources = {}
             # empty dictionary. Will contain the sources of each calls, 
             # emitted by every agent throughout the simulation.
+        self.echosources = {}
         self.boxsize = boxsize 
             # list of 2 integers. Area (rectangle) within which the agents can 
             # move, defined by the lengths of edges in meters. 
@@ -102,6 +103,7 @@ class Launcher:
             self.hearhistory_t = []
             self.hearhistory_i = []
             self.hearhistory_c = []
+            self.hearhistory_s = []
                 # empty arrays, length: Number of sounds heard. Will store: 
                 # - _i: ID of the source agent's call
                 # - _t: time at which the call was emitted 
@@ -152,7 +154,9 @@ class Launcher:
             
             if self.ID in env.callsources.keys():
                 self.Sound_update(env.callsources, self.ID)
-                    
+
+            if self.ID in env.echosources.keys():
+                self.Sound_update(env.echosources, self.ID)                    
                     
         def Hearing(self):
             
@@ -169,6 +173,17 @@ class Launcher:
                         # for each time step at which the agent previously called:
                         self.Hearing_test(env.callsources, identity, calltime)
                         # identify and record calls that can be heard by focal agent
+
+                if identity in env.echosources.keys():
+                    # if the agent has an produced an echo before: 
+                    
+                    self.all_echotimes = env.echosources[int(identity)].keys()
+                    self.all_echotimes.sort()
+                    
+                    for echotime in self.all_echotimes:
+                        # for each time step at which the agent previously called:
+                        self.Hearing_test(env.echosources, identity, calltime, False)
+                        # identify and record calls that can be heard by focal agent            
                         
         def Boundaries(self, coord, coordbound):
         
@@ -229,11 +244,11 @@ class Launcher:
                 # between the beginning (dcfs) and the end of the call 
                 # (dcfs - width)?            
         
-        def Hearing_test(self, dict1, ag_id, tcall):
+        def Hearing_test(self, dict1, ag_id, t_em, call = True):
             
-            callcentre_x = dict1[int(ag_id)][int(tcall)]['xsource']
-            callcentre_y = dict1[int(ag_id)][int(tcall)]['ysource']
-            beam_radius = dict1[int(ag_id)][int(tcall)]['propdist']
+            callcentre_x = dict1[int(ag_id)][int(t_em)]['xsource']
+            callcentre_y = dict1[int(ag_id)][int(t_em)]['ysource']
+            beam_radius = dict1[int(ag_id)][int(t_em)]['propdist']
             agent_xpos = all_bats[int(self.ID)].xhistory[int(self.timestep)]
             agent_ypos = all_bats[int(self.ID)].yhistory[int(self.timestep)]
             
@@ -248,12 +263,21 @@ class Launcher:
                 # bat hears itself):
                 self.hearhistory_t = np.append(self.hearhistory_t, self.timestep)
                     # store the time when the call has been heard                
-                self.hearhistory_c = np.append(self.hearhistory_c, tcall)
+                self.hearhistory_c = np.append(self.hearhistory_c, t_em)
                     # store the time at which the call has been emitted
                 self.hearhistory_i = np.append(self.hearhistory_i, ag_id)
                     # store the ID of the calling bat 
                 
-            return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i
+                if call:
+                    self.hearhistory_s = np.append(self.hearhistory_s, 'call')
+                    
+                    if ag_id != self.ID:
+                        Dict_update(env.echosources, {self.ID: {self.timestep: {'xsource': agent_xpos, 'ysource': agent_ypos, 'propdist': 0.0, 'id_E': ag_id, 't_E': t_em}}})
+                    
+                else:
+                    self.hearhistory_s = np.append(self.hearhistory_s, 'echo')
+                
+            return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i, self.hearhistory_s
                
 
 def Dict_update(dict1, dict2):
