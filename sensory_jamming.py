@@ -182,7 +182,7 @@ class Launcher:
                     
                     for echotime in self.all_echotimes:
                         # for each time step at which the agent previously called:
-                        self.Hearing_test(env.echosources, identity, calltime, False)
+                        self.Hearing_test(env.echosources, identity, echotime, False)
                         # identify and record calls that can be heard by focal agent            
                         
         def Boundaries(self, coord, coordbound):
@@ -430,7 +430,8 @@ for ID in env.all_ID:
     tmstp = all_bats[ID].hearhistory_t
     tcall = all_bats[ID].hearhistory_c
     idbat = all_bats[ID].hearhistory_i
-    all_bats[ID].hearhistory = {'t': tmstp, 'c': tcall, 'i': idbat}
+    stype = all_bats[ID].hearhistory_s
+    all_bats[ID].hearhistory = {'t': tmstp, 'c': tcall, 'i': idbat, 's': stype}
     
     xtrack = all_bats[ID].xhistory
     ytrack = all_bats[ID].yhistory
