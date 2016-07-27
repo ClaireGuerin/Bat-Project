@@ -14,10 +14,14 @@ setwd("D:/Bat_Project/Res")
 # to analyse are stored. Should be a directory in Res, and contain 3
 # directories: Calling, Moving, Hearing containing the corresponding data
 
-SIMDURATION <- as.numeric(readline("Duration of simulation: ")) # iterations
-TIMERESOLUTION <- as.numeric(readline("Time resolution of the simulation: ")) # seconds per iteration
-FLIGHTSPEED <- as.numeric(readline("Velocity of flight for all bats: ")) # m/s
+SIMDURATION <- 20
+# as.numeric(readline("Duration of simulation: ")) # iterations
+TIMERESOLUTION <- 0.002
+# as.numeric(readline("Time resolution of the simulation: ")) # seconds per iteration
+FLIGHTSPEED <- 5.5 
+# as.numeric(readline("Velocity of flight for all bats: ")) # m/s
 VSOUND <- 340.29 # m/s
+TETA = 0 # bat movement angle, in radians
 
 ### Calling ###
 
@@ -93,14 +97,54 @@ for (i in seq(1,length(H.fileNames),3)){
 	other_temp = temp[-which(temp$ID_E == ownID),]
 	D_E_R = (other_temp$Time_R - other_temp$Time_E)*TIMERESOLUTION*VSOUND
 	other_temp_bis = cbind(other_temp, D_E_R)
-	assign(paste("calls_self",ownID,sep=""),own_temp)
-	assign(paste("calls_others",ownID,sep=""),other_temp)
+	assign(paste("calls.self",ownID,sep=""),own_temp)
+	assign(paste("calls.others",ownID,sep=""),other_temp)
 }
 
 # Echoes from Time_R and Time_E
 # Calculate IID
 # Calculate distance between call source of any other bat and position where focal bat registered the sound
 # Calculate distance travelled by bats in the mean time
+
+R.dist = function(expl.t){
+	new.x = init.x + FLIGHTSPEED * expl.t * cos(TETA)
+	new.y = init.y + FLIGHTSPEED * expl.t * sin(TETA)
+	R.t.sq = (new.x - X.SOURCE) ** 2 + (new.y - Y.SOURCE) ** 2
+	r.t.sq = (VSOUND * expl.t) ** 2
+		
+	collision = which(R.t.sq <= r.t.sq)
+	impact.t = collision[length(collision)]		
+	return(impact.t)
+}
+
+echo = as.data.frame(matrix(NA, ncol = 5, nrow = dim(call.rec)[1] * dim(cal)[2]))
+colnames(echo) = c("id.E","time.E","time.C","id.C","time.D")
+meter = 0
+
+for (i in 0:(dim(cal)[2]-1)){
+	call.rec = get(paste("calls.others",i,sep="")) 
+
+	for (j in 1:dim(call.rec)[1]){
+		firstcol = seq(1,dim(cal)[2]*2,2)
+		time.R = call.rec$Time_R[j]
+		time.E = call.rec$Time_E[j]
+		id.em = call.rec$ID_E[j]
+
+		X.SOURCE = mov[firstcol[i+1],j]
+		Y.SOURCE = mov[firstcol[i+2],j]
+		init.x = mov[firstcol[id.em],j]
+		init.y = mov[firstcol[id.em+1],j]
+		
+		echo$time.D[meter+j] = R.dist(0:(time.R - time.E))
+		echo$id.C[meter+j] = i
+		echo$id.E[meter+j] = id.em
+		echo$time.C[meter+j] = time.R
+		echo$time.E[meter+j] = time.E
+
+	}
+	meter = meter + j		
+}		
+
 
 
 
