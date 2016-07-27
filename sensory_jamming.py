@@ -45,7 +45,7 @@ class Launcher:
         self.callsources = {}
             # empty dictionary. Will contain the sources of each calls, 
             # emitted by every agent throughout the simulation.
-        self.echosources = {}
+        #self.echosources = {}
         self.boxsize = boxsize 
             # list of 2 integers. Area (rectangle) within which the agents can 
             # move, defined by the lengths of edges in meters. 
@@ -103,7 +103,7 @@ class Launcher:
             self.hearhistory_t = []
             self.hearhistory_i = []
             self.hearhistory_c = []
-            self.hearhistory_s = []
+            #self.hearhistory_s = []
                 # empty arrays, length: Number of sounds heard. Will store: 
                 # - _i: ID of the source agent's call
                 # - _t: time at which the call was emitted 
@@ -155,8 +155,8 @@ class Launcher:
             if self.ID in env.callsources.keys():
                 self.Sound_update(env.callsources, self.ID)
 
-            if self.ID in env.echosources.keys():
-                self.Sound_update(env.echosources, self.ID)                    
+            #if self.ID in env.echosources.keys():
+            #    self.Sound_update(env.echosources, self.ID)                    
                     
         def Hearing(self):
             
@@ -174,15 +174,15 @@ class Launcher:
                         self.Hearing_test(env.callsources, identity, calltime)
                         # identify and record calls that can be heard by focal agent
 
-                if identity in env.echosources.keys():
+                #if identity in env.echosources.keys():
                     # if the agent has an produced an echo before: 
                     
-                    self.all_echotimes = env.echosources[int(identity)].keys()
-                    self.all_echotimes.sort()
+                #    self.all_echotimes = env.echosources[int(identity)].keys()
+                #    self.all_echotimes.sort()
                     
-                    for echotime in self.all_echotimes:
+                #    for echotime in self.all_echotimes:
                         # for each time step at which the agent previously called:
-                        self.Hearing_test(env.echosources, identity, echotime, False)
+                #        self.Hearing_test(env.echosources, identity, echotime, False)
                         # identify and record calls that can be heard by focal agent            
                         
         def Boundaries(self, coord, coordbound):
@@ -244,7 +244,7 @@ class Launcher:
                 # between the beginning (dcfs) and the end of the call 
                 # (dcfs - width)?            
         
-        def Hearing_test(self, dict1, ag_id, t_em, call = True):
+        def Hearing_test(self, dict1, ag_id, t_em): #, call = True):
             
             callcentre_x = dict1[int(ag_id)][int(t_em)]['xsource']
             callcentre_y = dict1[int(ag_id)][int(t_em)]['ysource']
@@ -268,16 +268,16 @@ class Launcher:
                 self.hearhistory_i = np.append(self.hearhistory_i, ag_id)
                     # store the ID of the calling bat 
                 
-                if call:
-                    self.hearhistory_s = np.append(self.hearhistory_s, 'call')
+                #if call:
+                #    self.hearhistory_s = np.append(self.hearhistory_s, 'call')
                     
-                    if ag_id != self.ID:
-                        Dict_update(env.echosources, {self.ID: {self.timestep: {'xsource': agent_xpos, 'ysource': agent_ypos, 'propdist': 0.0, 'id_E': ag_id, 't_E': t_em}}})
+                #    if ag_id != self.ID:
+                #        Dict_update(env.echosources, {self.ID: {self.timestep: {'xsource': agent_xpos, 'ysource': agent_ypos, 'propdist': 0.0, 'id_E': ag_id, 't_E': t_em}}})
                     
-                else:
-                    self.hearhistory_s = np.append(self.hearhistory_s, 'echo')
+                #else:
+                #    self.hearhistory_s = np.append(self.hearhistory_s, 'echo')
                 
-            return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i, self.hearhistory_s
+            return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i #, self.hearhistory_s
                
 
 def Dict_update(dict1, dict2):
@@ -323,7 +323,7 @@ TIME_RESOLUTION = 0.002
     # number of iterations
 SIMDURATION = 20
 
-MOVANGLE = 90
+MOVANGLE = 0
     # flight direction of the agents (angle in degrees, relative to the x-axis)
     # PLEASE ENTER ANGLE VALUE BETWEEN 0 & 360 ONLY
 FLIGHTSPEED = 5.5   
@@ -430,8 +430,8 @@ for ID in env.all_ID:
     tmstp = all_bats[ID].hearhistory_t
     tcall = all_bats[ID].hearhistory_c
     idbat = all_bats[ID].hearhistory_i
-    stype = all_bats[ID].hearhistory_s
-    all_bats[ID].hearhistory = {'t': tmstp, 'c': tcall, 'i': idbat, 's': stype}
+    #stype = all_bats[ID].hearhistory_s
+    all_bats[ID].hearhistory = {'t': tmstp, 'c': tcall, 'i': idbat} #, 's': stype}
     
     xtrack = all_bats[ID].xhistory
     ytrack = all_bats[ID].yhistory
