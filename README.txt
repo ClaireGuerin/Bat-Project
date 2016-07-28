@@ -1,62 +1,35 @@
-########################################################
-###													 ###
-### 		Documentation for sensory_jamming		 ###
-###													 ###
-########################################################
+###########################################################
+###													 	###
+### 		Documentation for sensory_jamming.py		###
+###													 	###
+###########################################################
 
 ###----------LAUNCHER----------###
-### Class implementation to initiate simulatory environment.
-### Inputs: popsize, boxsize, d_t, simduration
+### Class implementation to initiate a simulatory environment.
+### Inputs: popsize, allpos, boxsize, tres, simduration
 ### popsize: integer. Size of the bat population / Number of agents to run
+### allinitpos: numpy array, dimensions popsize * 2. x & y positions of all bats 
+### 	in the population at time 0.
 ### boxsize: list of 2 integers. Area (rectangle) within which the agents can move, 
-### ### defined by the lengths of edges in meters.
-### d_t: float. Time resolution in milliseconds.
-### simduration: integer. Total number of time steps to be run in the simulation. 
+### 	defined by the lengths of edges in meters.
+### tres: float. Time resolution (s), i.e. amount of time (in s) expressed in
+### 	1 simulation time step.
+### simduration: integer. Total number of iterations over which to run in the simulation. 
 
 ### Once initiated, a Launcher object also contains:
-### d_t: updated d_t so that the unit is in seconds (for homogeneisation in the program)
-### realtime: time of the simulation, in seconds. Initially set at 0.
-### timeclock: empty array for floats, dimensions 1*simduration. Will contain all the
-### ### times in seconds for each time step in the simulation.
 ### realduration: duration of the simulation in seconds.
-### all_ID: empty array for integers, dimensions 1*popsize. Will contain the 
-### ### identification numbers of all the agents to be run in the simulation.
-### all_initpos: empty array for floats, dimensions 2*popsize. Will contain the initial 
-### ### positions of all the agents to be run in the simulation. 
+### allID: empty array for integers, dimensions 1*popsize. Will contain the 
+### 	identification numbers of all the agents to be run in the simulation.
 ### callsources: empty dictionary. Will contain the sources of every calls, emitted by 
-### ### every agent throughout the simulation.
+### 	every agent throughout the simulation.
 
 #----------IDENTIFICATION----------#
-# function that assigns an identification number to every agent/bat to be considered
-# in the simulation, starting from 0.
-# Inputs: popsize & all_ID, taken from the method __init__
+# function which assigns a unique serial number to every agent in the population
+# Inputs: popsize & allID, taken from the method __init__
 
 #----------OUTPUTS----------#
-# all_ID: updated all_ID list with all the agents' identification numbers.
+# allID: updated allID list with all the agents' identification numbers.
 #----------End of Documentation for Identification----------#
-
-#----------POSITIONS----------#
-# Function that randomly assigns an initial position to each agent on the grid.
-# Inputs: all_ID, boxsize & all_initpos taken from the method __init__
-
-#----------OUTPUTS----------#
-# agent_initx: float. Randomly attributed abscissae of an agent 
-# agent_inity: float. Randomly attributed ordinate of an agent
-# all_initpos: updated all_initpos array with the intial coordinates of every agent.
-#----------End of Documentation for Positions----------#
-
-#----------Timeline----------#
-# Function that creates a time line of the whole simulation in seconds, with the 
-# interval defined by time resolution.
-# Inputs: simduration, realtime & timeclock, taken from the method __init__
-
-#----------OUTPUTS----------#
-# realtime: float. Iterated with the time resolution d_t. /!\ Timeline creates a clock in terms of real time. 
-# 	As 1 simulation iteration is ran, there is simduration/realduration time spent "for real", = time resolution. 
-# 	Timecount corresponds to the "actual" time (in sec), as opposed to simulation time (in time steps).
-# timeclock: updated timeclock list with all the times in seconds corresponding to every
-#   time step in the simulation.
-#----------End of Documentation for Timeline----------#
 
 ###----------BAT_JAMMING_00----------###
 ### Class implementation nested into Launcher class implementation.
