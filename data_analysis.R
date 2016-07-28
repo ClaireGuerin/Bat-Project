@@ -133,7 +133,7 @@ R.dist = function(expl.t){
 	# new position of the moving bat on the x-axis, after delta t = expl.t time
 	new.y = init.y + FLIGHTSPEED * expl.t * sin(TETA)
 	# new position of the moving bat on the y-axis, after delta t = expl.t time
-	R.t.sq = (new.x - X.SOURCE) ** 2 + (new.y - Y.SOURCE) ** 2
+	R.t.sq = (new.x - x.source) ** 2 + (new.y - y.source) ** 2
 	# R.t.sq stands for R(t)². Distance between the moving bat, which
 	# originally emitted the sound, and the position where the echo 
 	# bounced-off, otherwise called "source" as in source of the echo.
@@ -144,7 +144,6 @@ R.dist = function(expl.t){
 	# position in space. r(t)² increases with time.
 		
 	collision = which(R.t.sq <= r.t.sq)
-	# WARNING: THIS IS TO BE CHECKED!!!
 	# a bat-sound collision occurs as soon as R(t)² <= r(t)²
 	impact.t = collision[length(collision)]
 	# Exact time of impact
@@ -154,7 +153,7 @@ R.dist = function(expl.t){
 echo = as.data.frame(matrix(NA, ncol = 5, nrow = dim(call.rec)[1] * dim(cal)[2]))
 # Empty data frame to store Echo data, of dimensions: 
 # number of timesteps at which echoes are heard * 5
-colnames(echo) = c("id.E","time.E","time.C","id.C","time.D")
+colnames(echo) = c("id.E","time.E","time.B","id.B","time.C")
 # Columns: 
 # - ID of the bat who emitted the call and obtained an echo in return
 # - Time at which the call was emitted
@@ -164,24 +163,49 @@ colnames(echo) = c("id.E","time.E","time.C","id.C","time.D")
 meter = 0
 
 for (i in 0:(dim(cal)[2]-1)){
-	call.rec = get(paste("calls.others",i,sep="")) 
-
+# for each bat i in the simulation
+	call.rec = get(paste("calls.others",i,sep=""))
+	# get the corresponding data frame with heard calls from others
+	firstcol = seq(1,dim(mov)[2],2)
+	# store the index of the first column in mov data frame
+	# with attributes of bat i
+	
 	for (j in 1:dim(call.rec)[1]){
-		firstcol = seq(1,dim(cal)[2]*2,2)
+	# for each call j heard by the bat i
 		time.R = call.rec$Time_R[j]
+		# time at which the call was heard
+		# R stands for reception
 		time.E = call.rec$Time_E[j]
-		id.em = call.rec$ID_E[j]
+		# time at which the call was emitted
+		# E stands for emission
+		id.E = call.rec$ID_E[j]
+		# ID of the bat who emitted the call
 
-		X.SOURCE = mov[firstcol[i+1],j]
-		Y.SOURCE = mov[firstcol[i+1]+1,j]
-		init.x = mov[firstcol[id.em+1],j]
-		init.y = mov[firstcol[id.em+1]+1,j]
+		x.source = mov[time.R+1,firstcol[i+1]]
+		# position of bat i on x-axis at the time it heard sound j
+		y.source = mov[time.R+1,firstcol[i+1]+1]
+		# position of bat i on y-axis at the time it heard sound j
+		init.x = mov[time.R+1,firstcol[id.E+1]]
+		# position of bat E on x-axis at the time call j
+		# was heard by bat i.
+		init.y = mov[time.R+1,firstcol[id.E+1]+1]
+		# position of bat E on y-axis at the time call j
+		# was heard by bat i.
 		
-		echo$time.D[meter+j] = R.dist(0:(time.R - time.E))
-		echo$id.C[meter+j] = i
-		echo$id.E[meter+j] = id.em
-		echo$time.C[meter+j] = time.R
+		echo$time.C[meter+j] = R.dist(0:(time.R - time.E))
+		# time at which the collision C occurs, i.e. 
+		# bat E hears back the echo bouncing-off from bat i
+		
+		echo$id.B[meter+j] = i
+		# ID of bat i, on which the call bounced-off 
+		# & produced an echo
+		echo$id.E[meter+j] = id.E
+		# ID of bat E, who emitted the call 
+		# & hears its echo back
+		echo$time.B[meter+j] = time.R
+		# time at which the call j bounced-off bat i
 		echo$time.E[meter+j] = time.E
+		# time at which the call was emitted
 
 	}
 	meter = meter + j		
