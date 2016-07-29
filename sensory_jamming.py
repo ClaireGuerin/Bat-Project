@@ -9,6 +9,7 @@ Created on Mon Apr 04 14:31:31 2016
 # been stored. Type 'y' to confirm resetting.
 
 from __future__ import division
+import random as rd
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,6 +21,8 @@ class Launcher:
         
         self.popsize = int(popsize)
         # integer. Size of the bat population / Number of agents.
+        self.allID = range(self.popsize)
+        # list of integers, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
         self.allinitpos = allinitpos
         # numpy array, dimensions popsize * 2. 
         # x & y positions of all bats in the population at time 0.  
@@ -31,12 +34,11 @@ class Launcher:
         # run in the simulation. 
         self.realduration = float(self.simduration * self.tres)
         # float. Duration of the simulation (in s).
-        self.allID = np.empty(self.popsize, dtype = int)
-        # empty array for integers, dimensions 1*popsize. Will 
-        # contain the identification numbers of all the agents to be run.
         self.callsources = {}
         # empty dictionary. Will contain the sources of each calls, 
         # emitted by every agent throughout the simulation.
+        self.speedsound = 340.29
+        # float. Speed of sound at sea level in m/s.
         self.boxsize = boxsize 
         # list of 2 integers. Area (rectangle) within which the agents can 
         # move, defined by the lengths of edges (in m). 
@@ -44,13 +46,6 @@ class Launcher:
         
         assert isinstance(self.boxsize, list) and len(self.boxsize) == 2, '"boxsize" must be a list of 2 elements.' 
         # return error if boxsize is not of the right format, i.e. [x,y]
-        
-    def Identification(self):
-        
-        for agent in range(self.popsize):
-        # for each agent in the bat population:
-            self.allID[int(agent)] = agent
-            # add in the IDs list a unique ID corresponding to the agent.
 
     class Bat_Jamming_00:
     # Class implementation nested into Launcher class implementation.
@@ -72,17 +67,17 @@ class Launcher:
             # float. Distance in meters covered by the agent in 1 time step
             self.IPI = np.around(float(IPI / env.tres),0)
             # integer. Inter-pulse interval of the agent, converted in time steps.
-            self.speedsound = 340.29
-            # float. Speed of sound at sea level in m/s.
-            self.maxtimestore = float(maxheardist / self.speedsound)
+            self.maxtimestore = float(maxheardist / env.speedsound)
             # float. Maximum time for storing a sound, deduced from the time 
             # maximal, in seconds, during which a sound can travel, before its 
             # intensity passes below the hearing threshold of the agent.
             self.callduration = callduration
             # float. Duration (in s) of each call. 
-            self.ringwidth = float(self.callduration * self.speedsound) 
+            self.ringwidth = float(self.callduration * env.speedsound) 
             # float. Difference in radii of the two concentric circles 
             # (in 2D) which form the start and the end of the bat call.
+            self.firstcall = np.around(rd.uniform(0, (IPI + callduration))/self.tres, 0)
+            # time step for initiating the first call
             self.hearhistory_t = []
             self.hearhistory_i = []
             self.hearhistory_c = []
@@ -117,7 +112,7 @@ class Launcher:
             
         def Calling(self):
             
-            self.calltest = float(self.timestep-self.firstcall)/float(self.IPI)
+            self.calltest = float(self.timestep-self.firstcall)/float(self.IPI + self.callduration)
             # theoretical number of calls since the 1st call:
             # time since 1st call = current time - time of 1st call/IPI
             
@@ -206,7 +201,7 @@ class Launcher:
             self.backradius = dictionary['propdist']
             # float. Current value for the radius of the sound from its source,
             # that was calculated at the previous timestep.
-            self.propdist = float(self.speedsound * (self.timestore + 1) * env.tres)
+            self.propdist = float(env.speedsound * (self.timestore + 1) * env.tres)
             # Current propagation distance at timestep according to the time when 
             # the call was emitted, and the speed of sound.
             dictionary['propdist'] = self.propdist
@@ -235,12 +230,15 @@ class Launcher:
             beamradius = dict1[int(agID)][int(temission)]['propdist']
             # float. Current propagation distance of the source of the call 
             # emitted by agID at timestep = temission.
+            backradius = beamradius - env.speedsound * env.tres
+            # float. Current value for the radius of the sound from its source,
+            # that was calculated at the previous timestep.            
             xposagent = allbats[int(self.ID)].xhistory[int(self.timestep)]
             # float. Current x-coordinate of the focal agent. 
             yposagent = allbats[int(self.ID)].yhistory[int(self.timestep)]
             # float. Current x-coordinate of the focal agent.
             
-            self.ringtest = self.In_ring(xcallcentre, ycallcentre, self.backradius, beamradius, xposagent, yposagent)
+            self.ringtest = self.In_ring(xcallcentre, ycallcentre, backradius, beamradius, xposagent, yposagent)
             # boolean. Does the focal agent hear the call emitted by agID
             # at timestep = temission, knowing its current position?
                                            
@@ -308,7 +306,7 @@ POPULATION_SIZE = 2
 INITIAL_POSITIONS = np.array([[0.0,0.0], [1.0,1.0]], dtype = float)
 BOX_SIZE = [200.0,200.0]
 TIME_RESOLUTION = 0.002 
-SIMULATION_DURATION = 20
+SIMULATION_DURATION = 30
 
 MOVEMENT_ANGLE = 0
 FLIGHT_SPEED = 5.5   
@@ -317,11 +315,12 @@ CALL_DURATION = 0.007
 INTER_PULSE_INTERVAL = 0.05
 MAXIMUM_HEARING_DISTANCE = 300
 
+rd.seed(96) # initialize the basic random number generator.
+
 # Set the simulation environment with Launcher, according to the given parameters 
 # and store it into an object called env.
 
 env = Launcher(POPULATION_SIZE, INITIAL_POSITIONS, BOX_SIZE, TIME_RESOLUTION, SIMULATION_DURATION)
-env.Identification()
 
 allbats = {}
 # Create an empty dictionary for every bat instance to be stored
@@ -340,8 +339,6 @@ for ID in env.allID:
     # initial y coordinate for each instance, taken from env
     allbats[int(ID)].yhistory = [allbats[int(ID)].x]
     # store it in yhistory
-    allbats[int(ID)].firstcall = int(0)   
-    # time step for initiating the first call
     allbats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
     # create an empty list to store records of call times
     
@@ -361,14 +358,16 @@ for timestep in range(env.simduration):
         allbats[int(ID)].Calling()
         # make the instance call
         
-        for n in env.callsources[int(ID)].keys():
+        if ID in env.callsources.keys():
+        
+            for n in env.callsources[int(ID)].keys():
             
-            xcallcentre = env.callsources[int(ID)][n]['xsource']
-            ycallcentre = env.callsources[int(ID)][n]['ysource']
-            beamradius = env.callsources[int(ID)][n]['propdist']
-            ringout = plt.Circle([xcallcentre,ycallcentre], beamradius, color = colorpanel(ID*100), fill = False)
-            ax.add_artist(ringout)
-            # plot the corresponding ring of sound
+                xcallcentre = env.callsources[int(ID)][n]['xsource']
+                ycallcentre = env.callsources[int(ID)][n]['ysource']
+                beamradius = env.callsources[int(ID)][n]['propdist']
+                ringout = plt.Circle([xcallcentre,ycallcentre], beamradius, color = colorpanel(ID*100), fill = False)
+                ax.add_artist(ringout)
+                # plot the corresponding ring of sound
             
     for ID in env.allID:
         
