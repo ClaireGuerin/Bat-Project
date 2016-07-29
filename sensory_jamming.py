@@ -13,19 +13,13 @@ import random as rd
 import math  as m
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools as it
 
 class Launcher:
 # Class implementation to initiate simulatory environment.
 
-    def __init__(self, popsize, allinitpos, boxsize, tres, simduration):
-        
-        self.popsize = int(popsize)
-        # integer. Size of the bat population / Number of agents.
-        self.allID = range(self.popsize)
-        # list of integers, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
-        self.allinitpos = allinitpos
-        # numpy array, dimensions popsize * 2. 
-        # x & y positions of all bats in the population at time 0.  
+    def __init__(self, tres, simduration):
+         
         self.tres = float(tres)
         # float. Time resolution, i.e. how much time (in s) is expressed in
         #  1 simulation time step.
@@ -39,13 +33,19 @@ class Launcher:
         # emitted by every agent throughout the simulation.
         self.speedsound = 340.29
         # float. Speed of sound at sea level in m/s.
-        self.boxsize = boxsize 
-        # list of 2 integers. Area (rectangle) within which the agents can 
-        # move, defined by the lengths of edges (in m). 
-        # Has to be of the form [x,y], which is asserted below:
+    
+    def Square_lattice(self, lowvertex, axIID, Nedge):
         
-        assert isinstance(self.boxsize, list) and len(self.boxsize) == 2, '"boxsize" must be a list of 2 elements.' 
-        # return error if boxsize is not of the right format, i.e. [x,y]
+        self.popsize = int(Nedge ** 2)
+        # integer. Size of the bat population / Number of agents.
+        self.allID = range(self.popsize)
+        # list of integers, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
+        x = range(lowvertex[0], Nedge*axIID, axIID)
+        y = range(lowvertex[1], Nedge*axIID, axIID)
+        bothedges = [x,y]
+        self.allinitpos = list(it.product(*bothedges))
+        # list of tuples, dimensions popsize*2. 
+        # x & y positions of all bats in the population at time 0.
 
     class Bat_Jamming_00:
     # Class implementation nested into Launcher class implementation.
@@ -56,8 +56,6 @@ class Launcher:
             
             self.ID = int(ID)
             # integer. Serial (identification) number of the focal agent.
-            self.boxsize = env.boxsize
-            # take boxsize from env (object of class Launcher).
             self.tres = env.tres
             # take tres from env (class Launcher).
             self.movangle = m.radians(float(movangle))
@@ -101,9 +99,9 @@ class Launcher:
             # - the direction of the movement
         
             self.x = self.newx
-            # no closed boundaries conditions on x axis.
-            self.y = self.Boundaries(self.newy, self.boxsize[1])
-            # verify that the new y coordinate is within boundaries
+            # update the current x coordinate of the agent
+            self.y = self.newy
+            # update the current y coordinate of the agent
         
             self.xhistory = np.append(self.xhistory, self.x)
             # store the updated x coordinate in xhistory
@@ -153,16 +151,6 @@ class Launcher:
                     # for each time step at which the agent previously called:
                         self.Hearing_test(env.callsources, identity, calltime)
                         # identify and record calls that can be heard by focal agent
-
-        def Boundaries(self, coord, coordbound):
-        
-            if coord > 0 and coord < coordbound:
-            # if the coordinate is within boundaries:
-                return float(coord)
-                # return the original coordinate.
-            else:
-                return float(0)
-                # reset the coordinate to the beginning of the space frame.
         
         def Sound_update(self, dict1, identity):
             
@@ -302,11 +290,12 @@ def Dict_update(dict1, dict2):
 ### MAXIMUM_HEARING_DISTANCE: float. Maximum distance (m) at which a sound can be
 ###     heard by the agent (depending on the intensity threshold)
 
-POPULATION_SIZE = 2
-INITIAL_POSITIONS = np.array([[0.0,0.0], [1.0,1.0]], dtype = float)
-BOX_SIZE = [200.0,200.0]
 TIME_RESOLUTION = 0.002 
 SIMULATION_DURATION = 30
+
+CORNER_INDIVIDUAL_POSITION = [1,1]
+IID_ON_AXE = 2
+N_EDGE = 2
 
 MOVEMENT_ANGLE = 0
 FLIGHT_SPEED = 5.5   
@@ -320,7 +309,8 @@ rd.seed(96) # initialize the basic random number generator.
 # Set the simulation environment with Launcher, according to the given parameters 
 # and store it into an object called env.
 
-env = Launcher(POPULATION_SIZE, INITIAL_POSITIONS, BOX_SIZE, TIME_RESOLUTION, SIMULATION_DURATION)
+env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION)
+env.Square_lattice(CORNER_INDIVIDUAL_POSITION, IID_ON_AXE, N_EDGE)
 
 allbats = {}
 # Create an empty dictionary for every bat instance to be stored

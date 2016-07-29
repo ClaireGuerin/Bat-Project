@@ -20,7 +20,7 @@ setwd("D:/Bat_Project/Res")
 # are not entered accordingly to the simulation parameters
 # corresponding to the data, the script will not work.
 
-SIMDURATION <- 20 # duration of the simulation iterations
+SIMDURATION <- 30 # duration of the simulation iterations
 TIMERESOLUTION <- 0.002 # time resolution, in seconds per iteration
 FLIGHTSPEED <- 5.5 # speed of flight of the bats, in m/s
 VSOUND <- 340.29 # m/s
@@ -48,7 +48,7 @@ for (i in 1:length(C.fileNames)){
 # for every file in the Calling folder
 	cal[,i] = read.table(paste(C.path,C.fileNames[i], sep=""), header = F, sep = "\t", dec = ".")
 	# import data into the data frame
-	colnames(cal)[i] = paste("Bat",i, sep="")
+	colnames(cal)[i] = paste("Bat",i-1, sep="")
 	# calling information: 1 column per bat x, named Batx
 }
 
@@ -63,7 +63,7 @@ M.fileNames = dir(M.path, pattern =".txt")
 mov = as.data.frame(matrix(NA, ncol = length(M.fileNames), nrow = SIMDURATION))
 # empty data frame of dimensions simulation duration * (2*number of bats).
 id_M = ceiling(1:length(M.fileNames)/2) # bat identification per column 
-colnames(mov) = paste("Bat",id_M,c(".X",".Y"), sep = "")
+colnames(mov) = paste("Bat",id_M-1,c(".X",".Y"), sep = "")
 # calling information: 2 column per bat x, named Batx.X, Batx.Y 
 
 for (i in id_M){
@@ -101,6 +101,7 @@ for (i in seq(1,length(H.fileNames),3)){
 	own_temp = temp[which(temp$ID_E == ownID),] 
 	# extract sounds heard, which were originally emitted by the bat itself
 	other_temp = temp[-which(temp$ID_E == ownID),]
+	other_temp$ID_R = rep(ownID, dim(other_temp)[1])
 	# extract sounds heard, which were originally emitted by other bats
 	assign(paste("calls.self",ownID,sep=""),own_temp) 
 	# name of object: calls.selfx for bat x
@@ -150,7 +151,15 @@ R.dist = function(expl.t){
 	return(impact.t)
 }
 
-echo = as.data.frame(matrix(NA, ncol = 5, nrow = dim(call.rec)[1] * dim(cal)[2]))
+rowcount = 0
+for (i in 1:dim(cal)[2]){
+# for each bat in the simulation
+	rowcount = rowcount + dim(get(paste("calls.others",i-1,sep="")))[1]
+	# increment rowcount with the number of rows contained in the agent's 
+	# calls.others data frame
+}	
+
+echo = as.data.frame(matrix(NA, ncol = 5, nrow = rowcount))
 # Empty data frame to store Echo data, of dimensions: 
 # number of timesteps at which echoes are heard * 5
 colnames(echo) = c("id.E","time.E","time.B","id.B","time.C")
@@ -212,5 +221,17 @@ for (i in 0:(dim(cal)[2]-1)){
 }		
 
 
+#---------- End of ECHOES CALCULATIONS ----------#
 
+#---------- OVERLAP ANALYSIS ----------#
+# This section aims to quantitatively analyse the interference between a bat's own echoes, 
+# and the calls that are emitted by other bats and heard by the bat itself.
+# To do so, we will look at:
+# - the number of different calls overlapping with an own-echo
+# - the total amount of time overlap each echo has with calls
+# - the amount of time/ %age of the IPI that is free of any calls 
+# These calculations will be made for at both individual & group (mean) level,
+# with overall estimations and description of the evolution of the estimators
+# over time.
 
+library(IRanges)
