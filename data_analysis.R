@@ -91,17 +91,17 @@ for (i in seq(1,length(H.fileNames),3)){
 	idbat = read.table(paste(H.path,H.fileNames[i+1], sep=""), header = F, sep = "\t", dec = ".") # import i-data
 	tmstp = read.table(paste(H.path,H.fileNames[i+2], sep=""), header = F, sep = "\t", dec = ".") # import t-data
 
-	temp = as.data.frame(matrix(NA, ncol = 3, nrow = dim(tcall)[1]))
+	temp = as.data.frame(matrix(NA, ncol = 4, nrow = dim(tcall)[1]))
 	# temporary empty data frame to store data, of dimensions number of heared items * 3
-	colnames(temp) = c("Time_R","ID_E","Time_E")
+	colnames(temp) = c("ID_R","Time_R","ID_E","Time_E")
 	# 3 columns corresponding to the 3 data types c, i and t.
+	temp$ID_R = ownID
 	temp$Time_R = tmstp[,1] # transfer t-data into temp
 	temp$ID_E = idbat[,1] # transfer i-data into temp
 	temp$Time_E = tcall[,1] # transfer c-data into temp
 	own_temp = temp[which(temp$ID_E == ownID),] 
 	# extract sounds heard, which were originally emitted by the bat itself
 	other_temp = temp[-which(temp$ID_E == ownID),]
-	other_temp$ID_R = rep(ownID, dim(other_temp)[1])
 	# extract sounds heard, which were originally emitted by other bats
 	assign(paste("calls.self",ownID,sep=""),own_temp) 
 	# name of object: calls.selfx for bat x
@@ -146,7 +146,7 @@ R.dist = function(expl.t){
 		
 	collision = which(R.t.sq <= r.t.sq)
 	# a bat-sound collision occurs as soon as R(t)² <= r(t)²
-	impact.t = collision[length(collision)]
+	impact.t = collision[1]
 	# Exact time of impact
 	return(impact.t)
 }
@@ -201,7 +201,7 @@ for (i in 0:(dim(cal)[2]-1)){
 		# position of bat E on y-axis at the time call j
 		# was heard by bat i.
 		
-		echo$time.C[meter+j] = R.dist(0:(time.R - time.E))
+		echo$time.C[meter+j] = time.R + R.dist(0:(time.R - time.E))
 		# time at which the collision C occurs, i.e. 
 		# bat E hears back the echo bouncing-off from bat i
 		
@@ -234,4 +234,47 @@ for (i in 0:(dim(cal)[2]-1)){
 # with overall estimations and description of the evolution of the estimators
 # over time.
 
+# Filter out sounds that reach the agent when it was calling, 
+# rendering it impossible for the agent to hear it 
+# NB: Filter applied to both calls & echoes 
+
+for (i in 0:(dim(cal)[2]-1)){
+	e.self = echo[which(echo$id.E == i),] 
+	c.self = get(paste("calls.self",i,sep=""))
+	c.others = get(paste("calls.others",i,sep=""))	
+	
+	for (j in 1:dim(c.self)[1]){
+		filter1 = which(c.others$Time_R == c.self$Time_R[j])
+		if (length(filter1) > 0){
+			c.others = c.others[-filter1,]
+		}
+		
+		filter2 = which(e.self$time.C == c.self$Time_R[j])
+		if (length(filter2) > 0){
+			e.self = e.self[-filter2,]		}		
+	
+	}
+	name1 = paste("calls.filter",i,sep="")
+	assign(name1, c.others[order(c.others$ID_E),])
+	name2 = paste("echo.filter",i,sep="")
+	assign(name2, e.self)
+}
+
 library(IRanges)
+
+for (i in 0:(dim(cal)[2]-1)){
+	echo_channel = get(paste("echo.filter",i,sep=""))
+	call_channel = get(paste("calls.filter",i,sep=""))	
+	
+	c.range = rep(FALSE, SIMDURATION)
+	c.range[call_channel$Time_R-1] = TRUE
+
+	e.range = rep(FALSE, SIMDURATION)
+	e.range[echo_channel$time.C-1] = TRUE
+
+	assign(paste("cr",i, sep=""), IRanges(e.range))
+	assign(paste("er",i, sep=""), IRanges(c.range))
+}
+
+# Almost there! Problem: it's like we're directly reducing the IRanges...
+# Is this what we want???
