@@ -63,14 +63,16 @@ class Launcher:
             # agent flies. Value between 2*pi and pi, as asserted below.            
             self.stepsize = float(flightspeed * self.tres) 
             # float. Distance in meters covered by the agent in 1 time step
-            self.IPI = np.around(float(IPI / env.tres),0)
+            self.callduration = callduration
+            # float. Duration (in s) of each call. 
+            #self.IPI = np.around(float((self.callduration/dutycycle - self.callduration) / env.tres),0)
+            self.IPI = np.around(float(IPI / env.tres), 0)
             # integer. Inter-pulse interval of the agent, converted in time steps.
             self.maxtimestore = float(maxheardist / env.speedsound)
             # float. Maximum time for storing a sound, deduced from the time 
             # maximal, in seconds, during which a sound can travel, before its 
             # intensity passes below the hearing threshold of the agent.
-            self.callduration = callduration
-            # float. Duration (in s) of each call. 
+            
             self.ringwidth = float(self.callduration * env.speedsound) 
             # float. Difference in radii of the two concentric circles 
             # (in 2D) which form the start and the end of the bat call.
@@ -299,7 +301,7 @@ N_EDGE = 2
 
 MOVEMENT_ANGLE = 0
 FLIGHT_SPEED = 5.5   
-DUTY_CYCLE = 0
+#DUTY_CYCLE = 0.1228
 CALL_DURATION = 0.007
 INTER_PULSE_INTERVAL = 0.05
 MAXIMUM_HEARING_DISTANCE = 300

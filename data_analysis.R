@@ -262,19 +262,41 @@ for (i in 0:(dim(cal)[2]-1)){
 
 library(IRanges)
 
-for (i in 0:(dim(cal)[2]-1)){
+npop = 0:(dim(cal)[2]-1)
+
+for (i in npop){
 	echo_channel = get(paste("echo.filter",i,sep=""))
 	call_channel = get(paste("calls.filter",i,sep=""))	
+	c.ranges = IRanges()
+	e.ranges = IRanges()
+
+	for (j in 1:3){
+		ident = npop[-(i+1)][j]
+		
+		c.temp = rep(FALSE, SIMDURATION)
+		calltimes = call_channel$Time_R[which(call_channel$ID_E == ident)]+1
+		c.temp[calltimes] = TRUE
+		c.ranges = append(c.ranges, IRanges(c.temp))
+
+		e.temp = rep(FALSE, SIMDURATION)
+		echotimes = echo_channel$time.C[which(echo_channel$id.B == ident)]+1
+		e.temp[echotimes] = TRUE
+		e.ranges = append(e.ranges, IRanges(e.temp))
+	}	
+
+	c.ranges = shift(c.ranges, -1)
+	e.ranges = shift(e.ranges, -1)
 	
-	c.range = rep(FALSE, SIMDURATION)
-	c.range[call_channel$Time_R-1] = TRUE
+	Overlaps = findOverlaps(e.ranges, c.ranges)
+	numOverlaps = length(Overlaps)/length(e.ranges) # number of overlaps/echo (for now, /#other bat) 
 
-	e.range = rep(FALSE, SIMDURATION)
-	e.range[echo_channel$time.C-1] = TRUE
-
-	assign(paste("cr",i, sep=""), IRanges(e.range))
-	assign(paste("er",i, sep=""), IRanges(c.range))
+	assign(paste("cr",i, sep=""), c.ranges)
+	assign(paste("er",i, sep=""), e.ranges)
+	
 }
 
-# Almost there! Problem: it's like we're directly reducing the IRanges...
-# Is this what we want???
+subsetByOverlaps(cr0,er0)
+mergeOv=mergeByOverlaps(cr0,er0)
+intersect(mergeOv[3,1],mergeOv[3,2])
+
+Overlaps@queryHits # doesn't work for me O.o
