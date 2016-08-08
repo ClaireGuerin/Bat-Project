@@ -264,6 +264,9 @@ library(IRanges)
 
 npop = 0:(dim(cal)[2]-1)
 
+overlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 3)
+overlapMat[,1] = npop
+
 for (i in npop){
 	echo_channel = get(paste("echo.filter",i,sep=""))
 	call_channel = get(paste("calls.filter",i,sep=""))	
@@ -288,12 +291,20 @@ for (i in npop){
 	e.ranges = shift(e.ranges, -1)
 	
 	Overlaps = findOverlaps(e.ranges, c.ranges)
-	numOverlaps = length(Overlaps)/length(e.ranges) # number of overlaps/echo (for now, /#other bat) 
+	overlapWidth = ranges(Overlaps, e.ranges, c.ranges)
+	
 
+	overlapMat[i+1,2] = length(Overlaps)/length(e.ranges) # number of overlaps/echo 
+	overlapMat[i+1,3] = sum(width(overlapWidth))/length(e.ranges) # length of overlaps per echo 
+	
+
+	assign(paste("Overlaps","i"), Overlaps)
+	assign(paste("numOverlaps","i"), numOverlaps)
 	assign(paste("cr",i, sep=""), c.ranges)
 	assign(paste("er",i, sep=""), e.ranges)
 	
 }
+
 
 subsetByOverlaps(cr0,er0)
 mergeOv=mergeByOverlaps(cr0,er0)
