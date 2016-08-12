@@ -180,7 +180,7 @@ R.dist = function(expl.t){
 Hear.echo = function(preCDist,postCDist, SL, hearTh){
 	batRadius = 0.1 # bat simplified as a sphere of 10 cm radius
 	batTS = 20*log10(batRadius/2) # target strength of the bat 
-	SL_1m = SL - abs(20*log10(0.1/1)) # Sound Level calculated at 1 m 
+	SL_1m = SL - abs(20*log10(0.1/1)) # Source level calculated at 1 m 
 
 	### ONEWAYSPL FUN ###
 	# Function which calculates the Sound Pressure Level of a sound as it travels a 'one-way' route in a strait line of length R 
