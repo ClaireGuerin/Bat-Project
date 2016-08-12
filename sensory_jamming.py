@@ -41,14 +41,21 @@ class Launcher:
         self.speedsound = 340.29
         # float. Speed of sound at sea level in m/s.
     
-    def Square_lattice(self, lowvertex, axIID, Nedge):
+    
+    # function which places all the individuals in a simulation onto an upright square lattice 
+    # ref (https://en.wikipedia.org/wiki/Square_lattice as of 12/8/2016)
+    # inputs : 
+    # lowvertex: the lower bottom-left corner of the square - list of 1x2 dims
+    # axIID - on-axis distance between individuals
+    # Nside - number of individuals on one side 
+    def Square_lattice(self, lowvertex, axIID, Nside):
         
-        self.popsize = int(Nedge ** 2)
+        self.popsize = int(Nside ** 2)
         # integer. Size of the bat population / Number of agents.
         self.allID = range(self.popsize)
         # list of integers, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
-        x = range(lowvertex[0], Nedge*axIID, axIID)
-        y = range(lowvertex[1], Nedge*axIID, axIID)
+        x = range(lowvertex[0],Nside*axIID, axIID)
+        y = range(lowvertex[1], Nside*axIID, axIID)
         bothedges = [x,y]
         self.allinitpos = list(it.product(*bothedges))
         # list of tuples, dimensions popsize*2. 
@@ -312,9 +319,13 @@ TIME_RESOLUTION = 0.002 # duration in seconds of each iteration
  
 SIMULATION_DURATION = 30 # length of simulation in iterations
 
-CORNER_INDIVIDUAL_POSITION = [1,1] 
-IID_ON_AXE = 2
-N_EDGE = 2
+CORNER_INDIVIDUAL_POSITION = [1,1] # one of the corners of the square lattice
+
+#individuals are placed over an upright square lattice (https://en.wikipedia.org/wiki/Square_lattice as of 12/8/2016)
+
+IID_ON_AXE = 2 # inter individual distance on axis 
+
+N_SIDE = 2 # number of individuals on one side of the square 
 
 MOVEMENT_ANGLE = 0
 FLIGHT_SPEED = 5.5   
@@ -336,7 +347,7 @@ rd.seed(96) # initialize the basic random number generator.
 def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
     
     env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION)
-    env.Square_lattice(CORNER_INDIVIDUAL_POSITION, IID_ON_AXE, N_EDGE)
+    env.Square_lattice(CORNER_INDIVIDUAL_POSITION, IID_ON_AXE, N_SIDE)
 
     allbats = {}
     # Create an empty dictionary for every bat instance to be stored
@@ -479,8 +490,8 @@ parprod = itertools.product(allipi,allnedge,alliidaxe)
 for parcomb in parprod:
     
     interpulseinterval = parcomb[0]
-    nedge = parcomb[1]
+    nside = parcomb[1]
     iidonaxe = parcomb[2]
 
-    Sim_run(interpulseinterval, nedge, iidonaxe)
+    Sim_run(interpulseinterval, nside, iidonaxe)
     
