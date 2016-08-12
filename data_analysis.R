@@ -1,6 +1,7 @@
 ###############################################
 ###                         				###
-### 		BAT IBM SENSORY JAMMING 		### 
+### 		BAT IBM SENSORY JAMMING 		###
+### 		DESCRIPTIVE STATISTICS			### 
 ###                         				###
 ###############################################
 
@@ -9,9 +10,20 @@
 
 rm(list = ls())
 # clear current workspace
-setwd("D:/Bat_Project/Res")
+
+all_ipi = seq(0,1,0.01)
+all_nedge = seq(2,10,1)
+all_iidonaxe = seq(1,10,1)
+all_comb = expand.grid(all_ipi,all_nedge,all_iidonaxe)
+colnames(all_comb) = c("all_ipi","all_nedge","all_iidonaxe")
+
+for (comb in 1:dim(all_comb)[1]){
+
+comb = paste(all_comb[comb,1],all_comb[comb,2],all_comb[comb,3]) # ipi_nedge_iidonaxe
+
+setwd(paste("D:/Bat_Project/Res/",comb, sep=""))
 # Change this to the directory where the specific results that you want
-# to analyse are stored. Should be a folder containing 3 sub-folders:
+# to extract are stored. Should be a folder containing 3 sub-folders:
 # Calling, Moving, Hearing, with the corresponding data
 
 #---------- PARAMETERS OF THE SIMULATION ----------#
@@ -274,7 +286,7 @@ for (i in 0:(dim(cal)[2]-1)){
 # To do so, we will look at:
 # - mean number of calls/echo overlapping with an own-echo +/- SD
 # - mean amount of time overlap each echo has with calls/echoes +/- SD
-# - %age of echoes that face overlapping with calls/echoes
+# - total %age of echoes that face overlapping with calls/echoes
 # - the amount of time/ %age of the IPI that is free of any calls/echoes
 # > P(overlap echo-echo) * P(overlap echo-call) --> how many echoes are distinctly heard at all
  
@@ -282,94 +294,143 @@ for (i in 0:(dim(cal)[2]-1)){
 # with overall estimations and description of the evolution of the estimators
 # with IPI, Population size, Call Duration.
 
-# First, filter out sounds that reach the agent when it was calling, 
+# Need to filter out sounds that reach the agent when it was calling, 
 # rendering it impossible for the agent to hear it 
 # NB: Filter applied to both calls & echoes 
-
-for (i in 0:(dim(cal)[2]-1)){
-	e.self = echo[which(echo$id.E == i),] 
-	c.self = get(paste("calls.self",i,sep=""))
-	c.others = get(paste("calls.others",i,sep=""))	
-	
-	for (j in 1:dim(c.self)[1]){
-		filter1 = which(c.others$Time_R == c.self$Time_R[j])
-		if (length(filter1) > 0){
-			c.others = c.others[-filter1,]
-		}
-		
-		filter2 = which(e.self$time.C == c.self$Time_R[j])
-		if (length(filter2) > 0){
-			e.self = e.self[-filter2,]		}		
-	
-	}
-	name1 = paste("calls.filter",i,sep="")
-	assign(name1, c.others[order(c.others$ID_E),])
-	name2 = paste("echo.filter",i,sep="")
-	assign(name2, e.self)
-}
 
 library(IRanges)
 
 npop = 0:(dim(cal)[2]-1)
 
-ECoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 5)
+ECoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 7)
 ECoverlapMat[,1] = npop
+colnames(ECoverlapMat)=c("ID","meanNumOv","sdNumOv","meanTimeOv","sdTimeOv","numMask","timeFreeIPI")
 
-EEoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 5)
+EEoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 7)
 EEoverlapMat[,1] = npop
+colnames(EEoverlapMat)=colnames(ECoverlapMat)
+
+Self.overlaps = function(irobject){
+	newirobject = irobject	
+	
+	while (length(newirobject)>1){
+		alloverlaps = findOverlaps(newirobject)		
+		alloverlaps2 = alloverlaps[-which(alloverlaps@from == alloverlaps@to)]
+		alloverlaps3 = alloverlaps2[seq(1, length(alloverlaps2), by = length(newirobject))]
+		newirobject = ranges(alloverlaps3, newirobject, newirobject)
+	}
+	
+	width = newirobject@width
+
+	return(width)
+}
+		
 
 for (i in npop){
-	echo_channel = get(paste("echo.filter",i,sep=""))
-	call_channel = get(paste("calls.filter",i,sep=""))	
+	echo_channel_nofilter = echo[which(echo$id.E == i),] 
+	call_channel_nofilter = get(paste("calls.others",i,sep=""))
+	filter_channel = get(paste("calls.self",i,sep=""))	
 	c.ranges = IRanges()
 	e.ranges = IRanges()
+	f.ranges = IRanges()
 
-	for (j in 1:3){
+	f.temp = rep(FALSE, SIMDURATION)
+	filtertimes = filter_channel$Time_R+1
+	f.temp[filtertimes] = TRUE
+	f.ranges = append(f.ranges, IRanges(f.temp))
+	f.ranges = shift(f.ranges, -1)
+
+	for (j in 1:length(npop-1)){
 		ident = npop[-(i+1)][j]
 		
 		c.temp = rep(FALSE, SIMDURATION)
-		calltimes = call_channel$Time_R[which(call_channel$ID_E == ident)]+1
+		calltimes = call_channel_nofilter$Time_R[which(call_channel_nofilter$ID_E == ident)]+1
 		c.temp[calltimes] = TRUE
 		c.ranges = append(c.ranges, IRanges(c.temp))
 
 		e.temp = rep(FALSE, SIMDURATION)
-		echotimes = echo_channel$time.C[which(echo_channel$id.B == ident)]+1
+		echotimes = echo_channel_nofilter$time.C[which(echo_channel_nofilter$id.B == ident)]+1
 		e.temp[echotimes] = TRUE
 		e.ranges = append(e.ranges, IRanges(e.temp))
 	}	
 
 	c.ranges = shift(c.ranges, -1)
 	e.ranges = shift(e.ranges, -1)
+
+	c.ranges.f = IRanges()
+	e.ranges.f = IRanges()	
+
+	for (n in 1:length(c.ranges)) c.ranges.f = append(c.ranges.f,gaps(f.ranges, c.ranges@start[n], c.ranges@start[n]+c.ranges@width[n]-1)) 
+	for (n in 1:length(e.ranges)) e.ranges.f = append(e.ranges.f,gaps(f.ranges, e.ranges@start[n], e.ranges@start[n]+e.ranges@width[n]-1)) 
 	
-	ECOverlaps = findOverlaps(e.ranges, c.ranges)
-	ECOverlapWidth = ranges(ECOverlaps, e.ranges, c.ranges)
+	ECOverlaps = findOverlaps(e.ranges.f, c.ranges.f)
+	EEOverlaps = findOverlaps(e.ranges.f, e.ranges.f)
 
-	EEOverlaps = findOverlaps(e.ranges, e.ranges)
-	EEOverlapWidth = ranges(EEOverlaps, e.ranges, e.ranges)
+	numECOverlaps = rep(NA, length(e.ranges.f)) 
+	numEEOverlaps = rep(NA, length(e.ranges.f))	
 
-	numECOverlaps = rep(NA, length(e.ranges)) 
-	numEEOverlaps = rep(NA, length(e.ranges))	
+	widthECOverlaps = rep(NA, length(e.ranges.f)) 
+	widthEEOverlaps = rep(NA, length(e.ranges.f))
 
-	for (k in 1:length(e.ranges)){
-		numECOverlaps[k] = length(which(ECOverlaps@from == k))
-		numEEOverlaps[k] = length(which(EEOverlaps@from == k))
+	all.ranges = IRanges(rep(TRUE, SIMDURATION))
+	ipi.ranges = gaps(f.ranges, all.ranges@start, all.ranges@start+all.ranges@width-1)
+	c.free.ipi = IRanges()
+	e.free.ipi = IRanges()
+	for (n in 1:length(ipi.ranges)){ 
+		c.free.ipi = append(c.free.ipi, gaps(c.ranges, start=ipi.ranges[n]@start, end=ipi.ranges[n]@start+ipi.ranges[n]@width-1))
+		e.free.ipi = append(e.free.ipi, gaps(e.ranges, start=ipi.ranges[n]@start, end=ipi.ranges[n]@start+ipi.ranges[n]@width-1))
+	}
+
+	for (k in 1:length(e.ranges.f)){
+		indivEC = which(ECOverlaps@from == k)
+		indivEE = which(EEOverlaps@from == k)
+		numECOverlaps[k] = length(indivEC)
+		numEEOverlaps[k] = length(indivEE)
+
+		if (length(indivEC)>0){
+
+			Covrange = ranges(ECOverlaps[indivEC], e.ranges.f, c.ranges.f)
+			widthovC = Covrange@width
+			if (length(Covrange) > 1) widthovC = sum(Covrange@width) - Self.overlaps(Covrange)
+			widthECOverlaps[k] = widthovC/e.ranges.f@width[k]
+		
+		}else{
+			widthECOverlaps[k] = 0
+		}
+
+		if (length(indivEE)>0){	
+			
+			Eovrange = ranges(EEOverlaps[indivEE], e.ranges.f, e.ranges.f)
+		 	widthovE = Eovrange@width
+			if (length(Eovrange) > 1) widthovE = sum(Eovrange@width) - Self.overlaps(Eovrange)
+			widthEEOverlaps[k] = widthovE/e.ranges.f@width[k]
+		}else{
+			widthEEOverlaps[k] = 0
+		}
+		
 	}
 	
 	ECoverlapMat[i+1,2] = mean(numECOverlaps) # mean number of overlaps/echo
 	ECoverlapMat[i+1,3] = sd(numECOverlaps) # standard deviation of number of overlaps/echo
-	ECoverlapMat[i+1,4] = mean(width(ECOverlapWidth)*TIMERESOLUTION) # mean time of overlap 
-	ECoverlapMat[i+1,5] = sd(width(ECOverlapWidth)*TIMERESOLUTION) # standard deviation time of overlap 
+	ECoverlapMat[i+1,4] = mean(widthECOverlaps) # mean % time of overlap 
+	ECoverlapMat[i+1,5] = sd(widthECOverlaps) # standard deviation % time of overlap
+	ECoverlapMat[i+1,6] = length(numECOverlaps)/length(e.ranges.f)# total % echoes (number) masked by others' calls 
+	ECoverlapMat[i+1,7] = sum(c.free.ipi@width)/sum(ipi.ranges@width) # total % of IPI time that is free of calls from others 
 	
 	EEoverlapMat[i+1,2] = mean(numEEOverlaps) # number of echo overlaps/echo 
 	EEoverlapMat[i+1,3] = sd(numEEOverlaps) # standard deviation of number of echo overlaps/echo
-	EEoverlapMat[i+1,4] = mean(width(EEOverlapWidth)*TIMERESOLUTION) # mean time/length of overlaps
-	EEoverlapMat[i+1,5] = sd(width(EEOverlapWidth)*TIMERESOLUTION) # standard deviation time/length of overlaps
+	EEoverlapMat[i+1,4] = mean(widthEEOverlaps) # mean % time/length of overlaps
+	EEoverlapMat[i+1,5] = sd(widthEEOverlaps) # standard deviation % time/length of overlaps
+	EEoverlapMat[i+1,6] = length(numEEOverlaps)/length(e.ranges.f)# total % echoes (number) masked by echoes 
+	EEoverlapMat[i+1,7] = sum(e.free.ipi@width)/sum(ipi.ranges@width) # total % of IPI time that is free of echoes 
 	
 }
 
-EEoverlapMat
-subsetByOverlaps(cr0,er0)
-mergeOv=mergeByOverlaps(cr0,er0)
-intersect(mergeOv[3,1],mergeOv[3,2])
+subDir <- "Overlap_indices"
 
-Overlaps@queryHits # doesn't work for me O.o
+if (file.exists(subDir) == FALSE) dir.create(file.path(subDir))
+
+write.csv(ECoverlapMat, file=paste(subDir,"echo_call_",comb,".csv", sep=""))
+write.csv(EEoverlapMat, file=paste(subDir,"echo_echo_",comb,".csv", sep=""))
+
+}
