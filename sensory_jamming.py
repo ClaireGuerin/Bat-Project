@@ -4,6 +4,10 @@ Created on Mon Apr 04 14:31:31 2016
 @author: Claire
 '''
 
+
+
+# ---------------------start of the CLASS -------------------------------------------------------------------#
+
 # %reset
 # Reset the console and clear it from all previous variables that might have 
 # been stored. Type 'y' to confirm resetting.
@@ -262,10 +266,14 @@ def Dict_update(dict1, dict2):
     return dict1
 
 def Min_hear(param,alpha,sourcelevel, hth):
-# function to calculate the maximum distance at which a bat call can be heard
-    SL = sourcelevel - m.fabs(20 * m.log10(0.1/1)) # source level corrected for intensity at 1m
+    # function to calculate the maximum distance at which a bat call can be heard
+    SL = sourcelevel - m.fabs(20 * m.log10(0.1/1))  # source level corrected for intensity at 1m
     hearsqr = (SL - 20 * m.log10(param) + alpha * param - hth) ** 2
     return hearsqr
+
+# ---------------------END OF THE CLASS --------------------------------------------------------#
+
+
 
 ### SIMULATIONS ###      
 ### Run a multi-agents simulation and plot agents' movements.
@@ -300,10 +308,11 @@ def Min_hear(param,alpha,sourcelevel, hth):
 ### MAXIMUM_HEARING_DISTANCE: float. Maximum distance (m) at which a sound can be
 ###     heard by the agent (depending on the intensity threshold)
 
-TIME_RESOLUTION = 0.002 
-SIMULATION_DURATION = 30
+TIME_RESOLUTION = 0.002 # duration in seconds of each iteration
+ 
+SIMULATION_DURATION = 30 # length of simulation in iterations
 
-CORNER_INDIVIDUAL_POSITION = [1,1]
+CORNER_INDIVIDUAL_POSITION = [1,1] 
 IID_ON_AXE = 2
 N_EDGE = 2
 
@@ -315,7 +324,9 @@ INTER_PULSE_INTERVAL = 0.05
 ALPHA = -1.7 # db/m absorption at particular frequency 
 SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm 
 HEARING_THRESHOLD = -10 #hearing threshold in dB SPL 
-MAXIMUM_HEARING_DISTANCE = minimize(Min_hear, x0 = range(30,100), args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))
+
+# max distance over which a bat can hear a direct call from another conspecific
+MAX_HEAR_DIST = minimize(Min_hear, 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x']
 
 rd.seed(96) # initialize the basic random number generator.
 
