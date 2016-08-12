@@ -101,7 +101,7 @@ class Launcher:
             # - _t: time at which it was heard by the focal agent.
 
             assert self.movangle >= m.radians(0) and self.movangle < m.radians(360), "Enter movement angle between 0 and 360 degrees"
-            assert self.IPI > self.tres, 'Inter-pulse interval must be larger than the time resolution'            
+            assert self.IPI < self.tres, 'Inter-pulse interval must be larger than the time resolution'            
             
         def Movement(self):
             
@@ -334,17 +334,23 @@ CALL_DURATION = 0.007
 INTER_PULSE_INTERVAL = 0.05
 ALPHA = -1.7 # db/m absorption at particular frequency 
 SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm 
-HEARING_THRESHOLD = -10 #hearing threshold in dB SPL 
+HEARING_THRESHOLD = -10 #hearing threshold  of the bat in dB SPL 
 
 # max distance over which a bat can hear a direct call from another conspecific
-MAX_HEAR_DIST = minimize(Min_hear, 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x']
+MAX_HEAR_DIST = float(minimize(Min_hear, 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x'])
+
+
+
+
+
+# ---------------RUNNING ONE INSTANCE OF THE SIMULATION -------------------------------#
 
 rd.seed(96) # initialize the basic random number generator.
 
 # Set the simulation environment with Launcher, according to the given parameters 
 # and store it into an object called env.
 
-def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
+def Sim_run(INTER_PULSE_INTERVAL, N_SIDE,IID_ON_AXE):
     
     env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION)
     env.Square_lattice(CORNER_INDIVIDUAL_POSITION, IID_ON_AXE, N_SIDE)
@@ -353,26 +359,35 @@ def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
     # Create an empty dictionary for every bat instance to be stored
 
     # Set the agents with Bat_Jamming_00, according to the given parameters.
-
+    
+    
     for ID in env.allID:
-    
-        allbats[int(ID)] = env.Bat_Jamming_00(ID, MOVEMENT_ANGLE,FLIGHT_SPEED,INTER_PULSE_INTERVAL, MAXIMUM_HEARING_DISTANCE, CALL_DURATION)
+        
         # store all instances of the class Bat_Jamming_00 within the bat population
-        allbats[int(ID)].x = env.allinitpos[int(ID)][0]
+        allbats[int(ID)] = env.Bat_Jamming_00(ID, MOVEMENT_ANGLE,FLIGHT_SPEED,INTER_PULSE_INTERVAL, MAX_HEAR_DIST, CALL_DURATION)
+        
         # initial x coordinate for each instance, taken from env
-        allbats[int(ID)].xhistory = [allbats[int(ID)].x]
+        allbats[int(ID)].x = env.allinitpos[int(ID)][0]
+        
         # store it in xhistory
-        allbats[int(ID)].y = env.allinitpos[int(ID)][1]
+        allbats[int(ID)].xhistory = [allbats[int(ID)].x]
+                
+                    
         # initial y coordinate for each instance, taken from env
-        allbats[int(ID)].yhistory = [allbats[int(ID)].x]
+        allbats[int(ID)].y = env.allinitpos[int(ID)][1]
+        
         # store it in yhistory
-        allbats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
+        allbats[int(ID)].yhistory = [allbats[int(ID)].x]
+        
         # create an empty list to store records of call times
-    
-        fig, ax = plt.subplots()
+        allbats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
+        
         # create the figure where rings of sound will be drawn & bats positions will be plotted
-        colorpanel = plt.get_cmap('nipy_spectral')
+        fig, ax = plt.subplots()
+        
         # select a color panel to differentiate individuals
+        colorpanel = plt.get_cmap('nipy_spectral')
+        
 
     # Run the simulation of the individual based model, & store the results in allbats 
 
@@ -417,7 +432,7 @@ def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
     # set the x-limit of the figure
     ax.set_ylim(-1,15)
     # set the y-limit of the figure
-    fig.savefig('D:\Bat_Project\Res\plot_bats_rings.pdf')
+    fig.savefig('C:/Users/tbeleyur/Google Drive/Holger Goerlitz- IMPRS/PHD_2015/projects and analyses/2016_jamming response modelling/Coding/Thejasvi codes and comments/Bat-Project/Res/plot_bats_rings.pdf')
     # save the figure
     plt.close()
     # close the figure
@@ -433,10 +448,12 @@ def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
 
     ### EXPORTING DATA ###
 
-    filenamesH = []
-    filenamesM = []
+
+
+    filenamesH = [] # file names of hearing
+    filenamesM = [] # file names of movement
     
-    dirname = "D:\Bat_Project\Res\ipi%s_nedge%s_iidaxe%s" % (str(INTER_PULSE_INTERVAL), str(N_EDGE), str(IID_ON_AXE))
+    dirname = "C:/Users/tbeleyur/Google Drive/Holger Goerlitz- IMPRS/PHD_2015/projects and analyses/2016_jamming response modelling/Coding/Thejasvi codes and comments/Bat-Project/Res/ipi%s_nedge%s_iidaxe%s" % (str(INTER_PULSE_INTERVAL), str(N_SIDE), str(IID_ON_AXE))
     
     if not os.path.exists(dirname):
         try:
@@ -456,12 +473,16 @@ def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
         ytrack = allbats[ID].yhistory
         allbats[ID].movhistory = {'x': xtrack, 'y': ytrack}
     
+    
+    # creating .txt files for the hearhistory of each individual agent
         for data_type in allbats[ID].hearhistory.keys():
             filenamesH.append('%s\Hearing\%s_hearhistory_%s.txt' % (dirname, str(ID), data_type))
     
+    # creating .txt files for the movehistory of each individual agent
         for coordinate in allbats[ID].movhistory.keys():
             filenamesM.append('%s\Moving\%s_movhistory_%s.txt' % (dirname, str(ID), coordinate))
-        
+    
+    # creating .txt files for the callshistory of each individual agent            
         with open('%s\Calling\%s_callshistory.txt' % (dirname, ID), 'w') as fp3:
             for value in allbats[ID].callshistory:
                 fp3.writelines('%s\n' % value[0])
@@ -481,17 +502,24 @@ def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
             for value in allbats[int(fname[26:end_id])].movhistory[fname[-5]]:
                 fp2.writelines('%s\n' % value)
         fp2.close()
-        
-allipi = [x / 1000.0 for x in range(0, 500, 10)]
-allnedge = range(2,10,1)
-alliidaxe = range(1,20,2)
-parprod = itertools.product(allipi,allnedge,alliidaxe)
 
-for parcomb in parprod:
-    
-    interpulseinterval = parcomb[0]
-    nside = parcomb[1]
-    iidonaxe = parcomb[2]
 
-    Sim_run(interpulseinterval, nside, iidonaxe)
-    
+
+
+#------------------------------------------ end of script that runs one instance of the simulation  -------------------#
+
+
+# ---------------- RUNNING SIMULATIONS WITH MULTIPLE PARAMETER COMBINATIONS -----------------#        
+#allipi = [x / 1000.0 for x in range(0, 500, 10)]
+#allnedge = range(2,10,1)
+#alliidaxe = range(1,20,2)
+#parprod = itertools.product(allipi,allnedge,alliidaxe)
+#
+#for parcomb in parprod:
+#    
+#    interpulseinterval = parcomb[0]
+#    nside = parcomb[1]
+#    iidonaxe = parcomb[2]
+#
+#    Sim_run(interpulseinterval, nside, iidonaxe)
+#    
