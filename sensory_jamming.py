@@ -337,7 +337,7 @@ SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm
 HEARING_THRESHOLD = -10 #hearing threshold in dB SPL 
 
 # max distance over which a bat can hear a direct call from another conspecific
-MAX_HEAR_DIST = minimize(Min_hear, 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x']
+MAXIMUM_HEARING_DISTANCE = minimize(Min_hear, 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x']
 
 rd.seed(96) # initialize the basic random number generator.
 
