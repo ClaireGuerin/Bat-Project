@@ -305,7 +305,7 @@ SIMULATION_DURATION = 30
 
 CORNER_INDIVIDUAL_POSITION = [1,1]
 IID_ON_AXE = 2
-N_EDGE = 2
+N_EDGE = 4
 
 MOVEMENT_ANGLE = 0
 FLIGHT_SPEED = 5.5   
@@ -324,6 +324,8 @@ rd.seed(96) # initialize the basic random number generator.
 
 
 ## -- running one instance of the simulation and getting data outputs :
+
+# PLEASE CREATE A DIRECTORY CALLED 'RES' IN ANY DESIRED LOCATION AND PASTE THE ADDRESS (' C:\\_____\\.......\\Res')
 
 currdir='C:\\Users\\tbeleyur\\Desktop\\Res'
 
@@ -444,10 +446,9 @@ for ID in env.allID:
 
     ### EXPORTING DATA ###
 
-    filenamesH = []
-    filenamesM = []
-    
-    
+filenamesH = [] # hearing files 
+filenamesM = [] #movement files 
+
 
 for ID in env.allID:
 
@@ -471,19 +472,47 @@ for ID in env.allID:
             fp3.writelines('%s\n' % value[0])
     fp3.close()
 
+
+# --- function which determines the bat Id in concern when given a filename
+import re # import the regular expressions function   
+
+def idfinder(filename):
+     # figure out which is the bat ID of the fname in concern
+    
+    #find all the numbers in the fname string, and take the last number (batID)
+    batid=int(re.findall(r'\d+', fname)[-1])
+    
+    return(batid)
+# --end of function 
+ 
+#writing the values of hearhistory for each individual into the file
+
 for fname in filenamesH:
     with open('%s' % fname, 'w') as fp1:
-        end_id = [n for n in xrange(len(fname)) if fname.find('_', n) == n][1]
-        for value in allbats[int(fname[27:end_id])].hearhistory[fname[-5]]:
+        
+        # find the ID number of the bat in concern from the filename        
+        batid=idfinder(fname);
+        
+        #for value in allbats[int(fname[27:end_id])].hearhistory[fname[-5]]:
+        for value in allbats[batid].hearhistory[fname[-5]]:
+            
             fp1.writelines('%s\n' % value)
+            
     fp1.close()
 
+
+# writing the value of move history into the file for each individual 
     
 for fname in filenamesM:
     with open('%s' % fname, 'w') as fp2:
-        end_id = [n for n in xrange(len(fname)) if fname.find('_', n) == n][1]
-        for value in allbats[int(fname[26:end_id])].movhistory[fname[-5]]:
+        
+        # find the ID number of the bat in concern from the filename
+        batid=idfinder(fname);
+        
+        for value in allbats[batid].movhistory[fname[-5]]:
+            
             fp2.writelines('%s\n' % value)
+            
     fp2.close()
     
 
