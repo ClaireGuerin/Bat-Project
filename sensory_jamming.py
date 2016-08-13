@@ -327,7 +327,7 @@ rd.seed(96) # initialize the basic random number generator.
 
 # PLEASE CREATE A DIRECTORY CALLED 'RES' IN ANY DESIRED LOCATION AND PASTE THE ADDRESS (' C:\\_____\\.......\\Res')
 
-currdir='C:\\Users\\tbeleyur\\Desktop\\Res'
+currdir='D:\\Bat_Project\\Res'
 
 os.chdir(currdir) # change working directory
 
