@@ -90,7 +90,7 @@ class Launcher:
             # - _t: time at which it was heard by the focal agent.
 
             assert self.movangle >= m.radians(0) and self.movangle < m.radians(360), "Enter movement angle between 0 and 360 degrees"
-            assert self.IPI > self.tres, 'Inter-pulse interval must be larger than the time resolution'            
+            #assert self.IPI > self.tres, 'Inter-pulse interval must be larger than the time resolution'            
             
         def Movement(self):
             
@@ -315,107 +315,103 @@ INTER_PULSE_INTERVAL = 0.05
 ALPHA = -1.7 # db/m absorption at particular frequency 
 SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm 
 HEARING_THRESHOLD = -10 #hearing threshold in dB SPL 
-MAXIMUM_HEARING_DISTANCE = minimize(Min_hear, x0 = range(30,100), args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))
+MAXIMUM_HEARING_DISTANCE = float(minimize(Min_hear, x0 = 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x'])
 
 rd.seed(96) # initialize the basic random number generator.
 
 # Set the simulation environment with Launcher, according to the given parameters 
 # and store it into an object called env.
 
-def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
+
+## -- running one instance of the simulation and getting data outputs :
+
+currdir='C:\\Users\\tbeleyur\\Desktop\\Res'
+
+os.chdir(currdir) # change working directory
+
+
+#def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
     
-    env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION)
-    env.Square_lattice(CORNER_INDIVIDUAL_POSITION, IID_ON_AXE, N_EDGE)
+env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION)
+env.Square_lattice(CORNER_INDIVIDUAL_POSITION, IID_ON_AXE, N_EDGE)
 
-    allbats = {}
-    # Create an empty dictionary for every bat instance to be stored
+allbats = {}
+# Create an empty dictionary for every bat instance to be stored
 
-    # Set the agents with Bat_Jamming_00, according to the given parameters.
+# Set the agents with Bat_Jamming_00, according to the given parameters.
+
+for ID in env.allID:
+
+    allbats[int(ID)] = env.Bat_Jamming_00(ID, MOVEMENT_ANGLE,FLIGHT_SPEED,INTER_PULSE_INTERVAL, MAXIMUM_HEARING_DISTANCE, CALL_DURATION)
+    # store all instances of the class Bat_Jamming_00 within the bat population
+    allbats[int(ID)].x = env.allinitpos[int(ID)][0]
+    # initial x coordinate for each instance, taken from env
+    allbats[int(ID)].xhistory = [allbats[int(ID)].x]
+    # store it in xhistory
+    allbats[int(ID)].y = env.allinitpos[int(ID)][1]
+    # initial y coordinate for each instance, taken from env
+    allbats[int(ID)].yhistory = [allbats[int(ID)].x]
+    # store it in yhistory
+    allbats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
+    # create an empty list to store records of call times
+
+    fig, ax = plt.subplots()
+    # create the figure where rings of sound will be drawn & bats positions will be plotted
+    colorpanel = plt.get_cmap('nipy_spectral')
+    # select a color panel to differentiate individuals
+
+# Run the simulation of the individual based model, & store the results in allbats 
+
+for timestep in range(env.simduration):
+    
+    for ID in env.allID:
+    
+        allbats[int(ID)].timestep = int(timestep)
+        # current time step for each instance
+        allbats[int(ID)].Calling()
+        # make the instance call
+    
+        if ID in env.callsources.keys():
+    
+            for n in env.callsources[int(ID)].keys():
+        
+                xcallcentre = env.callsources[int(ID)][n]['xsource']
+                ycallcentre = env.callsources[int(ID)][n]['ysource']
+                beamradius = env.callsources[int(ID)][n]['propdist']
+                ringout = plt.Circle([xcallcentre,ycallcentre], beamradius, color = colorpanel(ID*100), fill = False)
+                ax.add_artist(ringout)
+                # plot the corresponding ring of sound
+        
+    for ID in env.allID:
+    
+        allbats[int(ID)].timestep = int(timestep)
+        # current time step for each instance
+        allbats[int(ID)].Hearing()
+        # make the instance hear
 
     for ID in env.allID:
     
-        allbats[int(ID)] = env.Bat_Jamming_00(ID, MOVEMENT_ANGLE,FLIGHT_SPEED,INTER_PULSE_INTERVAL, MAXIMUM_HEARING_DISTANCE, CALL_DURATION)
-        # store all instances of the class Bat_Jamming_00 within the bat population
-        allbats[int(ID)].x = env.allinitpos[int(ID)][0]
-        # initial x coordinate for each instance, taken from env
-        allbats[int(ID)].xhistory = [allbats[int(ID)].x]
-        # store it in xhistory
-        allbats[int(ID)].y = env.allinitpos[int(ID)][1]
-        # initial y coordinate for each instance, taken from env
-        allbats[int(ID)].yhistory = [allbats[int(ID)].x]
-        # store it in yhistory
-        allbats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
-        # create an empty list to store records of call times
-    
-        fig, ax = plt.subplots()
-        # create the figure where rings of sound will be drawn & bats positions will be plotted
-        colorpanel = plt.get_cmap('nipy_spectral')
-        # select a color panel to differentiate individuals
+        allbats[int(ID)].timestep = int(timestep)
+        # current time step for each instance
+        allbats[int(ID)].Movement()
+        # make the instance move
+        positions = plt.plot(allbats[int(ID)].xhistory, allbats[int(ID)].yhistory, color = colorpanel(ID*100), marker = '^')
+        ax.add_artist(positions[0])
+        # plot all instances movements over time
 
-    # Run the simulation of the individual based model, & store the results in allbats 
+ax.set_xlim(-1,15)
+# set the x-limit of the figure
+ax.set_ylim(-1,15)
+# set the y-limit of the figure
+fig.savefig('plot_bats_rings.pdf')
+# save the figure
+plt.close()
+# close the figure
 
-    for timestep in range(env.simduration):
-        
-        for ID in env.allID:
-        
-            allbats[int(ID)].timestep = int(timestep)
-            # current time step for each instance
-            allbats[int(ID)].Calling()
-            # make the instance call
-        
-            if ID in env.callsources.keys():
-        
-                for n in env.callsources[int(ID)].keys():
-            
-                    xcallcentre = env.callsources[int(ID)][n]['xsource']
-                    ycallcentre = env.callsources[int(ID)][n]['ysource']
-                    beamradius = env.callsources[int(ID)][n]['propdist']
-                    ringout = plt.Circle([xcallcentre,ycallcentre], beamradius, color = colorpanel(ID*100), fill = False)
-                    ax.add_artist(ringout)
-                    # plot the corresponding ring of sound
-            
-        for ID in env.allID:
-        
-            allbats[int(ID)].timestep = int(timestep)
-            # current time step for each instance
-            allbats[int(ID)].Hearing()
-            # make the instance hear
-    
-        for ID in env.allID:
-        
-            allbats[int(ID)].timestep = int(timestep)
-            # current time step for each instance
-            allbats[int(ID)].Movement()
-            # make the instance move
-            positions = plt.plot(allbats[int(ID)].xhistory, allbats[int(ID)].yhistory, color = colorpanel(ID*100), marker = '^')
-            ax.add_artist(positions[0])
-            # plot all instances movements over time
 
-    ax.set_xlim(-1,15)
-    # set the x-limit of the figure
-    ax.set_ylim(-1,15)
-    # set the y-limit of the figure
-    fig.savefig('D:\Bat_Project\Res\plot_bats_rings.pdf')
-    # save the figure
-    plt.close()
-    # close the figure
 
-    for ID in env.allID:
-    
-        allbats[ID].xhistory = np.delete(allbats[ID].xhistory, 0)
-        # remove initial x positions, which were use din the algorithm but are 
-        # not integrated into movement
-        allbats[ID].yhistory = np.delete(allbats[ID].yhistory, 0)
-        # remove initial y positions, which were used in the algorithm but are 
-        # not integrated into movement
-
-    ### EXPORTING DATA ###
-
-    filenamesH = []
-    filenamesM = []
-    
-    dirname = "D:\Bat_Project\Res\ipi%s_nedge%s_iidaxe%s" % (str(INTER_PULSE_INTERVAL), str(N_EDGE), str(IID_ON_AXE))
-    
+# function which makes a directory if it doesn't already exist
+def dirmaker(dirname):
     if not os.path.exists(dirname):
         try:
             os.makedirs(dirname)
@@ -423,53 +419,72 @@ def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
             if exc.errno != errno.EEXIST:
                 raise
 
-    for ID in env.allID:
-    
-        tmstp = allbats[ID].hearhistory_t
-        tcall = allbats[ID].hearhistory_c
-        idbat = allbats[ID].hearhistory_i
-        allbats[ID].hearhistory = {'t': tmstp, 'c': tcall, 'i': idbat}
-    
-        xtrack = allbats[ID].xhistory
-        ytrack = allbats[ID].yhistory
-        allbats[ID].movhistory = {'x': xtrack, 'y': ytrack}
-    
-        for data_type in allbats[ID].hearhistory.keys():
-            filenamesH.append('%s\Hearing\%s_hearhistory_%s.txt' % (dirname, str(ID), data_type))
-    
-        for coordinate in allbats[ID].movhistory.keys():
-            filenamesM.append('%s\Moving\%s_movhistory_%s.txt' % (dirname, str(ID), coordinate))
-        
-        with open('%s\Calling\%s_callshistory.txt' % (dirname, ID), 'w') as fp3:
-            for value in allbats[ID].callshistory:
-                fp3.writelines('%s\n' % value[0])
-        fp3.close()
+# creating the necessary directories where data will be saved
+dirname = "ipi%s_nedge%s_iidaxe%s" % (str(INTER_PULSE_INTERVAL), str(N_EDGE), str(IID_ON_AXE))
+dirmaker(dirname)
+dirmaker(os.path.join(dirname,'Moving'))
+dirmaker(os.path.join(dirname,'Calling'))
+dirmaker(os.path.join(dirname,'Hearing'))
 
-    for fname in filenamesH:
-        with open('%s' % fname, 'w') as fp1:
-            end_id = [n for n in xrange(len(fname)) if fname.find('_', n) == n][1]
-            for value in allbats[int(fname[27:end_id])].hearhistory[fname[-5]]:
-                fp1.writelines('%s\n' % value)
-        fp1.close()
 
-        
-    for fname in filenamesM:
-        with open('%s' % fname, 'w') as fp2:
-            end_id = [n for n in xrange(len(fname)) if fname.find('_', n) == n][1]
-            for value in allbats[int(fname[26:end_id])].movhistory[fname[-5]]:
-                fp2.writelines('%s\n' % value)
-        fp2.close()
-        
-allipi = [x / 1000.0 for x in range(0, 500, 10)]
-allnedge = range(2,10,1)
-alliidaxe = range(1,20,2)
-parprod = itertools.product(allipi,allnedge,alliidaxe)
 
-for parcomb in parprod:
+
+for ID in env.allID:
+
+    allbats[ID].xhistory = np.delete(allbats[ID].xhistory, 0)
+    # remove initial x positions, which were use din the algorithm but are 
+    # not integrated into movement
+    allbats[ID].yhistory = np.delete(allbats[ID].yhistory, 0)
+    # remove initial y positions, which were used in the algorithm but are 
+    # not integrated into movement
+
+
+
+
+
+    ### EXPORTING DATA ###
+
+    filenamesH = []
+    filenamesM = []
     
-    interpulseinterval = parcomb[0]
-    nedge = parcomb[1]
-    iidonaxe = parcomb[2]
+    
 
-    Sim_run(interpulseinterval, nedge, iidonaxe)
+for ID in env.allID:
+
+    tmstp = allbats[ID].hearhistory_t
+    tcall = allbats[ID].hearhistory_c
+    idbat = allbats[ID].hearhistory_i
+    allbats[ID].hearhistory = {'t': tmstp, 'c': tcall, 'i': idbat}
+
+    xtrack = allbats[ID].xhistory
+    ytrack = allbats[ID].yhistory
+    allbats[ID].movhistory = {'x': xtrack, 'y': ytrack}
+
+    for data_type in allbats[ID].hearhistory.keys():
+        filenamesH.append('%s\Hearing\%s_hearhistory_%s.txt' % (dirname, str(ID), data_type))
+
+    for coordinate in allbats[ID].movhistory.keys():
+        filenamesM.append('%s\Moving\%s_movhistory_%s.txt' % (dirname, str(ID), coordinate))
+    
+    with open('%s\Calling\%s_callshistory.txt' % (dirname, ID), 'w') as fp3:
+        for value in allbats[ID].callshistory:
+            fp3.writelines('%s\n' % value[0])
+    fp3.close()
+
+for fname in filenamesH:
+    with open('%s' % fname, 'w') as fp1:
+        end_id = [n for n in xrange(len(fname)) if fname.find('_', n) == n][1]
+        for value in allbats[int(fname[27:end_id])].hearhistory[fname[-5]]:
+            fp1.writelines('%s\n' % value)
+    fp1.close()
+
+    
+for fname in filenamesM:
+    with open('%s' % fname, 'w') as fp2:
+        end_id = [n for n in xrange(len(fname)) if fname.find('_', n) == n][1]
+        for value in allbats[int(fname[26:end_id])].movhistory[fname[-5]]:
+            fp2.writelines('%s\n' % value)
+    fp2.close()
+    
+
     
