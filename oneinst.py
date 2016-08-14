@@ -53,7 +53,7 @@ import csv
  # PCOMB = [N_EDGE ,TIME_RESOLUTION, SIMULATION_DURATION, CORNER_INDIVIDUAL_POSITION, IID_ON_AXE,MOVEMENT_ANGLE,FLIGHT_SPEED,CALL_DURATION,INTER_PULSE_INTERVAL, HEARING_THRESHOLD,SOURCE_LEVEL,ALPHA]
   
 #eg. param combi: pcomb=[3,0.001,30,[1,1],2,0,5,0.003,0.080,-10,120,-1.7]
-# tgtdir= 'C:\\Users\\tbeleyur\\Desktop\\test_folder\\sub_test_folder'
+# tgtdir= 'C:\\Users\\tbeleyur\\Desktop\\test_folder\\Rep0'
   
   
   
@@ -436,12 +436,14 @@ def onerun(currdir,PCOMB):
     # save the figure
     plt.close()
     # close the figure
-    
-    
-   
+  
     
     # creating the necessary directories where data will be saved
-    dirname = "ipi%s_nedge%s_iidaxe%s" % (str(INTER_PULSE_INTERVAL), str(N_EDGE), str(IID_ON_AXE))
+    
+    dirname = "ipi%s_nedge%s_iidaxe%s_calldurn%s_speed%s" % (str(INTER_PULSE_INTERVAL), str(N_EDGE), str(IID_ON_AXE),str(CALL_DURATION),str(FLIGHT_SPEED))
+    
+    
+    
     dirmaker(dirname)
     dirmaker(os.path.join(dirname,'Moving'))
     dirmaker(os.path.join(dirname,'Calling'))
