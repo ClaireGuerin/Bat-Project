@@ -15,6 +15,7 @@ import itertools as it
 from scipy.optimize import minimize
 import itertools
 import os, errno
+import csv 
 
 # function to run one instance of sensory jamming simulation
 # inputs: target directory where results will be created, parameter values to initiate simulation
@@ -51,8 +52,8 @@ import os, errno
  # the format of PCOMB is a list as follows :   
  # PCOMB = [N_EDGE ,TIME_RESOLUTION, SIMULATION_DURATION, CORNER_INDIVIDUAL_POSITION, IID_ON_AXE,MOVEMENT_ANGLE,FLIGHT_SPEED,CALL_DURATION,INTER_PULSE_INTERVAL, HEARING_THRESHOLD,SOURCE_LEVEL,ALPHA]
   
-#eg. param combi: pcomb=[3,0.001,30,[1,1],2,0,5,0.003,0.070,-10,120,-1.7]
-# tgtdir= 'C:\\Users\\tbeleyur\\Desktop\\test_folder'
+#eg. param combi: pcomb=[3,0.001,30,[1,1],2,0,5,0.003,0.080,-10,120,-1.7]
+# tgtdir= 'C:\\Users\\tbeleyur\\Desktop\\test_folder\\sub_test_folder'
   
   
   
@@ -533,7 +534,15 @@ def onerun(currdir,PCOMB):
                 
         fp2.close()
         
-    # writing the parameter combinations used in this instance into a separate file within the folder :
-        #PARAMCOMBI.write()
+    # writing the parameter combinations used in this instance into a csv file in the current folder:
+    
+    csvfile = "parameter_set.csv"
+    
+    #Assuming res is a flat list
+    with open(csvfile, "w") as output:
+        writer = csv.writer(output, lineterminator='\n')
+        for val in PCOMB:
+            writer.writerow([val])  
+      
 
     
