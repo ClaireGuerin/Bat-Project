@@ -2,7 +2,7 @@
 """
 Created on Sat Aug 13 18:07:20 2016
 
-@author: tbeleyur
+@author: Claire & tbeleyur
 """
 
 
@@ -15,12 +15,48 @@ import itertools as it
 from scipy.optimize import minimize
 import itertools
 import os, errno
-    
-def onerun(currdir):
-# %reset
-# Reset the console and clear it from all previous variables that might have 
-# been stored. Type 'y' to confirm resetting.
 
+# function to run one instance of sensory jamming simulation
+# inputs: target directory where results will be created, parameter values to initiate simulation
+# outputs: output files and folders + one pdf plot
+
+     ###----------PARAMETERS----------###
+    ### to be determined / chosen beforehand
+    
+    ### GENERAL ### 
+    
+    ### N_SIDE: integer. the number of bats per side in a square lattice - the total population size will be N_SIDE^2
+    ### TIME_RESOLUTION: float. Time resolution, i.e time (in s) represented over 1 iteration
+    ###     simulation time step.allows to keep a sensible ratio between time in
+    ###     in seconds & time in time steps in the simulation.
+    ###     Time (in s) = TIME_RESOLUTION * time (in simulation time steps).
+    ### SIMULATION_DURATION: integer. duration of the simulation, i.e. number of iterations
+    ###     over which the simulation must be ran.
+    ### CORNER_INDIVIDUAL_POSITION : 1x2 list with float numbers, the 'corner' position from which the rest of the lattice is built
+    ### IID_ON_AXE : float, inter individual distance on the axis 
+    
+    ### INDIVIDUAL ###
+    
+    ### MOVEMENT_ANGLE: float. Angle (in degrees), between the x-axis and the 
+    ###     direction of the movement of the agent. 
+    ###     Only values between 0 & 360°C are accepted.
+    ### FLIGHT_SPEED: float. Flight speed (m/s) of the agent.
+    ### CALL_DURATION: float. length of call, in seconds
+    ### INTER_PULSE_INTERVAL: Inter-pulse interval of the agent, i.e. time interval 
+    ###     between each call initiated.
+    ### HEARING_THRESHOLD: lowest sound pressure level a bat can hear (dB SPL)
+    ### SOURCE_LEVEL : the sound pressure level of a bat call (dB SPL @ 10cm)
+    ### ALPHA : atmospheric absorption of sound at the call frequencies
+
+ # the format of PCOMB is a list as follows :   
+ # PCOMB = [N_EDGE ,TIME_RESOLUTION, SIMULATION_DURATION, CORNER_INDIVIDUAL_POSITION, IID_ON_AXE,MOVEMENT_ANGLE,FLIGHT_SPEED,CALL_DURATION,INTER_PULSE_INTERVAL, HEARING_THRESHOLD,SOURCE_LEVEL,ALPHA]
+  
+#eg. param combi: pcomb=[3,0.001,30,[1,1],2,0,5,0.003,0.070,-10,120,-1.7]
+# tgtdir= 'C:\\Users\\tbeleyur\\Desktop\\test_folder'
+  
+  
+  
+def onerun(currdir,PCOMB):
     
     
     class Launcher:
@@ -275,51 +311,29 @@ def onerun(currdir):
     ### SIMULATIONS ###      
     ### Run a multi-agents simulation and plot agents' movements.
     
-    ###----------PARAMETERS----------###
-    ### to be determined / chosen beforehand
+    # PCOMB = [N_EDGE ,TIME_RESOLUTION, SIMULATION_DURATION, CORNER_INDIVIDUAL_POSITION, IID_ON_AXE,MOVEMENT_ANGLE,FLIGHT_SPEED,CALL_DURATION,INTER_PULSE_INTERVAL, HEARING_THRESHOLD,SOURCE_LEVEL,ALPHA]
+
+   
+    N_EDGE = PCOMB[0]
     
-    ### GENERAL ### 
+    TIME_RESOLUTION = PCOMB[1]
+    SIMULATION_DURATION = PCOMB[2]
     
-    ### POPULATION_SIZE: integer. Size of the population of bats you want to simulate
-    ### INITIAL_POSITIONS: numpy array, dimensions 2 * population size. Contains the
-    ###     initial x and y coordinates of each agent in the population, in meters (m).
-    ### BOX_SIZE: list of 2 float elements. Space within which the bats are moving,
-    ###     in meters (m).
-    ### TIME_RESOLUTION: float. Time resolution, i.e time (in s) represented over 1 
-    ###     simulation time step.allows to keep a sensible ratio between time in
-    ###     in seconds & time in time steps in the simulation.
-    ###     Time (in s) = TIME_RESOLUTION * time (in simulation time steps).
-    ### SIMULATION_DURATION: duration of the simulation, i.e. number of iterations
-    ###     over which the simulation must be ran.
+    CORNER_INDIVIDUAL_POSITION = PCOMB[3]
+    IID_ON_AXE = PCOMB[4]
     
-    ### INDIVIDUAL ###
     
-    ### MOVEMENT_ANGLE: float. Angle (in degrees), between the x-axis and the 
-    ###     direction of the movement of the agent. 
-    ###     Only values between 0 & 360°C are accepted.
-    ### FLIGHT_SPEED: float. Flight speed (m/s) of the agent. 
-    ###     5.5 m/s corresponds to a slow bat (Hayward & Davis (1964), Winter (1999)).
-    ### INTER_PULSE_INTERVAL: Inter-pulse interval of the agent, i.e. time interval 
-    ###     between each call initiated.
-    ### DUTY_CYCLE = float. Duty cycle of the agent (ratio IPI:call duration).
-    ### MAXIMUM_HEARING_DISTANCE: float. Maximum distance (m) at which a sound can be
-    ###     heard by the agent (depending on the intensity threshold)
+    MOVEMENT_ANGLE = PCOMB[5]
+    FLIGHT_SPEED = PCOMB[6] 
+    CALL_DURATION = PCOMB[7]
+    INTER_PULSE_INTERVAL = PCOMB[8]
+    HEARING_THRESHOLD = PCOMB[9]  
+    SOURCE_LEVEL = PCOMB[10] 
+    ALPHA = PCOMB[11] 
     
-    TIME_RESOLUTION = 0.002 
-    SIMULATION_DURATION = 30
     
-    CORNER_INDIVIDUAL_POSITION = [1,1]
-    IID_ON_AXE = 2
-    N_EDGE = 3
     
-    MOVEMENT_ANGLE = 0
-    FLIGHT_SPEED = 5.5   
-    #DUTY_CYCLE = 0.1228
-    CALL_DURATION = 0.007
-    INTER_PULSE_INTERVAL = 0.05
-    ALPHA = -1.7 # db/m absorption at particular frequency 
-    SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm 
-    HEARING_THRESHOLD = -10 #hearing threshold in dB SPL 
+    
     MAXIMUM_HEARING_DISTANCE = float(minimize(Min_hear, x0 = 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x'])
     
     rd.seed(96) # initialize the basic random number generator.
@@ -330,11 +344,19 @@ def onerun(currdir):
     
     ## -- running one instance of the simulation and getting data outputs :
     
-    # PLEASE CREATE A DIRECTORY CALLED 'RES' IN ANY DESIRED LOCATION AND PASTE THE ADDRESS (' C:\\_____\\.......\\Res')
     
-    #currdir='C:\\Users\\tbeleyur\\Desktop\\Res'
+     
+    # function which makes a directory if it doesn't already exist
+    def dirmaker(dirname):
+        if not os.path.exists(dirname):
+            try:
+                os.makedirs(dirname)
+            except OSError as exc: # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise    
     
-    os.chdir(currdir) # change working directory
+    dirmaker(currdir) # create the target directory 
+    os.chdir(currdir) # change to working directory
     
     
         
@@ -415,15 +437,7 @@ def onerun(currdir):
     # close the figure
     
     
-    
-    # function which makes a directory if it doesn't already exist
-    def dirmaker(dirname):
-        if not os.path.exists(dirname):
-            try:
-                os.makedirs(dirname)
-            except OSError as exc: # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
+   
     
     # creating the necessary directories where data will be saved
     dirname = "ipi%s_nedge%s_iidaxe%s" % (str(INTER_PULSE_INTERVAL), str(N_EDGE), str(IID_ON_AXE))
@@ -519,5 +533,7 @@ def onerun(currdir):
                 
         fp2.close()
         
+    # writing the parameter combinations used in this instance into a separate file within the folder :
+        #PARAMCOMBI.write()
 
     
