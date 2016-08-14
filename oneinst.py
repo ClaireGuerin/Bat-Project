@@ -538,7 +538,7 @@ def onerun(currdir,PCOMB):
         
     # writing the parameter combinations used in this instance into a csv file in the current folder:
     
-    csvfile = "parameter_set.csv"
+    csvfile = os.path.join(dirname,"parameter_set.csv")
     
     #Assuming res is a flat list
     with open(csvfile, "w") as output:
