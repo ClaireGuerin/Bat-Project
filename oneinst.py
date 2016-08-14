@@ -19,7 +19,7 @@ import csv
 
 # function to run one instance of sensory jamming simulation
 # inputs: target directory where results will be created, parameter values to initiate simulation
-# outputs: output files and folders + one pdf plot
+# outputs: output files and folders 
 
      ###----------PARAMETERS----------###
     ### to be determined / chosen beforehand
@@ -384,9 +384,9 @@ def onerun(currdir,PCOMB):
         allbats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
         # create an empty list to store records of call times
     
-        fig, ax = plt.subplots()
+        #fig, ax = plt.subplots()
         # create the figure where rings of sound will be drawn & bats positions will be plotted
-        colorpanel = plt.get_cmap('nipy_spectral')
+        #colorpanel = plt.get_cmap('nipy_spectral')
         # select a color panel to differentiate individuals
     
     # Run the simulation of the individual based model, & store the results in allbats 
@@ -407,8 +407,8 @@ def onerun(currdir,PCOMB):
                     xcallcentre = env.callsources[int(ID)][n]['xsource']
                     ycallcentre = env.callsources[int(ID)][n]['ysource']
                     beamradius = env.callsources[int(ID)][n]['propdist']
-                    ringout = plt.Circle([xcallcentre,ycallcentre], beamradius, color = colorpanel(ID*100), fill = False)
-                    ax.add_artist(ringout)
+                    #ringout = plt.Circle([xcallcentre,ycallcentre], beamradius, color = colorpanel(ID*100), fill = False)
+                    #ax.add_artist(ringout)
                     # plot the corresponding ring of sound
             
         for ID in env.allID:
@@ -424,17 +424,18 @@ def onerun(currdir,PCOMB):
             # current time step for each instance
             allbats[int(ID)].Movement()
             # make the instance move
-            positions = plt.plot(allbats[int(ID)].xhistory, allbats[int(ID)].yhistory, color = colorpanel(ID*100), marker = '^')
-            ax.add_artist(positions[0])
-            # plot all instances movements over time
+         
+#            positions = plt.plot(allbats[int(ID)].xhistory, allbats[int(ID)].yhistory, color = colorpanel(ID*100), marker = '^')
+#            ax.add_artist(positions[0])
+#            # plot all instances movements over time
     
-    ax.set_xlim(-1,15)
+    #ax.set_xlim(-1,15)
     # set the x-limit of the figure
-    ax.set_ylim(-1,15)
+    #ax.set_ylim(-1,15)
     # set the y-limit of the figure
-    fig.savefig('plot_bats_rings.pdf')
+    #fig.savefig('plot_bats_rings.pdf')
     # save the figure
-    plt.close()
+    #plt.close()
     # close the figure
   
     
