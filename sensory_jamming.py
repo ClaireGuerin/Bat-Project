@@ -300,18 +300,18 @@ def Min_hear(param,alpha,sourcelevel, hth):
 ### MAXIMUM_HEARING_DISTANCE: float. Maximum distance (m) at which a sound can be
 ###     heard by the agent (depending on the intensity threshold)
 
-TIME_RESOLUTION = 0.002 
-SIMULATION_DURATION = 30
+TIME_RESOLUTION = 0.001 
+SIMULATION_DURATION = 50
 
 CORNER_INDIVIDUAL_POSITION = [1,1]
 IID_ON_AXE = 2
-N_EDGE = 4
+N_EDGE = 3
 
 MOVEMENT_ANGLE = 0
 FLIGHT_SPEED = 5.5   
 #DUTY_CYCLE = 0.1228
 CALL_DURATION = 0.007
-INTER_PULSE_INTERVAL = 0.05
+INTER_PULSE_INTERVAL = 0.010
 ALPHA = -1.7 # db/m absorption at particular frequency 
 SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm 
 HEARING_THRESHOLD = -10 #hearing threshold in dB SPL 
@@ -332,7 +332,6 @@ currdir='C:\\Users\\tbeleyur\\Desktop\\Res'
 os.chdir(currdir) # change working directory
 
 
-#def Sim_run(INTER_PULSE_INTERVAL, N_EDGE,IID_ON_AXE):
     
 env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION)
 env.Square_lattice(CORNER_INDIVIDUAL_POSITION, IID_ON_AXE, N_EDGE)
