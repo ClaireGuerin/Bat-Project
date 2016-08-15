@@ -66,7 +66,8 @@ class Launcher:
             # agent flies. Value between 2*pi and pi, as asserted below.            
             self.stepsize = float(flightspeed * self.tres) 
             # float. Distance in meters covered by the agent in 1 time step
-            self.callduration = callduration
+            #self.callduration = callduration
+            self.callduration= np.around(float(callduration/ env.tres), 0)
             # float. Duration (in s) of each call. 
             #self.IPI = np.around(float((self.callduration/dutycycle - self.callduration) / env.tres),0)
             self.IPI = np.around(float(IPI / env.tres), 0)
@@ -121,7 +122,8 @@ class Launcher:
             
             if self.calltest%1 == 0:
             # if the theoretical number of calls since the 1st call is a 
-            # natural number:
+            # divisible by the call cycle duration
+            
                 self.callshistory[int(self.timestep)] = 1
                 # account for the initiation of a new call at this time step 
                 # by adding a 1 in the calls' history.
@@ -301,7 +303,7 @@ def Min_hear(param,alpha,sourcelevel, hth):
 ###     heard by the agent (depending on the intensity threshold)
 
 TIME_RESOLUTION = 0.001 
-SIMULATION_DURATION = 50
+SIMULATION_DURATION =20
 
 CORNER_INDIVIDUAL_POSITION = [1,1]
 IID_ON_AXE = 2
@@ -310,7 +312,7 @@ N_EDGE = 3
 MOVEMENT_ANGLE = 0
 FLIGHT_SPEED = 5.5   
 #DUTY_CYCLE = 0.1228
-CALL_DURATION = 0.007
+CALL_DURATION = 0.002
 INTER_PULSE_INTERVAL = 0.010
 ALPHA = -1.7 # db/m absorption at particular frequency 
 SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm 
@@ -371,6 +373,7 @@ for timestep in range(env.simduration):
         # current time step for each instance
         allbats[int(ID)].Calling()
         # make the instance call
+        print(timestep)
     
         if ID in env.callsources.keys():
     
