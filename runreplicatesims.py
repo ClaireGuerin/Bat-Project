@@ -18,11 +18,11 @@ import numpy as np
 # replicate numbered folder (Res#repnum)
 
 #the target folder that you want all the results to be stored in : (folder doesn't need to exist ! ) 
-Results_dir='C:\\Users\\tbeleyur\\Desktop\\final_results_TEST_wnewdurn'
+Results_dir='D:\\Bat_Project\\Res'
 
 
 # import the script ('oneinst.py') which runs one single instance of the simulation : 
-modulelocn='C:\\Users\\tbeleyur\\Google Drive\\Holger Goerlitz- IMPRS\\PHD_2015\\projects and analyses\\2016_jamming response modelling\\Coding\\Thejasvi codes and comments\\Bat-Project'
+modulelocn='C:\\Users\\Claire\\Documents\\GitHub\\Bat-Project'
 
 sys.path.append ( modulelocn ) # add the location of the module to the search path of python 
 from oneinst import onerun  # import the one function from the module 

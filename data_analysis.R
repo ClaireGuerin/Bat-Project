@@ -11,18 +11,22 @@
 rm(list = ls())
 # clear current workspace
 
-all_ipi = seq(0,1,0.01)
-all_nedge = seq(2,10,1)
-all_iidonaxe = seq(1,10,1)
-all_comb = expand.grid(all_ipi,all_nedge,all_iidonaxe)
-colnames(all_comb) = c("all_ipi","all_nedge","all_iidonaxe")
+library(IRanges)
+library(Hmisc)
 
-for (comb in 1:dim(all_comb)[1]){
+resDir = "D:/Bat_Project/Res/"
+setwd(resDir)
+resFiles = dir(resDir, pattern="Res")
 
-comb = paste(all_comb[comb,1],all_comb[comb,2],all_comb[comb,3]) # ipi_nedge_iidonaxe
+for (file in resFiles){
 
-setwd(paste("D:/Bat_Project/Res/",comb, sep=""))
-# Change this to the directory where the specific results that you want
+resNum = file
+combFolders = dir(resNum)
+
+for (comb in combFolders){
+
+newDir = paste(resDir,resNum,"/",comb, sep="")
+# directory where the specific results that you want
 # to extract are stored. Should be a folder containing 3 sub-folders:
 # Calling, Moving, Hearing, with the corresponding data
 
@@ -32,17 +36,18 @@ setwd(paste("D:/Bat_Project/Res/",comb, sep=""))
 # are not entered accordingly to the simulation parameters
 # corresponding to the data, the script will not work.
 
-SIMDURATION <- 30 # duration of the simulation iterations
-TIMERESOLUTION <- 0.002 # time resolution, in seconds per iteration
-FLIGHTSPEED <- 5.5 # speed of flight of the bats, in m/s
-VSOUND <- 340.29 # m/s
-TETA <- 0 # bat movement angle, in radians
-SOURCELEVEL <- 120 # source level of the bat's call in dB SPL at 10 cm
-HEARINGTHRESHOLD <- 0 # hearing threshold of the bat in dB SPL
-ALPHA <- -1.7 # sound absorbtion rate at particular frequency in db/m  
+param = read.csv(paste(newDir,"/","parameter_set.csv",sep=""), header = F)
+
+SIMDURATION <- as.numeric(as.character(param[3,1])) # duration of the simulation iterations
+TIMERESOLUTION <- as.numeric(as.character(param[2,1])) # time resolution, in seconds per iteration
+FLIGHTSPEED <- as.numeric(as.character(param[7,1])) # speed of flight of the bats, in m/s
+VSOUND <- as.numeric(as.character(param[13,1])) # m/s
+TETA <- as.numeric(as.character(param[6,1])) # bat movement angle, in radians
+SOURCELEVEL <- as.numeric(as.character(param[11,1])) # source level of the bat's call in dB SPL at 10 cm
+HEARINGTHRESHOLD <- as.numeric(as.character(param[10,1])) # hearing threshold of the bat in dB SPL
+ALPHA <- as.numeric(as.character(param[12,1])) # sound absorbtion rate at particular frequency in db/m  
 
 #---------- End of SIMULATION PARAMETERS ----------#
-
 
 #---------- DATA IMPORT & RESHAPE ----------#
 # This section imports the data from the simulation 
@@ -51,7 +56,7 @@ ALPHA <- -1.7 # sound absorbtion rate at particular frequency in db/m
 
 ### CALLING ###
 
-C.path = "Calling/" # set path to the Calling folder.
+C.path = paste(newDir,"/","Calling/",sep="") # set path to the Calling folder.
 C.fileNames = dir(C.path, pattern =".txt") 
 # names of all files in the folder in alphabetical order, 
 # i.e.: file names are ordered in IDs ascending order.
@@ -69,7 +74,7 @@ for (i in 1:length(C.fileNames)){
 
 ### MOVING ###
 
-M.path = "Moving/" # set path to the Moving folder.
+M.path = paste(newDir,"/","Moving/",sep="") # set path to the Moving folder.
 M.fileNames = dir(M.path, pattern =".txt") 
 # names of all files in the folder in alphabetical order, 
 # i.e.: file names are ordered in IDs ascending order, with
@@ -91,7 +96,7 @@ for (i in id_M){
 
 ### HEARING ###
 
-H.path = "Hearing/" # set path to the Hearing folder.
+H.path = paste(newDir,"/","Hearing/",sep="") # set path to the Hearing folder.
 H.fileNames = dir(H.path, pattern =".txt")
 # names of all files in the folder in alphabetical order, 
 # i.e.: file names are ordered in IDs ascending order, with
@@ -180,7 +185,7 @@ R.dist = function(expl.t){
 Hear.echo = function(preCDist,postCDist, SL, hearTh){
 	batRadius = 0.1 # bat simplified as a sphere of 10 cm radius
 	batTS = 20*log10(batRadius/2) # target strength of the bat 
-	SL_1m = SL - abs(20*log10(0.1/1)) # Sound Level calculated at 1 m 
+	SL_1m = SL - abs(20*log10(0.1/1)) # Source level calculated at 1 m 
 
 	### ONEWAYSPL FUN ###
 	# Function which calculates the Sound Pressure Level of a sound as it travels a 'one-way' route in a strait line of length R 
@@ -298,8 +303,6 @@ for (i in 0:(dim(cal)[2]-1)){
 # rendering it impossible for the agent to hear it 
 # NB: Filter applied to both calls & echoes 
 
-library(IRanges)
-
 npop = 0:(dim(cal)[2]-1)
 
 ECoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 7)
@@ -308,23 +311,7 @@ colnames(ECoverlapMat)=c("ID","meanNumOv","sdNumOv","meanTimeOv","sdTimeOv","num
 
 EEoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 7)
 EEoverlapMat[,1] = npop
-colnames(EEoverlapMat)=colnames(ECoverlapMat)
-
-Self.overlaps = function(irobject){
-	newirobject = irobject	
-	
-	while (length(newirobject)>1){
-		alloverlaps = findOverlaps(newirobject)		
-		alloverlaps2 = alloverlaps[-which(alloverlaps@from == alloverlaps@to)]
-		alloverlaps3 = alloverlaps2[seq(1, length(alloverlaps2), by = length(newirobject))]
-		newirobject = ranges(alloverlaps3, newirobject, newirobject)
-	}
-	
-	width = newirobject@width
-
-	return(width)
-}
-		
+colnames(EEoverlapMat)=colnames(ECoverlapMat)		
 
 for (i in npop){
 	echo_channel_nofilter = echo[which(echo$id.E == i),] 
@@ -390,8 +377,7 @@ for (i in npop){
 		if (length(indivEC)>0){
 
 			Covrange = ranges(ECOverlaps[indivEC], e.ranges.f, c.ranges.f)
-			widthovC = Covrange@width
-			if (length(Covrange) > 1) widthovC = sum(Covrange@width) - Self.overlaps(Covrange)
+			widthovC = sum(reduce(Covrange)@width)
 			widthECOverlaps[k] = widthovC/e.ranges.f@width[k]
 		
 		}else{
@@ -401,8 +387,7 @@ for (i in npop){
 		if (length(indivEE)>0){	
 			
 			Eovrange = ranges(EEOverlaps[indivEE], e.ranges.f, e.ranges.f)
-		 	widthovE = Eovrange@width
-			if (length(Eovrange) > 1) widthovE = sum(Eovrange@width) - Self.overlaps(Eovrange)
+		 	widthovE = sum(reduce(Eovrange)@width)
 			widthEEOverlaps[k] = widthovE/e.ranges.f@width[k]
 		}else{
 			widthEEOverlaps[k] = 0
@@ -426,11 +411,11 @@ for (i in npop){
 	
 }
 
-subDir <- "Overlap_indices"
+outputFile1 = paste(newDir,"/echo_call_index.csv", sep="")
+outputFile2 = paste(newDir,"/echo_echo_index.csv", sep="")
 
-if (file.exists(subDir) == FALSE) dir.create(file.path(subDir))
+write.csv(ECoverlapMat, file=outputFile1)
+write.csv(EEoverlapMat, file=outputFile2)
 
-write.csv(ECoverlapMat, file=paste(subDir,"echo_call_",comb,".csv", sep=""))
-write.csv(EEoverlapMat, file=paste(subDir,"echo_echo_",comb,".csv", sep=""))
-
+}
 }
