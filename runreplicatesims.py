@@ -6,6 +6,7 @@ Created on Sun Aug 14 12:57:40 2016
 """
 import sys
 import os
+import numpy as np
 # script which runs multiple replicates of many parameter combinations:
 # inputs : 
 # results_dir: folder in which ALL the results will be stored
@@ -17,7 +18,7 @@ import os
 # replicate numbered folder (Res#repnum)
 
 #the target folder that you want all the results to be stored in : (folder doesn't need to exist ! ) 
-Results_dir='C:\\Users\\tbeleyur\\Desktop\\final_results_TEST'
+Results_dir='C:\\Users\\tbeleyur\\Desktop\\final_results_TEST_wnewdurn'
 
 
 # import the script ('oneinst.py') which runs one single instance of the simulation : 
@@ -27,15 +28,38 @@ sys.path.append ( modulelocn ) # add the location of the module to the search pa
 from oneinst import onerun  # import the one function from the module 
 
 
-Nrep=5 # number of replicates to be run per parameter combination
+Nrep=10 # number of replicates to be run per parameter combination
 
 # create the parameter combinations wanted : - right now it is purposefully manual
-pcomb1=[3,0.001,30,[1,1],2,0,5,0.003,0.080,-10,120,-1.7]
-pcomb2=[3,0.001,30,[1,1],2,0,5,0.007,0.080,-10,120,-1.7]
+# PLEASE NOTE : simulation duration IS SET TO 0 ON PURPOSE - the appropriate duration is calculated below
+pcomb1=[3,0.001,0,[1,1],2,0,5,0.003,0.080,-10,120,-1.7,340]
+pcomb2=[3,0.001,0,[1,1],2,0,5,0.007,0.080,-10,120,-1.7,340]
+
+
+
+
+#function which calculates required simulation duration based on the number of call cycles to be studied:
+#inputs:
+# pulse interval (float), call duration (float), number of call cycles (integer),time resolution (float)
+# output: number of iterations the simulation should be run for (integer)
+
+def simdurcalc(PI,calldurn,numcallcycles,timeresn):
+    simdurn=(numcallcycles+1)*(PI+calldurn) # duration of the simulation in seconds - the numcallcycles +1 is to include the bat that calls at the last momen before PI is up
+    simdurn_iters=np.rint(simdurn/timeresn) # duration in integers round off number of iterations to closest integer
+    return (simdurn_iters)
+    
+    
+numcycles=9 # number of call cycles that will simulated for all parameter combinations
 
 
 # combine the parameter combination in a list with sublists
 Param_set=[pcomb1,pcomb2]
+
+#ensure the correct simulation duration is calculated for each parameter combination:
+for pcb in Param_set:
+    pcb[2]=simdurcalc(pcb[8],pcb[7],numcycles,pcb[1]) # reassigning the value for number of iterations to be run
+    
+
 
 
 # begin the replicate simulations for each parameter combinations:
