@@ -48,6 +48,7 @@ import csv
     ### HEARING_THRESHOLD: lowest sound pressure level a bat can hear (dB SPL)
     ### SOURCE_LEVEL : the sound pressure level of a bat call (dB SPL @ 10cm)
     ### ALPHA : atmospheric absorption of sound at the call frequencies
+    ### speed of sound : float. velocity of sound propagation in m/s
 
  # the format of PCOMB is a list as follows :   
  # PCOMB = [N_EDGE ,TIME_RESOLUTION, SIMULATION_DURATION, CORNER_INDIVIDUAL_POSITION, IID_ON_AXE,MOVEMENT_ANGLE,FLIGHT_SPEED,CALL_DURATION,INTER_PULSE_INTERVAL, HEARING_THRESHOLD,SOURCE_LEVEL,ALPHA]
@@ -76,8 +77,8 @@ def onerun(currdir,PCOMB):
             self.callsources = {}
             # empty dictionary. Will contain the sources of each calls, 
             # emitted by every agent throughout the simulation.
-            self.speedsound = 340.29
-            # float. Speed of sound at sea level in m/s.
+            self.speedsound = PCOMB[12]
+            # float. Speed of sound  in m/s.
         
         def Square_lattice(self, lowvertex, axIID, Nedge):
             
