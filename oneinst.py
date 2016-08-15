@@ -51,9 +51,9 @@ import csv
     ### speed of sound : float. velocity of sound propagation in m/s
 
  # the format of PCOMB is a list as follows :   
- # PCOMB = [N_EDGE ,TIME_RESOLUTION, SIMULATION_DURATION, CORNER_INDIVIDUAL_POSITION, IID_ON_AXE,MOVEMENT_ANGLE,FLIGHT_SPEED,CALL_DURATION,INTER_PULSE_INTERVAL, HEARING_THRESHOLD,SOURCE_LEVEL,ALPHA]
+ # PCOMB = [N_EDGE ,TIME_RESOLUTION, SIMULATION_DURATION, CORNER_INDIVIDUAL_POSITION, IID_ON_AXE,MOVEMENT_ANGLE,FLIGHT_SPEED,CALL_DURATION,INTER_PULSE_INTERVAL, HEARING_THRESHOLD,SOURCE_LEVEL,ALPHA,SPEED OF SOUND]
   
-#eg. param combi: pcomb=[3,0.001,30,[1,1],2,0,5,0.003,0.080,-10,120,-1.7]
+#eg. param combi: pcomb=[3,0.001,30,[1,1],2,0,5,0.003,0.080,-10,120,-1.7,340]
 # tgtdir= 'C:\\Users\\tbeleyur\\Desktop\\test_folder\\Rep0'
   
   
@@ -109,9 +109,9 @@ def onerun(currdir,PCOMB):
                 # agent flies. Value between 2*pi and pi, as asserted below.            
                 self.stepsize = float(flightspeed * self.tres) 
                 # float. Distance in meters covered by the agent in 1 time step
-                self.callduration = callduration
-                # float. Duration (in s) of each call. 
-                #self.IPI = np.around(float((self.callduration/dutycycle - self.callduration) / env.tres),0)
+                np.around(float(callduration/ env.tres), 0)
+                # float. Duration (in iterations) of each call. 
+                
                 self.IPI = np.around(float(IPI / env.tres), 0)
                 # integer. Inter-pulse interval of the agent, converted in time steps.
                 self.maxtimestore = float(maxheardist / env.speedsound)
@@ -338,7 +338,6 @@ def onerun(currdir,PCOMB):
     
     MAXIMUM_HEARING_DISTANCE = float(minimize(Min_hear, x0 = 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x'])
     
-    rd.seed(96) # initialize the basic random number generator.
     
     # Set the simulation environment with Launcher, according to the given parameters 
     # and store it into an object called env.
@@ -365,8 +364,9 @@ def onerun(currdir,PCOMB):
     env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION)
     env.Square_lattice(CORNER_INDIVIDUAL_POSITION, IID_ON_AXE, N_EDGE)
     
-    allbats = {}
     # Create an empty dictionary for every bat instance to be stored
+    allbats = {}
+    
     
     # Set the agents with Bat_Jamming_00, according to the given parameters.
     
@@ -385,21 +385,22 @@ def onerun(currdir,PCOMB):
         allbats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
         # create an empty list to store records of call times
     
-        #fig, ax = plt.subplots()
-        # create the figure where rings of sound will be drawn & bats positions will be plotted
-        #colorpanel = plt.get_cmap('nipy_spectral')
-        # select a color panel to differentiate individuals
+        
     
     # Run the simulation of the individual based model, & store the results in allbats 
+    # for each time step all agents must carry out the behaviour 'simultaneously', and so we do a loop over all individuals for each behaviour ! 
     
     for timestep in range(env.simduration):
         
+        # make all the bats call and propagate the sound. 
         for ID in env.allID:
-        
-            allbats[int(ID)].timestep = int(timestep)
+            
             # current time step for each instance
-            allbats[int(ID)].Calling()
+            allbats[int(ID)].timestep = int(timestep)
+            
             # make the instance call
+            allbats[int(ID)].Calling()
+            
         
             if ID in env.callsources.keys():
         
@@ -408,36 +409,27 @@ def onerun(currdir,PCOMB):
                     xcallcentre = env.callsources[int(ID)][n]['xsource']
                     ycallcentre = env.callsources[int(ID)][n]['ysource']
                     beamradius = env.callsources[int(ID)][n]['propdist']
-                    #ringout = plt.Circle([xcallcentre,ycallcentre], beamradius, color = colorpanel(ID*100), fill = False)
-                    #ax.add_artist(ringout)
-                    # plot the corresponding ring of sound
+                    
+        # all bats hear     
+        for ID in env.allID:
             
-        for ID in env.allID:
-        
-            allbats[int(ID)].timestep = int(timestep)
             # current time step for each instance
-            allbats[int(ID)].Hearing()
+            allbats[int(ID)].timestep = int(timestep)
+            
             # make the instance hear
-    
+            allbats[int(ID)].Hearing()
+            
+        #all bats move     
         for ID in env.allID:
-        
+            
+             #current time step for each instance
             allbats[int(ID)].timestep = int(timestep)
-            # current time step for each instance
-            allbats[int(ID)].Movement()
+            
             # make the instance move
+            allbats[int(ID)].Movement()
+            
          
-#            positions = plt.plot(allbats[int(ID)].xhistory, allbats[int(ID)].yhistory, color = colorpanel(ID*100), marker = '^')
-#            ax.add_artist(positions[0])
-#            # plot all instances movements over time
-    
-    #ax.set_xlim(-1,15)
-    # set the x-limit of the figure
-    #ax.set_ylim(-1,15)
-    # set the y-limit of the figure
-    #fig.savefig('plot_bats_rings.pdf')
-    # save the figure
-    #plt.close()
-    # close the figure
+           
   
     
     # creating the necessary directories where data will be saved

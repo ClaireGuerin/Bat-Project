@@ -17,6 +17,16 @@ import numpy as np
 # results in the specificed folder - each parameter combination gets its own labelled folder within each 
 # replicate numbered folder (Res#repnum)
 
+# uncomment to see how long the whole script takes (also uncomment last line)
+import time
+start = time.clock()
+
+
+# setting random seed :
+
+rd.seed(01) # initialize the basic random number generator - which should make sure the results are compatible across runs and multiple systems! 
+
+
 #the target folder that you want all the results to be stored in : (folder doesn't need to exist ! ) 
 Results_dir='D:\\Bat_Project\\Res'
 
@@ -28,12 +38,15 @@ sys.path.append ( modulelocn ) # add the location of the module to the search pa
 from oneinst import onerun  # import the one function from the module 
 
 
-Nrep=10 # number of replicates to be run per parameter combination
+Nrep=100 # number of replicates to be run per parameter combination
 
 # create the parameter combinations wanted : - right now it is purposefully manual
 # PLEASE NOTE : simulation duration IS SET TO 0 ON PURPOSE - the appropriate duration is calculated below
-pcomb1=[3,0.001,0,[1,1],2,0,5,0.003,0.080,-10,120,-1.7,340]
-pcomb2=[3,0.001,0,[1,1],2,0,5,0.007,0.080,-10,120,-1.7,340]
+pcomb1=[5,0.001,0,[1,1],2,0,5,0.003,0.080,-10,120,-1.7,340]
+pcomb2=[5,0.001,0,[1,1],2,0,5,0.003,0.050,-10,120,-1.7,340]
+pcomb3=[5,0.001,0,[1,1],2,0,5,0.003,0.040,-10,120,-1.7,340]
+pcomb4=[5,0.001,0,[1,1],2,0,5,0.003,0.020,-10,120,-1.7,340]
+pcomb5=[5,0.001,0,[1,1],2,0,5,0.003,0.010,-10,120,-1.7,340]
 
 
 
@@ -69,5 +82,7 @@ for repno in range(Nrep):
             tgtdir=os.path.join(Results_dir,'Res%s'%str(repno)) # create a directory for each replicate of all pcombs run          
             onerun(tgtdir,parcomb)  # run the simulation for the pcomb               
                 
-    
+   
+   
+print (time.clock()-start) #uncomment to see how long the whole script takes 
     
