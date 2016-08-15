@@ -338,7 +338,6 @@ def onerun(currdir,PCOMB):
     
     MAXIMUM_HEARING_DISTANCE = float(minimize(Min_hear, x0 = 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x'])
     
-    rd.seed(96) # initialize the basic random number generator.
     
     # Set the simulation environment with Launcher, according to the given parameters 
     # and store it into an object called env.
