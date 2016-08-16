@@ -42,9 +42,12 @@ class Launcher:
         self.popsize = int(Nedge ** 2)
         # integer. Size of the bat population / Number of agents.
         self.allID = range(self.popsize)
-        # list of integers, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
-        x = range(lowvertex[0], Nedge*axIID, axIID)
-        y = range(lowvertex[1], Nedge*axIID, axIID)
+        # list of floats, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
+        x = np.linspace(lowvertex[0], lowvertex[0]+(Nedge-1)*axIID, num=Nedge)
+        y = np.linspace(lowvertex[1], lowvertex[1]+(Nedge-1)*axIID, num=Nedge)
+        
+        #  the initial positions are not exact numbers -- but more like float approxmns - next thing to be figured out !               
+        
         bothedges = [x,y]
         self.allinitpos = list(it.product(*bothedges))
         # list of tuples, dimensions popsize*2. 
@@ -160,6 +163,8 @@ class Launcher:
                         self.Hearing_test(env.callsources, identity, calltime)
                         # identify and record calls that can be heard by focal agent
         
+        # calls_dict is the dictionary which holds all the calls to be propagated in the simulation environment
+        
         def Sound_update(self, calls_dict, identity):
             
             allsoundtimes = calls_dict[identity].keys()
@@ -217,22 +222,28 @@ class Launcher:
         
         def Hearing_test(self, calls_dict, agID, temission):
             
-            xcallcentre = calls_dict[int(agID)][int(temission)]['xsource']
-            # float. x-coordinate of the source of the call emitted by agID at 
+             # float. x-coordinate of the source of the call emitted by agID at 
             # timestep = temission .
-            ycallcentre = calls_dict[int(agID)][int(temission)]['ysource']
+            xcallcentre = calls_dict[int(agID)][int(temission)]['xsource']
+            
             # float. y-coordinate of the source of the call emitted by agID at 
-            # timestep = temission.
-            beamradius = calls_dict[int(agID)][int(temission)]['propdist']
+            # timestep = temission.    
+            ycallcentre = calls_dict[int(agID)][int(temission)]['ysource']
+            
             # float. Current propagation distance of the source of the call 
-            # emitted by agID at timestep = temission.
-            backradius = beamradius - env.speedsound * env.tres
+            # emitted by agID at timestep = temission.     
+            beamradius = calls_dict[int(agID)][int(temission)]['propdist']
+            
             # float. Current value for the radius of the sound from its source,
             # that was calculated at the previous timestep.            
-            xposagent = allbats[int(self.ID)].xhistory[int(self.timestep)]
+            backradius = beamradius - env.speedsound * env.tres
+            
             # float. Current x-coordinate of the focal agent. 
-            yposagent = allbats[int(self.ID)].yhistory[int(self.timestep)]
+            xposagent = allbats[int(self.ID)].xhistory[int(self.timestep)]
+            
             # float. Current x-coordinate of the focal agent.
+            yposagent = allbats[int(self.ID)].yhistory[int(self.timestep)]
+            
             
             self.ringtest = self.In_ring(xcallcentre, ycallcentre, backradius, beamradius, xposagent, yposagent)
             # boolean. Does the focal agent hear the call emitted by agID
@@ -307,14 +318,14 @@ TIME_RESOLUTION = 0.001
 SIMULATION_DURATION =20
 
 CORNER_INDIVIDUAL_POSITION = [1,1]
-IID_ON_AXE = 2
-N_EDGE = 3
+IID_ON_AXE = 0.9
+N_EDGE = 2
 
 MOVEMENT_ANGLE = 0
 FLIGHT_SPEED = 5.5   
 #DUTY_CYCLE = 0.1228
 CALL_DURATION = 0.002
-INTER_PULSE_INTERVAL = 0.005
+INTER_PULSE_INTERVAL = 0.008
 ALPHA = -1.7 # db/m absorption at particular frequency 
 SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm 
 HEARING_THRESHOLD = -10 #hearing threshold in dB SPL 
