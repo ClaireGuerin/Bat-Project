@@ -80,7 +80,7 @@ class Launcher:
             self.ringwidth = float(self.callduration * env.speedsound) 
             # float. Difference in radii of the two concentric circles 
             # (in 2D) which form the start and the end of the bat call.
-            self.firstcall = np.around(rd.uniform(0, (self.IPI + self.callduration))/self.tres, 0)
+            self.firstcall = rd.randint(0,self.IPI+self.callduration)
             # time step for initiating the first call
             self.hearhistory_t = []
             self.hearhistory_i = []
@@ -307,13 +307,13 @@ SIMULATION_DURATION =20
 
 CORNER_INDIVIDUAL_POSITION = [1,1]
 IID_ON_AXE = 2
-N_EDGE = 3
+N_EDGE = 2
 
 MOVEMENT_ANGLE = 0
 FLIGHT_SPEED = 5.5   
 #DUTY_CYCLE = 0.1228
 CALL_DURATION = 0.002
-INTER_PULSE_INTERVAL = 0.010
+INTER_PULSE_INTERVAL = 0.005
 ALPHA = -1.7 # db/m absorption at particular frequency 
 SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm 
 HEARING_THRESHOLD = -10 #hearing threshold in dB SPL 
@@ -373,7 +373,7 @@ for timestep in range(env.simduration):
         # current time step for each instance
         allbats[int(ID)].Calling()
         # make the instance call
-        print(timestep)
+        #print(timestep)
     
         if ID in env.callsources.keys():
     
