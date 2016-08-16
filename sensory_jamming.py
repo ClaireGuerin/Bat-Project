@@ -77,7 +77,7 @@ class Launcher:
             # maximal, in seconds, during which a sound can travel, before its 
             # intensity passes below the hearing threshold of the agent.
             
-            self.ringwidth = float(self.callduration * env.speedsound) 
+            self.ringwidth = float(callduration * env.speedsound) 
             # float. Difference in radii of the two concentric circles 
             # (in 2D) which form the start and the end of the bat call.
             self.firstcall = np.around(rd.uniform(0, (IPI + callduration))/self.tres, 0)
@@ -137,9 +137,9 @@ class Launcher:
                 # step by adding a zero in the calls' history.
                 
             if self.ID in env.callsources.keys():
-            # if the agent has call already stored in the call dictionary:
+            # if the agent has call(s) already stored in the call dictionary:
                 self.Sound_update(env.callsources, self.ID)
-                # update the information on this call.
+                # update the information on this/these call(s).
 
         def Hearing(self):
             
