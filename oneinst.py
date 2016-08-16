@@ -122,7 +122,7 @@ def onerun(currdir,PCOMB):
                 self.ringwidth = float(self.callduration * env.speedsound) 
                 # float. Difference in radii of the two concentric circles 
                 # (in 2D) which form the start and the end of the bat call.
-                self.firstcall = np.around(rd.uniform(0, (IPI + callduration))/self.tres, 0)
+                self.firstcall = np.around(rd.uniform(0, (self.IPI + self.callduration))/self.tres, 0)
                 # time step for initiating the first call
                 self.hearhistory_t = []
                 self.hearhistory_i = []
