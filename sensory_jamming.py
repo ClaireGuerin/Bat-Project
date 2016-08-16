@@ -215,7 +215,8 @@ class Launcher:
             
             dist = float(m.sqrt((x - xcallsource) ** 2 + (y - ycallsource) ** 2))
             # distance between the agent and the source of the call
-            return dist <= soundfront and dist > soundfront - self.ringwidth
+            #return dist < soundfront and dist >= soundback - self.ringwidth
+            return dist < soundfront and dist > soundfront - self.ringwidth
             # boolean. Is dist within the distance travelled by the call 
             # between the beginning of the call at t = tres * (timestep - 1) 
             # (soundfront), & the end of the call at t = tres * timestep 
@@ -319,7 +320,7 @@ TIME_RESOLUTION = 0.001
 SIMULATION_DURATION =20
 
 CORNER_INDIVIDUAL_POSITION = [1,1]
-IID_ON_AXE = 0.9
+IID_ON_AXE = env.speedsound*env.tres
 N_EDGE = 2
 
 MOVEMENT_ANGLE = 0
