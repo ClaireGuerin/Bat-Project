@@ -18,9 +18,10 @@ from scipy.optimize import minimize
 import itertools
 import os, errno
 
+
 class Launcher:
 # Class implementation to initiate simulatory environment.
-
+    
     def __init__(self, tres, simduration):
          
         self.tres = float(tres)
@@ -36,7 +37,7 @@ class Launcher:
         # emitted by every agent throughout the simulation.
         self.speedsound = 340.29
         # float. Speed of sound at sea level in m/s.
-    
+
     def Square_lattice(self, lowvertex, axIID, Nedge):
         
         self.popsize = int(Nedge ** 2)
@@ -80,7 +81,7 @@ class Launcher:
             # maximal, in seconds, during which a sound can travel, before its 
             # intensity passes below the hearing threshold of the agent.
             
-            self.ringwidth = float(self.callduration * env.speedsound) 
+            self.ringwidth = float(callduration * env.speedsound) 
             # float. Difference in radii of the two concentric circles 
             # (in 2D) which form the start and the end of the bat call.
             self.firstcall = rd.randint(0,self.IPI+self.callduration)
