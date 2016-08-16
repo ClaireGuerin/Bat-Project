@@ -81,7 +81,7 @@ class Launcher:
             # maximal, in seconds, during which a sound can travel, before its 
             # intensity passes below the hearing threshold of the agent.
             
-            self.ringwidth = float(callduration * env.speedsound) 
+            self.ringwidth = float(self.callduration*self.tres * env.speedsound) 
             # float. Difference in radii of the two concentric circles 
             # (in 2D) which form the start and the end of the bat call.
             self.firstcall = rd.randint(0,self.IPI+self.callduration)
