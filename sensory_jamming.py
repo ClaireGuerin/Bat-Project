@@ -42,8 +42,8 @@ class Launcher:
         # emitted by every agent throughout the simulation.
         speedsound_dec = Decimal(340.29)
         self.speedsound = Decimal(speedsound_dec.quantize(self.sigfig, rounding=ROUND_05UP))
+        
         # Decimal. Speed of sound at sea level in m/s.
-
     def Square_lattice(self, lowvertex, axIID, Nedge):
         
         self.popsize = int(Nedge ** 2)
