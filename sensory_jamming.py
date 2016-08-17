@@ -12,7 +12,7 @@ from __future__ import division
 import random as rd
 import math  as m
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import itertools as it
 from scipy.optimize import minimize
 import os, errno
@@ -21,20 +21,26 @@ from decimal import Decimal, ROUND_05UP
 class Launcher:
 # Class implementation to initiate simulatory environment.
 
-    def __init__(self, tres, simduration):
+    def __init__(self, tres, simduration, sigfig):
          
-        self.tres = Decimal(tres)
+        sigfig_dec = Decimal(0.1 ** sigfig)
+        sigfig_str = str(0.1 ** sigfig)
+        self.sigfig = Decimal(sigfig_dec.quantize(Decimal(sigfig_str), rounding=ROUND_05UP))
+        tres_dec = Decimal(tres)
+        self.tres = Decimal(tres_dec.quantize(self.sigfig, rounding=ROUND_05UP))
         # Decimal. Time resolution, i.e. how much time (in s) is expressed in
         #  1 simulation time step.
         self.simduration = int(simduration)
         # integer. Simulation duration, i.e. total number of time steps to be 
         # run in the simulation. 
-        self.realduration = Decimal(self.simduration * self.tres)
+        realduration_dec = Decimal(self.simduration * self.tres)
+        self.realduration = Decimal(realduration_dec.quantize(self.sigfig, rounding=ROUND_05UP))
         # Decimal. Duration of the simulation (in s).
         self.callsources = {}
         # empty dictionary. Will contain the sources of each calls, 
         # emitted by every agent throughout the simulation.
-        self.speedsound = Decimal(340.29)
+        speedsound_dec = Decimal(340.29)
+        self.speedsound = Decimal(speedsound_dec.quantize(self.sigfig, rounding=ROUND_05UP))
         # Decimal. Speed of sound at sea level in m/s.
     
     def Square_lattice(self, lowvertex, axIID, Nedge):
@@ -43,8 +49,20 @@ class Launcher:
         # integer. Size of the bat population / Number of agents.
         self.allID = range(self.popsize)
         # list of integers, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
-        x = range(lowvertex[0], Nedge*axIID + 1, axIID)
-        y = range(lowvertex[1], Nedge*axIID + 1, axIID)
+        x_lowvertex_dec = Decimal(lowvertex[0])
+        x_lowvertex = float(Decimal(x_lowvertex_dec.quantize(self.sigfig, rounding=ROUND_05UP)))        
+
+        y_lowvertex_dec = Decimal(lowvertex[1])
+        y_lowvertex = float(Decimal(y_lowvertex_dec.quantize(self.sigfig, rounding=ROUND_05UP)))        
+
+        Nedge_dec = Decimal(Nedge - 1)
+        Nedge_adj = float(Decimal(Nedge_dec.quantize(self.sigfig, rounding=ROUND_05UP)))
+        
+        axIID_dec = Decimal(axIID)
+        axIID_adj = float(Decimal(axIID_dec.quantize(self.sigfig, rounding=ROUND_05UP)))
+        
+        x = np.linspace(x_lowvertex, x_lowvertex + Nedge_adj * axIID_adj, num=Nedge)
+        y = np.linspace(y_lowvertex, y_lowvertex + Nedge_adj * axIID_adj, num=Nedge)
         bothedges = [x,y]
         self.allinitpos = list(it.product(*bothedges))
         # list of tuples, dimensions popsize*2. 
@@ -59,10 +77,12 @@ class Launcher:
             
             self.ID = int(ID)
             # integer. Serial (identification) number of the focal agent.
-            self.movangle = Decimal(m.radians(movangle))
+            movangle_dec = Decimal(m.radians(movangle))
+            self.movangle = Decimal(movangle_dec.quantize(env.sigfig, rounding=ROUND_05UP))
             # Decimal. Movement angle, i.e. direction (in rad) towards which the 
             # agent flies. Value between 2*pi and pi, as asserted below.            
-            self.stepsize = Decimal(flightspeed) * env.tres 
+            stepsize_dec = Decimal(flightspeed) * env.tres 
+            self.stepsize = Decimal(stepsize_dec.quantize(env.sigfig, rounding=ROUND_05UP))
             # Decimal. Distance in meters covered by the agent in 1 time step
             #self.callduration = callduration
             callduration_dec = Decimal(callduration) / env.tres
@@ -81,7 +101,7 @@ class Launcher:
             # Decimal. Difference in radii of the two concentric circles 
             # (in 2D) which form the start and the end of the bat call.
             firstcall_dec = Decimal(rd.randint(0, (self.IPI + self.callduration)))
-            self.firstcall = Decimal(firstcall_dec.quantize(Decimal('1'), rounding = ROUND_05UP))
+            self.firstcall = int(Decimal(firstcall_dec.quantize(Decimal('1'), rounding = ROUND_05UP)))
             # time step for initiating the first call
             self.hearhistory_t = []
             self.hearhistory_i = []
@@ -305,9 +325,10 @@ def Min_hear(param,alpha,sourcelevel, hth):
 
 TIME_RESOLUTION = 0.001
 SIMULATION_DURATION = 20
+SIGNIFICANT_FIGURES = 3
 
 CORNER_INDIVIDUAL_POSITION = (1,1)
-IID_ON_AXE = 0.34029
+IID_ON_AXE = 2
 N_EDGE = 2
 
 MOVEMENT_ANGLE = 0
@@ -336,7 +357,7 @@ os.chdir(currdir) # change working directory
 
 
     
-env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION)
+env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION, SIGNIFICANT_FIGURES)
 env.Square_lattice(CORNER_INDIVIDUAL_POSITION, IID_ON_AXE, N_EDGE)
 
 allbats = {}
@@ -517,6 +538,9 @@ for fname in filenamesM:
             fp2.writelines('%s\n' % value)
             
     fp2.close()
+    
+for x,y,z in zip(allbats[0].hearhistory_t,allbats[0].hearhistory_c,allbats[0].hearhistory_i):
+    print (x,y,z)
     
 
     
