@@ -109,7 +109,7 @@ def onerun(currdir,PCOMB):
                 # agent flies. Value between 2*pi and pi, as asserted below.            
                 self.stepsize = float(flightspeed * self.tres) 
                 # float. Distance in meters covered by the agent in 1 time step
-                np.around(float(callduration/ env.tres), 0)
+                self.callduration=np.around(float(callduration/ env.tres), 0)
                 # float. Duration (in iterations) of each call. 
                 
                 self.IPI = np.around(float(IPI / env.tres), 0)
@@ -122,7 +122,7 @@ def onerun(currdir,PCOMB):
                 self.ringwidth = float(self.callduration * env.speedsound) 
                 # float. Difference in radii of the two concentric circles 
                 # (in 2D) which form the start and the end of the bat call.
-                self.firstcall = np.around(rd.uniform(0, (IPI + callduration))/self.tres, 0)
+                self.firstcall = rd.randint(0,self.IPI+self.callduration)
                 # time step for initiating the first call
                 self.hearhistory_t = []
                 self.hearhistory_i = []

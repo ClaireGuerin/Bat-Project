@@ -18,9 +18,10 @@ from scipy.optimize import minimize
 import itertools
 import os, errno
 
+
 class Launcher:
 # Class implementation to initiate simulatory environment.
-
+    
     def __init__(self, tres, simduration):
          
         self.tres = float(tres)
@@ -36,15 +37,18 @@ class Launcher:
         # emitted by every agent throughout the simulation.
         self.speedsound = 340.29
         # float. Speed of sound at sea level in m/s.
-    
+
     def Square_lattice(self, lowvertex, axIID, Nedge):
         
         self.popsize = int(Nedge ** 2)
         # integer. Size of the bat population / Number of agents.
         self.allID = range(self.popsize)
-        # list of integers, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
-        x = range(lowvertex[0], Nedge*axIID, axIID)
-        y = range(lowvertex[1], Nedge*axIID, axIID)
+        # list of floats, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
+        x = np.linspace(lowvertex[0], lowvertex[0]+(Nedge-1)*axIID, num=Nedge)
+        y = np.linspace(lowvertex[1], lowvertex[1]+(Nedge-1)*axIID, num=Nedge)
+        
+        #  the initial positions are not exact numbers -- but more like float approxmns - next thing to be figured out !               
+        
         bothedges = [x,y]
         self.allinitpos = list(it.product(*bothedges))
         # list of tuples, dimensions popsize*2. 
@@ -77,10 +81,10 @@ class Launcher:
             # maximal, in seconds, during which a sound can travel, before its 
             # intensity passes below the hearing threshold of the agent.
             
-            self.ringwidth = float(self.callduration * env.speedsound) 
+            self.ringwidth = float(self.callduration*self.tres * env.speedsound) 
             # float. Difference in radii of the two concentric circles 
             # (in 2D) which form the start and the end of the bat call.
-            self.firstcall = np.around(rd.uniform(0, (IPI + callduration))/self.tres, 0)
+            self.firstcall = rd.randint(0,self.IPI+self.callduration)
             # time step for initiating the first call
             self.hearhistory_t = []
             self.hearhistory_i = []
@@ -122,7 +126,7 @@ class Launcher:
             
             if self.calltest%1 == 0:
             # if the theoretical number of calls since the 1st call is a 
-            # divisible by the call cycle duration
+            # divisible by the call cycle duration then initiate a call
             
                 self.callshistory[int(self.timestep)] = 1
                 # account for the initiation of a new call at this time step 
@@ -149,34 +153,37 @@ class Launcher:
                 if identity in env.callsources.keys():
                 # if the agent has a call stored in the call dictionary: 
                     
-                    self.allcalltimes = env.callsources[int(identity)].keys()
+                    
+                    # store the time of emission of the call 
+                    self.allcalltimes = env.callsources[identity].keys()
                     self.allcalltimes.sort()
-                    # times of emission of each call from this agent that are registered in
-                    # the call dictionary.
+                    
                     
                     for calltime in self.allcalltimes:
-                    # for each time step at which the agent previously called:
+                    # for each time step at which any agent has previously called:
                         self.Hearing_test(env.callsources, identity, calltime)
                         # identify and record calls that can be heard by focal agent
         
-        def Sound_update(self, dict1, identity):
+        # calls_dict is the dictionary which holds all the calls to be propagated in the simulation environment
+        
+        def Sound_update(self, calls_dict, identity):
             
-            allsoundtimes = dict1[identity].keys()
+            allsoundtimes = calls_dict[identity].keys()
             allsoundtimes.sort()
-            # emission time of every sound that is recorded in dict1 for this 
+            # emission time of every sound that is recorded in calls_dict for this 
             # individual
             
             for soundtime in allsoundtimes:
             # for each time step at which a sound was emitted:
-                self.Data_storage(dict1, int(soundtime))
+                self.Data_storage(calls_dict, int(soundtime))
                 # erase sounds that are too old to be heared anymore
                 
-                if soundtime in dict1[identity].keys():
+                if soundtime in calls_dict[identity].keys():
                 # if the sound is still in the dictionary:
-                    self.Propagation(dict1, int(soundtime), identity)
+                    self.Propagation(calls_dict, int(soundtime), identity)
                     # update its propagation distance accordingly            
         
-        def Data_storage(self, dict1, tcall):
+        def Data_storage(self, calls_dict, tcall):
             
             self.timestore = self.timestep - tcall
             # Time (in time steps) for which the call has been stored into 
@@ -184,14 +191,14 @@ class Launcher:
             
             if self.timestore > self.maxtimestore/self.tres:
             # if the storing time is longer than it should: 
-                dict1[int(self.ID)].pop(tcall, None)
+                calls_dict[int(self.ID)].pop(tcall, None)
                 # erase it from the memory / dictionary
         
-            return dict1
+            return calls_dict
 
-        def Propagation(self, dict1, tmstp, identity):
+        def Propagation(self, calls_dict, tmstp, identity):
             
-            dictionary = dict1[identity][int(tmstp)]
+            dictionary = calls_dict[identity][int(tmstp)]
             
             self.backradius = dictionary['propdist']
             # float. Current value for the radius of the sound from its source,
@@ -200,38 +207,45 @@ class Launcher:
             # Current propagation distance at timestep according to the time when 
             # the call was emitted, and the speed of sound.
             dictionary['propdist'] = self.propdist
-            # update the propagation distance in dict1
+            # update the propagation distance in calls_dict
             
-            return dict1
+            return calls_dict
     
         def In_ring(self, xcallsource, ycallsource, soundback, soundfront, x, y):
             
             dist = float(m.sqrt((x - xcallsource) ** 2 + (y - ycallsource) ** 2))
             # distance between the agent and the source of the call
-            return dist <= soundfront and dist >= soundback - self.ringwidth
+            #return dist < soundfront and dist >= soundback - self.ringwidth
+            return dist < soundfront and dist > soundfront - self.ringwidth
             # boolean. Is dist within the distance travelled by the call 
             # between the beginning of the call at t = tres * (timestep - 1) 
             # (soundfront), & the end of the call at t = tres * timestep 
             # (soundback - self.ringwidth)?            
         
-        def Hearing_test(self, dict1, agID, temission):
+        def Hearing_test(self, calls_dict, agID, temission):
             
-            xcallcentre = dict1[int(agID)][int(temission)]['xsource']
-            # float. x-coordinate of the source of the call emitted by agID at 
+             # float. x-coordinate of the source of the call emitted by agID at 
             # timestep = temission .
-            ycallcentre = dict1[int(agID)][int(temission)]['ysource']
+            xcallcentre = calls_dict[int(agID)][int(temission)]['xsource']
+            
             # float. y-coordinate of the source of the call emitted by agID at 
-            # timestep = temission.
-            beamradius = dict1[int(agID)][int(temission)]['propdist']
+            # timestep = temission.    
+            ycallcentre = calls_dict[int(agID)][int(temission)]['ysource']
+            
             # float. Current propagation distance of the source of the call 
-            # emitted by agID at timestep = temission.
-            backradius = beamradius - env.speedsound * env.tres
+            # emitted by agID at timestep = temission.     
+            beamradius = calls_dict[int(agID)][int(temission)]['propdist']
+            
             # float. Current value for the radius of the sound from its source,
             # that was calculated at the previous timestep.            
-            xposagent = allbats[int(self.ID)].xhistory[int(self.timestep)]
+            backradius = beamradius - env.speedsound * env.tres
+            
             # float. Current x-coordinate of the focal agent. 
-            yposagent = allbats[int(self.ID)].yhistory[int(self.timestep)]
+            xposagent = allbats[int(self.ID)].xhistory[int(self.timestep)]
+            
             # float. Current x-coordinate of the focal agent.
+            yposagent = allbats[int(self.ID)].yhistory[int(self.timestep)]
+            
             
             self.ringtest = self.In_ring(xcallcentre, ycallcentre, backradius, beamradius, xposagent, yposagent)
             # boolean. Does the focal agent hear the call emitted by agID
@@ -251,17 +265,17 @@ class Launcher:
             return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i
 
 
-def Dict_update(dict1, dict2):
+def Dict_update(calls_dict, dict2):
 # Updates a dictionary without over-writing the keys already stored in it.
     
     for key in dict2:
     
-        if key in dict1:
-            dict1[key].update(dict2[key])
+        if key in calls_dict:
+            calls_dict[key].update(dict2[key])
         else:
-            dict1[key] = dict2[key]
+            calls_dict[key] = dict2[key]
             
-    return dict1
+    return calls_dict
 
 def Min_hear(param,alpha,sourcelevel, hth):
 # function to calculate the maximum distance at which a bat call can be heard
@@ -306,14 +320,14 @@ TIME_RESOLUTION = 0.001
 SIMULATION_DURATION =20
 
 CORNER_INDIVIDUAL_POSITION = [1,1]
-IID_ON_AXE = 2
-N_EDGE = 3
+IID_ON_AXE = env.speedsound*env.tres
+N_EDGE = 2
 
 MOVEMENT_ANGLE = 0
-FLIGHT_SPEED = 5.5   
+FLIGHT_SPEED = 0
 #DUTY_CYCLE = 0.1228
 CALL_DURATION = 0.002
-INTER_PULSE_INTERVAL = 0.010
+INTER_PULSE_INTERVAL = 0.008
 ALPHA = -1.7 # db/m absorption at particular frequency 
 SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm 
 HEARING_THRESHOLD = -10 #hearing threshold in dB SPL 
@@ -373,7 +387,7 @@ for timestep in range(env.simduration):
         # current time step for each instance
         allbats[int(ID)].Calling()
         # make the instance call
-        print(timestep)
+        #print(timestep)
     
         if ID in env.callsources.keys():
     
