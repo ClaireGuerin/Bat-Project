@@ -15,27 +15,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 import itertools as it
 from scipy.optimize import minimize
-import itertools
 import os, errno
+from decimal import Decimal, ROUND_05UP
 
 class Launcher:
 # Class implementation to initiate simulatory environment.
 
     def __init__(self, tres, simduration):
          
-        self.tres = float(tres)
-        # float. Time resolution, i.e. how much time (in s) is expressed in
+        self.tres = Decimal(tres)
+        # Decimal. Time resolution, i.e. how much time (in s) is expressed in
         #  1 simulation time step.
         self.simduration = int(simduration)
         # integer. Simulation duration, i.e. total number of time steps to be 
         # run in the simulation. 
-        self.realduration = float(self.simduration * self.tres)
-        # float. Duration of the simulation (in s).
+        self.realduration = Decimal(self.simduration * self.tres)
+        # Decimal. Duration of the simulation (in s).
         self.callsources = {}
         # empty dictionary. Will contain the sources of each calls, 
         # emitted by every agent throughout the simulation.
-        self.speedsound = 340.29
-        # float. Speed of sound at sea level in m/s.
+        self.speedsound = Decimal(340.29)
+        # Decimal. Speed of sound at sea level in m/s.
     
     def Square_lattice(self, lowvertex, axIID, Nedge):
         
@@ -43,8 +43,8 @@ class Launcher:
         # integer. Size of the bat population / Number of agents.
         self.allID = range(self.popsize)
         # list of integers, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
-        x = range(lowvertex[0], Nedge*axIID, axIID)
-        y = range(lowvertex[1], Nedge*axIID, axIID)
+        x = range(lowvertex[0], Nedge*axIID + 1, axIID)
+        y = range(lowvertex[1], Nedge*axIID + 1, axIID)
         bothedges = [x,y]
         self.allinitpos = list(it.product(*bothedges))
         # list of tuples, dimensions popsize*2. 
@@ -59,28 +59,29 @@ class Launcher:
             
             self.ID = int(ID)
             # integer. Serial (identification) number of the focal agent.
-            self.tres = env.tres
-            # take tres from env (class Launcher).
-            self.movangle = m.radians(float(movangle))
-            # float. Movement angle, i.e. direction (in rad) towards which the 
+            self.movangle = Decimal(m.radians(movangle))
+            # Decimal. Movement angle, i.e. direction (in rad) towards which the 
             # agent flies. Value between 2*pi and pi, as asserted below.            
-            self.stepsize = float(flightspeed * self.tres) 
-            # float. Distance in meters covered by the agent in 1 time step
+            self.stepsize = Decimal(flightspeed) * env.tres 
+            # Decimal. Distance in meters covered by the agent in 1 time step
             #self.callduration = callduration
-            self.callduration= np.around(float(callduration/ env.tres), 0)
-            # float. Duration (in s) of each call. 
-            #self.IPI = np.around(float((self.callduration/dutycycle - self.callduration) / env.tres),0)
-            self.IPI = np.around(float(IPI / env.tres), 0)
+            callduration_dec = Decimal(callduration) / env.tres
+            self.callduration = int(Decimal(callduration_dec.quantize(Decimal('1'), rounding = ROUND_05UP)))
+            # Decimal. Duration (in s) of each call. 
+            #self.IPI = np.around(Decimal((self.callduration/dutycycle - self.callduration) / env.tres),0)
+            IPI_dec = Decimal(IPI) / env.tres
+            self.IPI = int(Decimal(IPI_dec.quantize(Decimal('1'), rounding = ROUND_05UP)))
             # integer. Inter-pulse interval of the agent, converted in time steps.
-            self.maxtimestore = float(maxheardist / env.speedsound)
-            # float. Maximum time for storing a sound, deduced from the time 
+            self.maxtimestore = Decimal(maxheardist) / env.speedsound
+            # Decimal. Maximum time for storing a sound, deduced from the time 
             # maximal, in seconds, during which a sound can travel, before its 
             # intensity passes below the hearing threshold of the agent.
             
-            self.ringwidth = float(callduration * env.speedsound) 
-            # float. Difference in radii of the two concentric circles 
+            self.ringwidth = Decimal(callduration) * env.speedsound 
+            # Decimal. Difference in radii of the two concentric circles 
             # (in 2D) which form the start and the end of the bat call.
-            self.firstcall = np.around(rd.uniform(0, (IPI + callduration))/self.tres, 0)
+            firstcall_dec = Decimal(rd.randint(0, (self.IPI + self.callduration)))
+            self.firstcall = Decimal(firstcall_dec.quantize(Decimal('1'), rounding = ROUND_05UP))
             # time step for initiating the first call
             self.hearhistory_t = []
             self.hearhistory_i = []
@@ -91,15 +92,15 @@ class Launcher:
             # - _t: time at which it was heard by the focal agent.
 
             assert self.movangle >= m.radians(0) and self.movangle < m.radians(360), "Enter movement angle between 0 and 360 degrees"
-            #assert self.IPI > self.tres, 'Inter-pulse interval must be larger than the time resolution'            
+            #assert self.IPI > env.tres, 'Inter-pulse interval must be larger than the time resolution'            
             
         def Movement(self):
             
-            self.newx = float(self.x + self.stepsize * m.cos(self.movangle))
+            self.newx = self.x + self.stepsize * Decimal(m.cos(self.movangle))
             # calculate the new x coordinate according to:
             # - the distance travelled over 1 time step.
             # - the direction of the movement
-            self.newy = float(self.y + self.stepsize * m.sin(self.movangle))
+            self.newy = self.y + self.stepsize * Decimal(m.sin(self.movangle))
             # calculate the new y coordinate according to:
             # - the distance travelled over 1 time step.
             # - the direction of the movement
@@ -116,7 +117,7 @@ class Launcher:
             
         def Calling(self):
             
-            self.calltest = float(self.timestep-self.firstcall)/float(self.IPI + self.callduration)
+            self.calltest = Decimal(self.timestep-self.firstcall)/Decimal(self.IPI + self.callduration)
             # theoretical number of calls since the 1st call:
             # time since 1st call = current time - time of 1st call/IPI
             
@@ -182,7 +183,7 @@ class Launcher:
             # Time (in time steps) for which the call has been stored into 
             # the dictionary.
             
-            if self.timestore > self.maxtimestore/self.tres:
+            if self.timestore > self.maxtimestore/env.tres:
             # if the storing time is longer than it should: 
                 dict1[int(self.ID)].pop(tcall, None)
                 # erase it from the memory / dictionary
@@ -194,9 +195,9 @@ class Launcher:
             dictionary = dict1[identity][int(tmstp)]
             
             self.backradius = dictionary['propdist']
-            # float. Current value for the radius of the sound from its source,
+            # Decimal. Current value for the radius of the sound from its source,
             # that was calculated at the previous timestep.
-            self.propdist = float(env.speedsound * (self.timestore + 1) * env.tres)
+            self.propdist = Decimal(env.speedsound * (self.timestore + 1) * env.tres)
             # Current propagation distance at timestep according to the time when 
             # the call was emitted, and the speed of sound.
             dictionary['propdist'] = self.propdist
@@ -206,9 +207,9 @@ class Launcher:
     
         def In_ring(self, xcallsource, ycallsource, soundback, soundfront, x, y):
             
-            dist = float(m.sqrt((x - xcallsource) ** 2 + (y - ycallsource) ** 2))
+            dist = Decimal(m.sqrt((x - xcallsource) ** 2 + (y - ycallsource) ** 2))
             # distance between the agent and the source of the call
-            return dist <= soundfront and dist >= soundback - self.ringwidth
+            return dist <= soundfront and dist > soundfront - self.ringwidth
             # boolean. Is dist within the distance travelled by the call 
             # between the beginning of the call at t = tres * (timestep - 1) 
             # (soundfront), & the end of the call at t = tres * timestep 
@@ -217,21 +218,21 @@ class Launcher:
         def Hearing_test(self, dict1, agID, temission):
             
             xcallcentre = dict1[int(agID)][int(temission)]['xsource']
-            # float. x-coordinate of the source of the call emitted by agID at 
+            # Decimal. x-coordinate of the source of the call emitted by agID at 
             # timestep = temission .
             ycallcentre = dict1[int(agID)][int(temission)]['ysource']
-            # float. y-coordinate of the source of the call emitted by agID at 
+            # Decimal. y-coordinate of the source of the call emitted by agID at 
             # timestep = temission.
             beamradius = dict1[int(agID)][int(temission)]['propdist']
-            # float. Current propagation distance of the source of the call 
+            # Decimal. Current propagation distance of the source of the call 
             # emitted by agID at timestep = temission.
             backradius = beamradius - env.speedsound * env.tres
-            # float. Current value for the radius of the sound from its source,
+            # Decimal. Current value for the radius of the sound from its source,
             # that was calculated at the previous timestep.            
             xposagent = allbats[int(self.ID)].xhistory[int(self.timestep)]
-            # float. Current x-coordinate of the focal agent. 
+            # Decimal. Current x-coordinate of the focal agent. 
             yposagent = allbats[int(self.ID)].yhistory[int(self.timestep)]
-            # float. Current x-coordinate of the focal agent.
+            # Decimal. Current x-coordinate of the focal agent.
             
             self.ringtest = self.In_ring(xcallcentre, ycallcentre, backradius, beamradius, xposagent, yposagent)
             # boolean. Does the focal agent hear the call emitted by agID
@@ -280,9 +281,9 @@ def Min_hear(param,alpha,sourcelevel, hth):
 ### POPULATION_SIZE: integer. Size of the population of bats you want to simulate
 ### INITIAL_POSITIONS: numpy array, dimensions 2 * population size. Contains the
 ###     initial x and y coordinates of each agent in the population, in meters (m).
-### BOX_SIZE: list of 2 float elements. Space within which the bats are moving,
+### BOX_SIZE: list of 2 Decimal elements. Space within which the bats are moving,
 ###     in meters (m).
-### TIME_RESOLUTION: float. Time resolution, i.e time (in s) represented over 1 
+### TIME_RESOLUTION: Decimal. Time resolution, i.e time (in s) represented over 1 
 ###     simulation time step.allows to keep a sensible ratio between time in
 ###     in seconds & time in time steps in the simulation.
 ###     Time (in s) = TIME_RESOLUTION * time (in simulation time steps).
@@ -291,23 +292,23 @@ def Min_hear(param,alpha,sourcelevel, hth):
 
 ### INDIVIDUAL ###
 
-### MOVEMENT_ANGLE: float. Angle (in degrees), between the x-axis and the 
+### MOVEMENT_ANGLE: Decimal. Angle (in degrees), between the x-axis and the 
 ###     direction of the movement of the agent. 
 ###     Only values between 0 & 360°C are accepted.
-### FLIGHT_SPEED: float. Flight speed (m/s) of the agent. 
+### FLIGHT_SPEED: Decimal. Flight speed (m/s) of the agent. 
 ###     5.5 m/s corresponds to a slow bat (Hayward & Davis (1964), Winter (1999)).
 ### INTER_PULSE_INTERVAL: Inter-pulse interval of the agent, i.e. time interval 
 ###     between each call initiated.
-### DUTY_CYCLE = float. Duty cycle of the agent (ratio IPI:call duration).
-### MAXIMUM_HEARING_DISTANCE: float. Maximum distance (m) at which a sound can be
+### DUTY_CYCLE = Decimal. Duty cycle of the agent (ratio IPI:call duration).
+### MAXIMUM_HEARING_DISTANCE: Decimal. Maximum distance (m) at which a sound can be
 ###     heard by the agent (depending on the intensity threshold)
 
-TIME_RESOLUTION = 0.001 
-SIMULATION_DURATION =20
+TIME_RESOLUTION = 0.001
+SIMULATION_DURATION = 20
 
-CORNER_INDIVIDUAL_POSITION = [1,1]
-IID_ON_AXE = 2
-N_EDGE = 3
+CORNER_INDIVIDUAL_POSITION = (1,1)
+IID_ON_AXE = 0.34029
+N_EDGE = 2
 
 MOVEMENT_ANGLE = 0
 FLIGHT_SPEED = 5.5   
@@ -317,7 +318,7 @@ INTER_PULSE_INTERVAL = 0.010
 ALPHA = -1.7 # db/m absorption at particular frequency 
 SOURCE_LEVEL = 120 # dB SPL, ref 20uPa @10cm 
 HEARING_THRESHOLD = -10 #hearing threshold in dB SPL 
-MAXIMUM_HEARING_DISTANCE = float(minimize(Min_hear, x0 = 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x'])
+MAXIMUM_HEARING_DISTANCE = Decimal(minimize(Min_hear, x0 = 30, args = (ALPHA,SOURCE_LEVEL,HEARING_THRESHOLD))['x'][0])
 
 rd.seed(96) # initialize the basic random number generator.
 
@@ -345,22 +346,22 @@ allbats = {}
 
 for ID in env.allID:
 
-    allbats[int(ID)] = env.Bat_Jamming_00(ID, MOVEMENT_ANGLE,FLIGHT_SPEED,INTER_PULSE_INTERVAL, MAXIMUM_HEARING_DISTANCE, CALL_DURATION)
+    allbats[int(ID)] = env.Bat_Jamming_00(ID, MOVEMENT_ANGLE,FLIGHT_SPEED,INTER_PULSE_INTERVAL,MAXIMUM_HEARING_DISTANCE,CALL_DURATION)
     # store all instances of the class Bat_Jamming_00 within the bat population
-    allbats[int(ID)].x = env.allinitpos[int(ID)][0]
+    allbats[int(ID)].x = Decimal(env.allinitpos[int(ID)][0])
     # initial x coordinate for each instance, taken from env
     allbats[int(ID)].xhistory = [allbats[int(ID)].x]
     # store it in xhistory
-    allbats[int(ID)].y = env.allinitpos[int(ID)][1]
+    allbats[int(ID)].y = Decimal(env.allinitpos[int(ID)][1])
     # initial y coordinate for each instance, taken from env
-    allbats[int(ID)].yhistory = [allbats[int(ID)].x]
+    allbats[int(ID)].yhistory = [allbats[int(ID)].y]
     # store it in yhistory
     allbats[int(ID)].callshistory = np.empty([env.simduration,1], dtype = int)
     # create an empty list to store records of call times
 
-    fig, ax = plt.subplots()
+    #fig, ax = plt.subplots()
     # create the figure where rings of sound will be drawn & bats positions will be plotted
-    colorpanel = plt.get_cmap('nipy_spectral')
+    #colorpanel = plt.get_cmap('nipy_spectral')
     # select a color panel to differentiate individuals
 
 # Run the simulation of the individual based model, & store the results in allbats 
@@ -373,17 +374,17 @@ for timestep in range(env.simduration):
         # current time step for each instance
         allbats[int(ID)].Calling()
         # make the instance call
-        print(timestep)
+        #print(timestep)
     
-        if ID in env.callsources.keys():
+        #if ID in env.callsources.keys():
     
-            for n in env.callsources[int(ID)].keys():
+            #for n in env.callsources[int(ID)].keys():
         
-                xcallcentre = env.callsources[int(ID)][n]['xsource']
-                ycallcentre = env.callsources[int(ID)][n]['ysource']
-                beamradius = env.callsources[int(ID)][n]['propdist']
-                ringout = plt.Circle([xcallcentre,ycallcentre], beamradius, color = colorpanel(ID*100), fill = False)
-                ax.add_artist(ringout)
+                #xcallcentre = env.callsources[int(ID)][n]['xsource']
+                #ycallcentre = env.callsources[int(ID)][n]['ysource']
+                #beamradius = env.callsources[int(ID)][n]['propdist']
+                #ringout = plt.Circle([xcallcentre,ycallcentre], beamradius, color = colorpanel(ID*100), fill = False)
+                #ax.add_artist(ringout)
                 # plot the corresponding ring of sound
         
     for ID in env.allID:
@@ -399,17 +400,17 @@ for timestep in range(env.simduration):
         # current time step for each instance
         allbats[int(ID)].Movement()
         # make the instance move
-        positions = plt.plot(allbats[int(ID)].xhistory, allbats[int(ID)].yhistory, color = colorpanel(ID*100), marker = '^')
-        ax.add_artist(positions[0])
+        #positions = plt.plot(allbats[int(ID)].xhistory, allbats[int(ID)].yhistory, color = colorpanel(ID*100), marker = '^')
+        #ax.add_artist(positions[0])
         # plot all instances movements over time
 
-ax.set_xlim(-1,15)
+#ax.set_xlim(-1,15)
 # set the x-limit of the figure
-ax.set_ylim(-1,15)
+#ax.set_ylim(-1,15)
 # set the y-limit of the figure
-fig.savefig('plot_bats_rings.pdf')
+#fig.savefig('plot_bats_rings.pdf')
 # save the figure
-plt.close()
+#plt.close()
 # close the figure
 
 
