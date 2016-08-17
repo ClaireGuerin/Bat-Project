@@ -152,6 +152,7 @@ def onerun(currdir,PCOMB):
             def Movement(self):
                 
                 self.newx = self.x + self.stepsize * Decimal(m.cos(self.movangle))
+                
                 # calculate the new x coordinate according to:
                 # - the distance travelled over 1 time step.
                 # - the direction of the movement
@@ -393,11 +394,13 @@ def onerun(currdir,PCOMB):
     
         allbats[int(ID)] = env.Bat_Jamming_00(ID, MOVEMENT_ANGLE,FLIGHT_SPEED,INTER_PULSE_INTERVAL, MAXIMUM_HEARING_DISTANCE, CALL_DURATION)
         # store all instances of the class Bat_Jamming_00 within the bat population
-        allbats[int(ID)].x = env.allinitpos[int(ID)][0]
+        x_dec = Decimal(env.allinitpos[int(ID)][0])
+        allbats[int(ID)].x = Decimal(x_dec.quantize(env.sigfig, rounding=ROUND_05UP))
         # initial x coordinate for each instance, taken from env
         allbats[int(ID)].xhistory = [allbats[int(ID)].x]
         # store it in xhistory
-        allbats[int(ID)].y = env.allinitpos[int(ID)][1]
+        y_dec = Decimal(env.allinitpos[int(ID)][0])
+        allbats[int(ID)].y = Decimal(y_dec.quantize(env.sigfig, rounding=ROUND_05UP))
         # initial y coordinate for each instance, taken from env
         allbats[int(ID)].yhistory = [allbats[int(ID)].x]
         # store it in yhistory
