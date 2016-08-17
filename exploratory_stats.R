@@ -11,6 +11,9 @@ library(Rcmdr)
 
 startTime = Sys.time()
 
+varParam = "ipi"
+dutycycle = c("Unconstrained", "5.4%", "15%")
+
 resDir = "D:/Bat_Project/Res/"
 setwd(resDir)
 repFolders = dir(resDir, pattern = "Res")
@@ -21,6 +24,8 @@ eelist = list()
 eclist = list()
 
 for (i in 1:nSim){
+
+###----------IMPORT INDICES----------###
 
 	eelist[[i]] = matrix(NA, ncol = 7, nrow = 2)
 	eclist[[i]] = matrix(NA, ncol = 7, nrow = 2)
@@ -39,7 +44,11 @@ for (i in 1:nSim){
 		eelist[[i]] = rbind(eelist[[i]], ee_ind)
 		eclist[[i]] = rbind(eclist[[i]], ec_ind)
 	}
-	
+
+###----------End of INDICES IMPORT----------###	
+
+###----------BOXPLOTS----------###
+
 	ec_ids = as.factor(as.vector(eclist[[i]][1])[,1])
 	ee_ids = as.factor(as.vector(eelist[[i]][1])[,1])
 
@@ -60,7 +69,18 @@ for (i in 1:nSim){
 		Boxplot(ee_index~ee_ids, medcol="mediumseagreen", cex=3, ylab = index, xlab = "ID", add=T)
 	}
 	
-	dev.off()	
+	dev.off()
+	
+###----------End of BOXPLOTS----------###
+
 }
+
+
+
+###----------SCATTERPLOTS----------###
+
+
+
+###----------End of SCATTERPLOTS----------###
 
 print(Sys.time() - startTime)
