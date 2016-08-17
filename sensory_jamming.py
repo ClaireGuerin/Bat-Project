@@ -22,10 +22,10 @@ from decimal import Decimal, ROUND_05UP
 class Launcher:
 # Class implementation to initiate simulatory environment.
 
-    def __init__(self, tres, simduration, sigfig):
+    def __init__(self, tres, simduration):
          
-        sigfig_dec = Decimal(0.1 ** sigfig)
-        sigfig_str = str(0.1 ** sigfig)
+        sigfig_dec = Decimal(0.1 ** (len(str(tres))-2))
+        sigfig_str = str(0.1 ** (len(str(tres))-2))
         self.sigfig = Decimal(sigfig_dec.quantize(Decimal(sigfig_str), rounding=ROUND_05UP))
         tres_dec = Decimal(tres)
         self.tres = Decimal(tres_dec.quantize(self.sigfig, rounding=ROUND_05UP))
@@ -318,7 +318,6 @@ def Min_hear(param,alpha,sourcelevel, hth):
 
 TIME_RESOLUTION = 0.001
 SIMULATION_DURATION = 20
-SIGNIFICANT_FIGURES = 3
 
 IID_ON_AXE = env.speedsound*env.tres
 CORNER_INDIVIDUAL_POSITION = (1,1)
@@ -350,7 +349,7 @@ os.chdir(currdir) # change working directory
 
 
     
-env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION, SIGNIFICANT_FIGURES)
+env = Launcher(TIME_RESOLUTION, SIMULATION_DURATION)
 env.Square_lattice(CORNER_INDIVIDUAL_POSITION, IID_ON_AXE, N_EDGE)
 
 allbats = {}
