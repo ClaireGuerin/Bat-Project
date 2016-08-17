@@ -16,6 +16,7 @@ from scipy.optimize import minimize
 import itertools
 import os, errno
 import csv 
+from decimal import Decimal, ROUND_05UP
 
 # function to run one instance of sensory jamming simulation
 # inputs: target directory where results will be created, parameter values to initiate simulation
@@ -49,9 +50,11 @@ import csv
     ### SOURCE_LEVEL : the sound pressure level of a bat call (dB SPL @ 10cm)
     ### ALPHA : atmospheric absorption of sound at the call frequencies
     ### speed of sound : float. velocity of sound propagation in m/s
+    
+    ### number of significant figures to be used in all calculations
 
  # the format of PCOMB is a list as follows :   
- # PCOMB = [N_EDGE ,TIME_RESOLUTION, SIMULATION_DURATION, CORNER_INDIVIDUAL_POSITION, IID_ON_AXE,MOVEMENT_ANGLE,FLIGHT_SPEED,CALL_DURATION,INTER_PULSE_INTERVAL, HEARING_THRESHOLD,SOURCE_LEVEL,ALPHA,SPEED OF SOUND]
+ # PCOMB = [N_EDGE ,TIME_RESOLUTION, SIMULATION_DURATION, CORNER_INDIVIDUAL_POSITION, IID_ON_AXE,MOVEMENT_ANGLE,FLIGHT_SPEED,CALL_DURATION,INTER_PULSE_INTERVAL, HEARING_THRESHOLD,SOURCE_LEVEL,ALPHA,SPEED OF SOUND,num_sigfig]
   
 #eg. param combi: pcomb=[3,0.001,30,[1,1],2,0,5,0.003,0.080,-10,120,-1.7,340]
 # tgtdir= 'C:\\Users\\tbeleyur\\Desktop\\test_folder\\Rep0'
@@ -66,28 +69,36 @@ def onerun(currdir,PCOMB):
     
         def __init__(self, tres, simduration):
              
-            self.tres = float(tres)
-            # float. Time resolution, i.e. how much time (in s) is expressed in
+            self.sigfig_dec = Decimal(0.1 ** (len(str(tres))-2))
+            self.sigfig_str = str(0.1 ** (len(str(tres))-2))
+            self.sigfig = Decimal(self.sigfig_dec.quantize(Decimal(self.sigfig_str), rounding=ROUND_05UP))
+            tres_dec = Decimal(tres)
+            self.tres = Decimal(tres_dec.quantize(self.sigfig, rounding=ROUND_05UP))
+            # Decimal. Time resolution, i.e. how much time (in s) is expressed in
             #  1 simulation time step.
             self.simduration = int(simduration)
             # integer. Simulation duration, i.e. total number of time steps to be 
             # run in the simulation. 
-            self.realduration = float(self.simduration * self.tres)
-            # float. Duration of the simulation (in s).
+            realduration_dec = Decimal(self.simduration * self.tres)
+            self.realduration = Decimal(realduration_dec.quantize(self.sigfig, rounding=ROUND_05UP))
+            # Decimal. Duration of the simulation (in s).
             self.callsources = {}
             # empty dictionary. Will contain the sources of each calls, 
             # emitted by every agent throughout the simulation.
-            self.speedsound = PCOMB[12]
-            # float. Speed of sound  in m/s.
-        
+            speedsound_dec = Decimal(PCOMB[12])
+            self.speedsound = Decimal(speedsound_dec.quantize(self.sigfig, rounding=ROUND_05UP))
+            # Decimal. Speed of sound at sea level in m/s.
+    
         def Square_lattice(self, lowvertex, axIID, Nedge):
             
             self.popsize = int(Nedge ** 2)
             # integer. Size of the bat population / Number of agents.
             self.allID = range(self.popsize)
-            # list of integers, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
-            x = range(lowvertex[0], Nedge*axIID, axIID)
-            y = range(lowvertex[1], Nedge*axIID, axIID)
+            # list of floats, dimensions 1*popsize. IDs a unique ID corresponding to the agent.
+            x = np.linspace(lowvertex[0], lowvertex[0]+(Nedge-1)*axIID, num=Nedge)
+            y = np.linspace(lowvertex[1], lowvertex[1]+(Nedge-1)*axIID, num=Nedge)
+            
+            #  the initial positions are not exact numbers -- but more like float approxmns - next thing to be figured out !               
             bothedges = [x,y]
             self.allinitpos = list(it.product(*bothedges))
             # list of tuples, dimensions popsize*2. 
@@ -102,27 +113,30 @@ def onerun(currdir,PCOMB):
                 
                 self.ID = int(ID)
                 # integer. Serial (identification) number of the focal agent.
-                self.tres = env.tres
-                # take tres from env (class Launcher).
-                self.movangle = m.radians(float(movangle))
-                # float. Movement angle, i.e. direction (in rad) towards which the 
+                movangle_dec = Decimal(m.radians(movangle))
+                self.movangle = Decimal(movangle_dec.quantize(env.sigfig, rounding=ROUND_05UP))
+                # Decimal. Movement angle, i.e. direction (in rad) towards which the 
                 # agent flies. Value between 2*pi and pi, as asserted below.            
-                self.stepsize = float(flightspeed * self.tres) 
-                # float. Distance in meters covered by the agent in 1 time step
-                self.callduration = np.around(float(callduration/ env.tres), 0)
-                # float. Duration (in iterations) of each call. 
-                
-                self.IPI = np.around(float(IPI / env.tres), 0)
+                stepsize_dec = Decimal(flightspeed) * env.tres 
+                self.stepsize = Decimal(stepsize_dec.quantize(env.sigfig, rounding=ROUND_05UP))
+                # Decimal. Distance in meters covered by the agent in 1 time step
+                #self.callduration = callduration
+                callduration_dec = Decimal(callduration) / env.tres
+                self.callduration = int(Decimal(callduration_dec.quantize(Decimal('1'), rounding = ROUND_05UP)))
+                # Decimal. Duration (in s) of each call. 
+                #self.IPI = np.around(Decimal((self.callduration/dutycycle - self.callduration) / env.tres),0)
+                IPI_dec = Decimal(IPI) / env.tres
+                self.IPI = int(Decimal(IPI_dec.quantize(Decimal('1'), rounding = ROUND_05UP)))
                 # integer. Inter-pulse interval of the agent, converted in time steps.
-                self.maxtimestore = float(maxheardist / env.speedsound)
-                # float. Maximum time for storing a sound, deduced from the time 
+                self.maxtimestore = Decimal(maxheardist) / env.speedsound
+                # Decimal. Maximum time for storing a sound, deduced from the time 
                 # maximal, in seconds, during which a sound can travel, before its 
                 # intensity passes below the hearing threshold of the agent.
-                
-                self.ringwidth = float(self.callduration * env.speedsound) 
-                # float. Difference in radii of the two concentric circles 
+                self.ringwidth = Decimal(callduration) * env.speedsound 
+                # Decimal. Difference in radii of the two concentric circles 
                 # (in 2D) which form the start and the end of the bat call.
-                self.firstcall = rd.randint(0,self.IPI+self.callduration)
+                firstcall_dec = Decimal(rd.randint(0, (self.IPI + self.callduration)))
+                self.firstcall = int(Decimal(firstcall_dec.quantize(Decimal('1'), rounding = ROUND_05UP)))
                 # time step for initiating the first call
                 self.hearhistory_t = []
                 self.hearhistory_i = []
@@ -133,15 +147,15 @@ def onerun(currdir,PCOMB):
                 # - _t: time at which it was heard by the focal agent.
     
                 assert self.movangle >= m.radians(0) and self.movangle < m.radians(360), "Enter movement angle between 0 and 360 degrees"
-                #assert self.IPI > self.tres, 'Inter-pulse interval must be larger than the time resolution'            
+                #assert self.IPI > env.tres, 'Inter-pulse interval must be larger than the time resolution'            
                 
             def Movement(self):
                 
-                self.newx = float(self.x + self.stepsize * m.cos(self.movangle))
+                self.newx = self.x + self.stepsize * Decimal(m.cos(self.movangle))
                 # calculate the new x coordinate according to:
                 # - the distance travelled over 1 time step.
                 # - the direction of the movement
-                self.newy = float(self.y + self.stepsize * m.sin(self.movangle))
+                self.newy = self.y + self.stepsize * Decimal(m.sin(self.movangle))
                 # calculate the new y coordinate according to:
                 # - the distance travelled over 1 time step.
                 # - the direction of the movement
@@ -158,13 +172,14 @@ def onerun(currdir,PCOMB):
                 
             def Calling(self):
                 
-                self.calltest = float(self.timestep-self.firstcall)/float(self.IPI + self.callduration)
+                self.calltest = Decimal(self.timestep-self.firstcall)/Decimal(self.IPI + self.callduration)
                 # theoretical number of calls since the 1st call:
                 # time since 1st call = current time - time of 1st call/IPI
                 
                 if self.calltest%1 == 0:
                 # if the theoretical number of calls since the 1st call is a 
-                # natural number:
+                # divisible by the call cycle duration then initiate a call
+                
                     self.callshistory[int(self.timestep)] = 1
                     # account for the initiation of a new call at this time step 
                     # by adding a 1 in the calls' history.
@@ -178,9 +193,9 @@ def onerun(currdir,PCOMB):
                     # step by adding a zero in the calls' history.
                     
                 if self.ID in env.callsources.keys():
-                # if the agent has call already stored in the call dictionary:
+                # if the agent has call(s) already stored in the call dictionary:
                     self.Sound_update(env.callsources, self.ID)
-                    # update the information on this call.
+                    # update the information on this/these call(s).
     
             def Hearing(self):
                 
@@ -190,89 +205,92 @@ def onerun(currdir,PCOMB):
                     if identity in env.callsources.keys():
                     # if the agent has a call stored in the call dictionary: 
                         
-                        self.allcalltimes = env.callsources[int(identity)].keys()
+                        
+                        # store the time of emission of the call 
+                        self.allcalltimes = env.callsources[identity].keys()
                         self.allcalltimes.sort()
-                        # times of emission of each call from this agent that are registered in
-                        # the call dictionary.
+                        
                         
                         for calltime in self.allcalltimes:
-                        # for each time step at which the agent previously called:
+                        # for each time step at which any agent has previously called:
                             self.Hearing_test(env.callsources, identity, calltime)
                             # identify and record calls that can be heard by focal agent
             
-            def Sound_update(self, dict1, identity):
+            # calls_dict is the dictionary which holds all the calls to be propagated in the simulation environment
+            
+            def Sound_update(self, calls_dict, identity):
                 
-                allsoundtimes = dict1[identity].keys()
+                allsoundtimes = calls_dict[identity].keys()
                 allsoundtimes.sort()
-                # emission time of every sound that is recorded in dict1 for this 
+                # emission time of every sound that is recorded in calls_dict for this 
                 # individual
                 
                 for soundtime in allsoundtimes:
                 # for each time step at which a sound was emitted:
-                    self.Data_storage(dict1, int(soundtime))
+                    self.Data_storage(calls_dict, int(soundtime))
                     # erase sounds that are too old to be heared anymore
                     
-                    if soundtime in dict1[identity].keys():
+                    if soundtime in calls_dict[identity].keys():
                     # if the sound is still in the dictionary:
-                        self.Propagation(dict1, int(soundtime), identity)
+                        self.Propagation(calls_dict, int(soundtime), identity)
                         # update its propagation distance accordingly            
             
-            def Data_storage(self, dict1, tcall):
+            def Data_storage(self, calls_dict, tcall):
                 
                 self.timestore = self.timestep - tcall
                 # Time (in time steps) for which the call has been stored into 
                 # the dictionary.
                 
-                if self.timestore > self.maxtimestore/self.tres:
+                if self.timestore > self.maxtimestore/env.tres:
                 # if the storing time is longer than it should: 
-                    dict1[int(self.ID)].pop(tcall, None)
+                    calls_dict[int(self.ID)].pop(tcall, None)
                     # erase it from the memory / dictionary
             
-                return dict1
+                return calls_dict
     
-            def Propagation(self, dict1, tmstp, identity):
+            def Propagation(self, calls_dict, tmstp, identity):
                 
-                dictionary = dict1[identity][int(tmstp)]
+                dictionary = calls_dict[identity][int(tmstp)]
                 
                 self.backradius = dictionary['propdist']
-                # float. Current value for the radius of the sound from its source,
+                # Decimal. Current value for the radius of the sound from its source,
                 # that was calculated at the previous timestep.
-                self.propdist = float(env.speedsound * (self.timestore + 1) * env.tres)
+                self.propdist = Decimal(env.speedsound * (self.timestore + 1) * env.tres)
                 # Current propagation distance at timestep according to the time when 
                 # the call was emitted, and the speed of sound.
                 dictionary['propdist'] = self.propdist
-                # update the propagation distance in dict1
+                # update the propagation distance in calls_dict
                 
-                return dict1
+                return calls_dict
         
             def In_ring(self, xcallsource, ycallsource, soundback, soundfront, x, y):
                 
-                dist = float(m.sqrt((x - xcallsource) ** 2 + (y - ycallsource) ** 2))
+                dist = Decimal(m.sqrt((x - xcallsource) ** 2 + (y - ycallsource) ** 2))
                 # distance between the agent and the source of the call
-                return dist <= soundfront and dist >= soundback - self.ringwidth
+                return dist < soundfront and dist >= soundback - self.ringwidth
                 # boolean. Is dist within the distance travelled by the call 
                 # between the beginning of the call at t = tres * (timestep - 1) 
                 # (soundfront), & the end of the call at t = tres * timestep 
                 # (soundback - self.ringwidth)?            
             
-            def Hearing_test(self, dict1, agID, temission):
+            def Hearing_test(self, calls_dict, agID, temission):
                 
-                xcallcentre = dict1[int(agID)][int(temission)]['xsource']
-                # float. x-coordinate of the source of the call emitted by agID at 
+                xcallcentre = calls_dict[int(agID)][int(temission)]['xsource']
+                # Decimal. x-coordinate of the source of the call emitted by agID at 
                 # timestep = temission .
-                ycallcentre = dict1[int(agID)][int(temission)]['ysource']
-                # float. y-coordinate of the source of the call emitted by agID at 
+                ycallcentre = calls_dict[int(agID)][int(temission)]['ysource']
+                # Decimal. y-coordinate of the source of the call emitted by agID at 
                 # timestep = temission.
-                beamradius = dict1[int(agID)][int(temission)]['propdist']
-                # float. Current propagation distance of the source of the call 
+                beamradius = calls_dict[int(agID)][int(temission)]['propdist']
+                # Decimal. Current propagation distance of the source of the call 
                 # emitted by agID at timestep = temission.
                 backradius = beamradius - env.speedsound * env.tres
-                # float. Current value for the radius of the sound from its source,
+                # Decimal. Current value for the radius of the sound from its source,
                 # that was calculated at the previous timestep.            
                 xposagent = allbats[int(self.ID)].xhistory[int(self.timestep)]
-                # float. Current x-coordinate of the focal agent. 
+                # Decimal. Current x-coordinate of the focal agent. 
                 yposagent = allbats[int(self.ID)].yhistory[int(self.timestep)]
-                # float. Current x-coordinate of the focal agent.
+                # Decimal. Current x-coordinate of the focal agent.
                 
                 self.ringtest = self.In_ring(xcallcentre, ycallcentre, backradius, beamradius, xposagent, yposagent)
                 # boolean. Does the focal agent hear the call emitted by agID
@@ -292,23 +310,24 @@ def onerun(currdir,PCOMB):
                 return self.hearhistory_t, self.hearhistory_c, self.hearhistory_i
     
     
-    def Dict_update(dict1, dict2):
+    def Dict_update(calls_dict, dict2):
     # Updates a dictionary without over-writing the keys already stored in it.
         
         for key in dict2:
         
-            if key in dict1:
-                dict1[key].update(dict2[key])
+            if key in calls_dict:
+                calls_dict[key].update(dict2[key])
             else:
-                dict1[key] = dict2[key]
+                calls_dict[key] = dict2[key]
                 
-        return dict1
+        return calls_dict
     
     def Min_hear(param,alpha,sourcelevel, hth):
     # function to calculate the maximum distance at which a bat call can be heard
         SL = sourcelevel - m.fabs(20 * m.log10(0.1/1)) # source level corrected for intensity at 1m
         hearsqr = (SL - 20 * m.log10(param) + alpha * param - hth) ** 2
         return hearsqr
+
     
     ### SIMULATIONS ###      
     ### Run a multi-agents simulation and plot agents' movements.
