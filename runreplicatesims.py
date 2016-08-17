@@ -7,6 +7,7 @@ Created on Sun Aug 14 12:57:40 2016
 import sys
 import os
 import numpy as np
+import random as rd
 # script which runs multiple replicates of many parameter combinations:
 # inputs : 
 # results_dir: folder in which ALL the results will be stored
@@ -28,25 +29,25 @@ rd.seed(01) # initialize the basic random number generator - which should make s
 
 
 #the target folder that you want all the results to be stored in : (folder doesn't need to exist ! ) 
-Results_dir='D:\\Bat_Project\\Res'
+Results_dir='C:\\Users\\tbeleyur\\Desktop\\fin_res'
 
 
 # import the script ('oneinst.py') which runs one single instance of the simulation : 
-modulelocn='C:\\Users\\Claire\\Documents\\GitHub\\Bat-Project'
+modulelocn='C:\\Users\\tbeleyur\\Google Drive\\Holger Goerlitz- IMPRS\\PHD_2015\\projects and analyses\\2016_jamming response modelling\Coding\\Thejasvi codes and comments\\Bat-Project'
 
 sys.path.append ( modulelocn ) # add the location of the module to the search path of python 
 from oneinst import onerun  # import the one function from the module 
 
 
-Nrep=100 # number of replicates to be run per parameter combination
+Nrep=1 # number of replicates to be run per parameter combination
 
 # create the parameter combinations wanted : - right now it is purposefully manual
 # PLEASE NOTE : simulation duration IS SET TO 0 ON PURPOSE - the appropriate duration is calculated below
 pcomb1=[5,0.001,0,[1,1],2,0,5,0.003,0.080,-10,120,-1.7,340]
-pcomb2=[5,0.001,0,[1,1],2,0,5,0.003,0.050,-10,120,-1.7,340]
-pcomb3=[5,0.001,0,[1,1],2,0,5,0.003,0.040,-10,120,-1.7,340]
-pcomb4=[5,0.001,0,[1,1],2,0,5,0.003,0.020,-10,120,-1.7,340]
-pcomb5=[5,0.001,0,[1,1],2,0,5,0.003,0.010,-10,120,-1.7,340]
+#pcomb2=[5,0.001,0,[1,1],2,0,5,0.003,0.050,-10,120,-1.7,340,6]
+#pcomb3=[5,0.001,0,[1,1],2,0,5,0.003,0.040,-10,120,-1.7,340,6]
+#pcomb4=[5,0.001,0,[1,1],2,0,5,0.003,0.020,-10,120,-1.7,340]
+#pcomb5=[5,0.001,0,[1,1],2,0,5,0.003,0.010,-10,120,-1.7,340]
 
 
 
@@ -66,7 +67,7 @@ numcycles=9 # number of call cycles that will simulated for all parameter combin
 
 
 # combine the parameter combination in a list with sublists
-Param_set=[pcomb1,pcomb2]
+Param_set=[pcomb1]#,pcomb2]
 
 #ensure the correct simulation duration is calculated for each parameter combination:
 for pcb in Param_set:
