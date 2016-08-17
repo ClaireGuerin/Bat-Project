@@ -51,7 +51,7 @@ from decimal import Decimal, ROUND_05UP
     ### ALPHA : atmospheric absorption of sound at the call frequencies
     ### speed of sound : float. velocity of sound propagation in m/s
     
-    ### number of significant figures to be used in all calculations
+    
 
  # the format of PCOMB is a list as follows :   
  # PCOMB = [N_EDGE ,TIME_RESOLUTION, SIMULATION_DURATION, CORNER_INDIVIDUAL_POSITION, IID_ON_AXE,MOVEMENT_ANGLE,FLIGHT_SPEED,CALL_DURATION,INTER_PULSE_INTERVAL, HEARING_THRESHOLD,SOURCE_LEVEL,ALPHA,SPEED OF SOUND,num_sigfig]
@@ -456,8 +456,7 @@ def onerun(currdir,PCOMB):
     
     # creating the necessary directories where data will be saved
     
-    dirname = "ipi%s_nedge%s_iidaxe%s_calldurn%s_speed%s" % (str(INTER_PULSE_INTERVAL), str(N_EDGE), str(IID_ON_AXE),str(CALL_DURATION),str(FLIGHT_SPEED))
-    
+    dirname = "ipi%s_nedge%s_iidaxe%s_calldurn%s_speed%s_sourcelevel_%s" % (str(INTER_PULSE_INTERVAL), str(N_EDGE), str(IID_ON_AXE),str(CALL_DURATION),str(FLIGHT_SPEED),str(SOURCE_LEVEL))    
     
     
     dirmaker(dirname)
