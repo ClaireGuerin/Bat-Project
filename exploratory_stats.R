@@ -9,6 +9,8 @@ rm(list = ls())
 
 library(Rcmdr)
 
+startTime = Sys.time()
+
 resDir = "D:/Bat_Project/Res/"
 setwd(resDir)
 repFolders = dir(resDir, pattern = "Res")
@@ -21,9 +23,7 @@ eclist = list()
 for (i in 1:nSim){
 
 	eelist[[i]] = matrix(NA, ncol = 7, nrow = 2)
-	colnames(eelist[[i]]) = c("ID","meanNumOvPerEcho","sdNumOv","meanTimeOvPerEch","sdTimeOv","%echoOverlapped","%timeFreeIPI")
 	eclist[[i]] = matrix(NA, ncol = 7, nrow = 2)
-	colnames(eclist[[i]]) = c("ID","meanNumOvPerEcho","sdNumOv","meanTimeOvPerEch","sdTimeOv","%echoOverlapped","%timeFreeIPI")
 	
 	for (folder in repFolders){
 		sim = dir(folder)[i]
@@ -32,6 +32,9 @@ for (i in 1:nSim){
 
 		ee_ind = read.table(ee_file, header=T, sep=",", dec=".", row.names = 1)
 		ec_ind = read.table(ec_file, header=T, sep=",", dec=".", row.names = 1)
+
+		colnames(eelist[[i]]) = colnames(ee_ind)
+		colnames(eclist[[i]]) = colnames(ec_ind)
 
 		eelist[[i]] = rbind(eelist[[i]], ee_ind)
 		eclist[[i]] = rbind(eclist[[i]], ec_ind)
@@ -59,3 +62,5 @@ for (i in 1:nSim){
 	
 	dev.off()	
 }
+
+print(Sys.time() - startTime)

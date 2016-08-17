@@ -12,7 +12,8 @@ rm(list = ls())
 # clear current workspace
 
 library(IRanges)
-library(Hmisc)
+
+startTime = Sys.time()
 
 resDir = "D:/Bat_Project/Res/"
 setwd(resDir)
@@ -253,7 +254,7 @@ for (i in 0:(dim(cal)[2]-1)){
 		# position of bat E on y-axis at the time call j
 		# was heard by bat i.
 		
-		echoTravel = R.dist(0:(time.R - time.E))
+		echoTravel = R.dist(0:(time.R - time.E + 5))
 		preCD = (time.R - time.E)*VSOUND*TIMERESOLUTION
 		postCD = echoTravel*VSOUND*TIMERESOLUTION
 		echoPerception = Hear.echo(preCD, postCD, SOURCELEVEL, HEARINGTHRESHOLD)
@@ -307,7 +308,7 @@ npop = 0:(dim(cal)[2]-1)
 
 ECoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 7)
 ECoverlapMat[,1] = npop
-colnames(ECoverlapMat)=c("ID","meanNumOv","sdNumOv","meanTimeOv","sdTimeOv","numMask","timeFreeIPI")
+colnames(ECoverlapMat)=c("ID","meanNumOvPerEcho","sdNumOv","meanTimeOvPerEch","sdTimeOv","%echoOverlapped","%timeFreeIPI")
 
 EEoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 7)
 EEoverlapMat[,1] = npop
@@ -332,12 +333,14 @@ for (i in npop){
 		
 		c.temp = rep(FALSE, SIMDURATION)
 		calltimes = call_channel_nofilter$Time_R[which(call_channel_nofilter$ID_E == ident)]+1
-		c.temp[calltimes] = TRUE
+		checkcall = calltimes[which(calltimes<length(c.temp))]
+		c.temp[checkcall] = TRUE
 		c.ranges = append(c.ranges, IRanges(c.temp))
 
 		e.temp = rep(FALSE, SIMDURATION)
 		echotimes = echo_channel_nofilter$time.C[which(echo_channel_nofilter$id.B == ident)]+1
-		e.temp[echotimes] = TRUE
+		checkecho = echotimes[which(echotimes<length(e.temp))]
+		e.temp[checkecho] = TRUE
 		e.ranges = append(e.ranges, IRanges(e.temp))
 	}	
 
@@ -419,3 +422,5 @@ write.csv(EEoverlapMat, file=outputFile2)
 
 }
 }
+
+print(Sys.time() - startTime)
