@@ -40,7 +40,7 @@ class Launcher:
         self.callsources = {}
         # empty dictionary. Will contain the sources of each calls, 
         # emitted by every agent throughout the simulation.
-        speedsound_dec = Decimal(PCOMB[12])
+        speedsound_dec = Decimal(340.29)
         self.speedsound = Decimal(speedsound_dec.quantize(self.sigfig, rounding=ROUND_05UP))
         # Decimal. Speed of sound at sea level in m/s.
 
@@ -230,13 +230,13 @@ class Launcher:
         
         def Hearing_test(self, calls_dict, agID, temission):
             
-            xcallcentre = dict1[int(agID)][int(temission)]['xsource']
+            xcallcentre = calls_dict[int(agID)][int(temission)]['xsource']
             # Decimal. x-coordinate of the source of the call emitted by agID at 
             # timestep = temission .
-            ycallcentre = dict1[int(agID)][int(temission)]['ysource']
+            ycallcentre = calls_dict[int(agID)][int(temission)]['ysource']
             # Decimal. y-coordinate of the source of the call emitted by agID at 
             # timestep = temission.
-            beamradius = dict1[int(agID)][int(temission)]['propdist']
+            beamradius = calls_dict[int(agID)][int(temission)]['propdist']
             # Decimal. Current propagation distance of the source of the call 
             # emitted by agID at timestep = temission.
             backradius = beamradius - env.speedsound * env.tres
@@ -319,7 +319,7 @@ def Min_hear(param,alpha,sourcelevel, hth):
 TIME_RESOLUTION = 0.001
 SIMULATION_DURATION = 20
 
-IID_ON_AXE = env.speedsound*env.tres
+IID_ON_AXE = 340.29*0.001
 CORNER_INDIVIDUAL_POSITION = (1,1)
 N_EDGE = 2
 
@@ -343,7 +343,7 @@ rd.seed(96) # initialize the basic random number generator.
 
 # PLEASE CREATE A DIRECTORY CALLED 'RES' IN ANY DESIRED LOCATION AND PASTE THE ADDRESS (' C:\\_____\\.......\\Res')
 
-currdir='D:\\Bat_Project\\Res'
+currdir='C:\\Users\\tbeleyur\\Desktop\\fin_res'
 
 os.chdir(currdir) # change working directory
 
