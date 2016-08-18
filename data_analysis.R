@@ -15,16 +15,16 @@ library(IRanges)
 
 startTime = Sys.time()
 
-resDir = "D:/Bat_Project/Res/"
+resDir = "C:/Users/qliang/Documents/Bat-Project/Res/"
 setwd(resDir)
 resFiles = dir(resDir, pattern="Res")
 
-for (file in resFiles){
+for (resfile in resFiles[1:11]){
 
-resNum = file
+resNum = resfile
 combFolders = dir(resNum)
 
-for (comb in combFolders){
+for (comb in combFolders[4]){
 
 newDir = paste(resDir,resNum,"/",comb, sep="")
 # directory where the specific results that you want
@@ -304,6 +304,19 @@ for (i in 0:(dim(cal)[2]-1)){
 # rendering it impossible for the agent to hear it 
 # NB: Filter applied to both calls & echoes 
 
+plotRanges <- function(x, xlim = x, main = deparse(substitute(x)),
+	col = "black", sep = 0.5, ...){
+	height <- 1
+	if (is(xlim, "Ranges")) xlim <- c(min(start(xlim)), max(end(xlim)))
+	bins <- disjointBins(IRanges(start(x), end(x) + 1))
+	plot.new()
+	plot.window(xlim, c(0, max(bins)*(height + sep)))
+	ybottom <- bins * (sep + height) - height
+	rect(start(x)-0.5, ybottom, end(x)+0.5, ybottom + height, col = col, ...)
+	title(main)
+	axis(1)
+}
+
 npop = 0:(dim(cal)[2]-1)
 
 ECoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 7)
@@ -327,6 +340,7 @@ for (i in npop){
 	f.temp[filtertimes] = TRUE
 	f.ranges = append(f.ranges, IRanges(f.temp))
 	f.ranges = shift(f.ranges, -1)
+
 
 	for (j in 1:length(npop-1)){
 		ident = npop[-(i+1)][j]
@@ -355,6 +369,7 @@ for (i in npop){
 	
 	ECOverlaps = findOverlaps(e.ranges.f, c.ranges.f)
 	EEOverlaps = findOverlaps(e.ranges.f, e.ranges.f)
+	EEOverlaps = EEOverlaps[-which(EEOverlaps@from == EEOverlaps@to)]
 
 	numECOverlaps = rep(NA, length(e.ranges.f)) 
 	numEEOverlaps = rep(NA, length(e.ranges.f))	
@@ -363,7 +378,7 @@ for (i in npop){
 	widthEEOverlaps = rep(NA, length(e.ranges.f))
 
 	all.ranges = IRanges(rep(TRUE, SIMDURATION))
-	ipi.ranges = gaps(f.ranges, all.ranges@start, all.ranges@start+all.ranges@width-1)
+	ipi.ranges = gaps(f.ranges, all.ranges@start, all.ranges@start+all.ranges@width)
 	c.free.ipi = IRanges()
 	e.free.ipi = IRanges()
 	for (n in 1:length(ipi.ranges)){ 
@@ -374,26 +389,47 @@ for (i in npop){
 	for (k in 1:length(e.ranges.f)){
 		indivEC = which(ECOverlaps@from == k)
 		indivEE = which(EEOverlaps@from == k)
-		numECOverlaps[k] = length(indivEC)
-		numEEOverlaps[k] = length(indivEE)
 
 		if (length(indivEC)>0){
 
 			Covrange = ranges(ECOverlaps[indivEC], e.ranges.f, c.ranges.f)
-			widthovC = sum(reduce(Covrange)@width)
-			widthECOverlaps[k] = widthovC/e.ranges.f@width[k]
+			eraseC = which(Covrange@start == Covrange@start+Covrange@width-1)
+			Covrange = Covrange[-eraseC]
+
+			if (length(Covrange)>0){
+				widthovC = sum(reduce(Covrange)@width-1)
+				widthECOverlaps[k] = widthovC/(e.ranges.f@width[k]-1)
+				numECOverlaps[k] = length(Covrange)
+
+			}else{
+				widthECOverlaps[k] = 0
+				numECOverlaps[k] = 0
+			}
 		
 		}else{
 			widthECOverlaps[k] = 0
+			numECOverlaps[k] = 0
 		}
 
 		if (length(indivEE)>0){	
 			
 			Eovrange = ranges(EEOverlaps[indivEE], e.ranges.f, e.ranges.f)
-		 	widthovE = sum(reduce(Eovrange)@width)
-			widthEEOverlaps[k] = widthovE/e.ranges.f@width[k]
+			eraseE = which(Eovrange@start == Eovrange@start+Eovrange@width-1)
+			Eovrange = Eovrange[-eraseE]
+
+			if (length(Eovrange)>0){
+				widthovE = sum(reduce(Eovrange)@width-1)
+				widthEEOverlaps[k] = widthovE/(e.ranges.f@width[k]-1)
+				numEEOverlaps[k] = length(Eovrange)
+
+			}else{
+				widthEEOverlaps[k] = 0
+				numEEOverlaps[k] = 0
+			}
+
 		}else{
 			widthEEOverlaps[k] = 0
+			numEEOverlaps[k] = 0
 		}
 		
 	}
@@ -402,16 +438,39 @@ for (i in npop){
 	ECoverlapMat[i+1,3] = sd(numECOverlaps) # standard deviation of number of overlaps/echo
 	ECoverlapMat[i+1,4] = mean(widthECOverlaps) # mean % time of overlap 
 	ECoverlapMat[i+1,5] = sd(widthECOverlaps) # standard deviation % time of overlap
-	ECoverlapMat[i+1,6] = length(numECOverlaps)/length(e.ranges.f)# total % echoes (number) masked by others' calls 
-	ECoverlapMat[i+1,7] = sum(c.free.ipi@width)/sum(ipi.ranges@width) # total % of IPI time that is free of calls from others 
+	ECoverlapMat[i+1,6] = sum(numECOverlaps>0)/length(e.ranges.f)# total % echoes (number) masked by others' calls 
+	ECoverlapMat[i+1,7] = sum(c.free.ipi@width+1)/sum(ipi.ranges@width+1) # total % of IPI time that is free of calls from others 
 	
 	EEoverlapMat[i+1,2] = mean(numEEOverlaps) # number of echo overlaps/echo 
 	EEoverlapMat[i+1,3] = sd(numEEOverlaps) # standard deviation of number of echo overlaps/echo
 	EEoverlapMat[i+1,4] = mean(widthEEOverlaps) # mean % time/length of overlaps
 	EEoverlapMat[i+1,5] = sd(widthEEOverlaps) # standard deviation % time/length of overlaps
-	EEoverlapMat[i+1,6] = length(numEEOverlaps)/length(e.ranges.f)# total % echoes (number) masked by echoes 
+	EEoverlapMat[i+1,6] = sum(numEEOverlaps>0)/length(e.ranges.f)# total % echoes (number) masked by echoes 
 	EEoverlapMat[i+1,7] = sum(e.free.ipi@width)/sum(ipi.ranges@width) # total % of IPI time that is free of echoes 
-	
+
+	zerotest_c = which(ECoverlapMat[i+1,c(2,3,4,5)]==0)	
+	zerotest_e = which(EEoverlapMat[i+1,c(2,3,4,5)]==0)
+
+	if (length(zerotest_c)>0){
+		imgPath = paste("TESTPLOTS/",resfile,"_",comb,"_ec.pdf", sep="")
+		pdf(imgPath, width=7, height=7)
+		layout(matrix(c(1,1,2,2), nrow=2, byrow=T))
+		plotRanges(c(c.ranges.f, e.ranges.f), col=c("blue","green"), main=paste(i+1,"EC"))
+		plot.new()
+		legend(x="center", ncol=2, cex=2, title="Type of sound",legend=c("c.ranges.f","e.ranges.f"), fill=c("blue","green"))
+		dev.off()
+	}
+
+	if (length(zerotest_e)>0){
+		imgPath2 = paste("TESTPLOTS/",resfile,"_",comb,"_ee.pdf", sep="")
+		pdf(imgPath2, width=7, height=7)
+		layout(matrix(c(1,1,2,2), nrow=2, byrow=T))
+		plotRanges(e.ranges.f, col="green", main=paste(i+1,"EE"))
+		plot.new()
+		legend(x="center", cex=2, title="Type of sound",legend="e.ranges.f", fill="green")
+		dev.off()
+	}
+
 }
 
 outputFile1 = paste(newDir,"/echo_call_index.csv", sep="")
