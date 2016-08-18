@@ -9,12 +9,24 @@ rm(list = ls())
 
 library(Rcmdr)
 
-startTime = Sys.time()
+###----------USER INPUT REQUIRED----------###
+
+resDir = "D:/Bat_Project/Res/" # directory where the results are stored
 
 varParam = "ipi"
-dutycycle = c("Unconstrained", "5.4%", "15%")
+dutyCycle = ""
+# dutyCycle = "Unconstrained" # uncomment accordingly
+# dutyCycle = "5.4%" # uncomment accordingly
+# dutyCycle = "15%" # uncomment accordingly
 
-resDir = "D:/Bat_Project/Res/"
+###----------###################----------###
+
+startTime = Sys.time()
+
+pcomb = c("nedge","tres","sim_durn","cornerpos","iid_on_axis","mov_angle","flight_speed",
+	"call_durn","ipi","hear_tresh","source_level","alpha","speedsound")
+varParIndex = which(pcomb == varParam)
+
 setwd(resDir)
 repFolders = dir(resDir, pattern = "Res")
 nRep = length(repFolders)
@@ -22,6 +34,7 @@ nSim = length(dir(repFolders[1]))
 
 eelist = list()
 eclist = list()
+paramlist = list()
 
 for (i in 1:nSim){
 
@@ -34,15 +47,18 @@ for (i in 1:nSim){
 		sim = dir(folder)[i]
 		ee_file = paste(resDir,folder,"/",sim,"/","echo_echo_index.csv", sep="")
 		ec_file = paste(resDir,folder,"/",sim,"/","echo_call_index.csv", sep="")
+		param_file = paste(resDir,folder,"/",sim,"/","parameter_set.csv", sep="") 
 
 		ee_ind = read.table(ee_file, header=T, sep=",", dec=".", row.names = 1)
 		ec_ind = read.table(ec_file, header=T, sep=",", dec=".", row.names = 1)
-
+		parameter = as.numeric(as.character(read.table(param_file, header=F, sep="\n", dec=".")[varParIndex,]))
+		
 		colnames(eelist[[i]]) = colnames(ee_ind)
 		colnames(eclist[[i]]) = colnames(ec_ind)
-
+		
 		eelist[[i]] = rbind(eelist[[i]], ee_ind)
 		eclist[[i]] = rbind(eclist[[i]], ec_ind)
+		paramlist[[i]] = parameter
 	}
 
 ###----------End of INDICES IMPORT----------###	
@@ -52,9 +68,10 @@ for (i in 1:nSim){
 	ec_ids = as.factor(as.vector(eclist[[i]][1])[,1])
 	ee_ids = as.factor(as.vector(eelist[[i]][1])[,1])
 
-	imgPath = paste("Exploratory/",sim,".pdf", sep="")
-	pdf(imgPath, width=7, height=7)
-	par(mfrow = c(2,2))
+	imgPath1 = paste("Boxplots/",sim,".pdf", sep="")
+	pdf(imgPath1, width=7, height=7)
+	layout(matrix(c(1,2,3,4,5,5), ncol=2, byrow=TRUE), widths=c(1,1,1), heights=c(3,3,1))
+	par(mai=rep(0.5, 4))
 
 	indexNames = c("Mean number of sound overlaps per echo","Mean time of sound overlap per echo", "Number of overlapped echoes (%)", "Time of IPI free of sounds (%)")
 	
@@ -68,18 +85,55 @@ for (i in 1:nSim){
 		Boxplot(ec_index~ec_ids, medcol="coral", cex=3, ylab = index, xlab = "ID", ylim=c(0,indlim)) 
 		Boxplot(ee_index~ee_ids, medcol="mediumseagreen", cex=3, ylab = index, xlab = "ID", add=T)
 	}
-	
+	par(mai=c(0,0,0,0))
+	plot.new()
+	legend(x="center", ncol=2, legend=c("Echo-call overlaps","Echo-echo overlaps"),
+      	col=c("coral","mediumseagreen"), title="Type of overlap", pch=20, pt.cex=3)
 	dev.off()
-	
+
 ###----------End of BOXPLOTS----------###
 
 }
 
-
-
 ###----------SCATTERPLOTS----------###
 
+imgPath2 = paste("Scatterplots/",varParam,dutyCycle,".pdf", sep="")
+pdf(imgPath2, width=7, height=7)
+layout(matrix(c(1,2,3,4,5,5), ncol=2, byrow=TRUE), widths=c(1,1,1), heights=c(3,3,1))
+par(mai=rep(0.5, 4))
+	
+for (j in 1:4){
 
+	indexCol = c(2,4,6,7)[j]
+	index = indexNames[j]
+	ec_index_all = c()
+	ee_index_all = c()
+	param_all = c()
+	
+	for (i in 1:nSim){
+
+		ec_index = as.vector(eclist[[i]][indexCol])[,1]
+		ee_index = as.vector(eelist[[i]][indexCol])[,1]
+		len_ind = length(ec_index)
+		param = rep(paramlist[[i]], len_ind)
+
+		ec_index_all = append(ec_index_all, ec_index)
+		ee_index_all = append(ee_index_all, ee_index)
+		param_all = append(param_all, param)		
+	}
+
+	maxy = max(ec_index_all, ee_index_all, na.rm=T)
+	jitterStrength = 0.1*(max(param_all)-min(param_all))
+	
+	plot(ec_index_all~jitter(param_all, jitterStrength), col="coral", pch=20, ylab = index, xlab = varParam, ylim=c(0,maxy)) 
+	points(ee_index_all~jitter(param_all, jitterStrength), col="mediumseagreen", pch=20)
+}
+
+par(mai=c(0,0,0,0))
+plot.new()
+legend(x="center", ncol=2, legend=c("Echo-call overlaps","Echo-echo overlaps"),
+	col=c("coral","mediumseagreen"), title="Type of overlap", pch=20, pt.cex=3)		
+dev.off()
 
 ###----------End of SCATTERPLOTS----------###
 
