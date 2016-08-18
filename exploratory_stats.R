@@ -14,9 +14,10 @@ library(Rcmdr)
 resDir = "D:/Bat_Project/Res/" # directory where the results are stored
 
 varParam = "ipi"
-# dutycycle = "Unconstrained" # uncomment accordingly
-# dutycycle = "5.4%" # uncomment accordingly
-# dutycycle = "15%" # uncomment accordingly
+dutyCycle = ""
+# dutyCycle = "Unconstrained" # uncomment accordingly
+# dutyCycle = "5.4%" # uncomment accordingly
+# dutyCycle = "15%" # uncomment accordingly
 
 ###----------###################----------###
 
@@ -69,7 +70,8 @@ for (i in 1:nSim){
 
 	imgPath1 = paste("Boxplots/",sim,".pdf", sep="")
 	pdf(imgPath1, width=7, height=7)
-	par(mfrow = c(2,2))
+	layout(matrix(c(1,2,3,4,5,5), ncol=2, byrow=TRUE), widths=c(1,1,1), heights=c(3,3,1))
+	par(mai=rep(0.5, 4))
 
 	indexNames = c("Mean number of sound overlaps per echo","Mean time of sound overlap per echo", "Number of overlapped echoes (%)", "Time of IPI free of sounds (%)")
 	
@@ -83,7 +85,10 @@ for (i in 1:nSim){
 		Boxplot(ec_index~ec_ids, medcol="coral", cex=3, ylab = index, xlab = "ID", ylim=c(0,indlim)) 
 		Boxplot(ee_index~ee_ids, medcol="mediumseagreen", cex=3, ylab = index, xlab = "ID", add=T)
 	}
-	
+	par(mai=c(0,0,0,0))
+	plot.new()
+	legend(x="center", ncol=2, legend=c("Echo-call overlaps","Echo-echo overlaps"),
+      	col=c("coral","mediumseagreen"), title="Type of overlap", pch=20, pt.cex=3)
 	dev.off()
 
 ###----------End of BOXPLOTS----------###
@@ -92,9 +97,10 @@ for (i in 1:nSim){
 
 ###----------SCATTERPLOTS----------###
 
-imgPath2 = paste("Scatterplots/",sim,".pdf", sep="")
+imgPath2 = paste("Scatterplots/",varParam,dutyCycle,".pdf", sep="")
 pdf(imgPath2, width=7, height=7)
-par(mfrow = c(2,2))
+layout(matrix(c(1,2,3,4,5,5), ncol=2, byrow=TRUE), widths=c(1,1,1), heights=c(3,3,1))
+par(mai=rep(0.5, 4))
 	
 for (j in 1:4){
 
@@ -122,20 +128,13 @@ for (j in 1:4){
 	plot(ec_index_all~jitter(param_all, jitterStrength), col="coral", pch=20, ylab = index, xlab = varParam, ylim=c(0,maxy)) 
 	points(ee_index_all~jitter(param_all, jitterStrength), col="mediumseagreen", pch=20)
 }
-		
+
+par(mai=c(0,0,0,0))
+plot.new()
+legend(x="center", ncol=2, legend=c("Echo-call overlaps","Echo-echo overlaps"),
+	col=c("coral","mediumseagreen"), title="Type of overlap", pch=20, pt.cex=3)		
 dev.off()
 
 ###----------End of SCATTERPLOTS----------###
 
 print(Sys.time() - startTime)
-
-layout(matrix(c(1,2,3,3), ncol=2, byrow=TRUE), heights=c(4, 1))
-
-par(mai=rep(0.5, 4))
-plot(1:3,4:6,main="plot 1")
-plot(1:3,4:6,main="plot 2")
-
-par(mai=c(0,0,0,0))
-plot.new()
-legend(x="center", ncol=3,legend=c("0-1 km","1-5 km","outside barrier"),
-       fill=c("green","orange","red"), title="Fetch")
