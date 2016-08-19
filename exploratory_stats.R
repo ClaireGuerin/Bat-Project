@@ -10,14 +10,14 @@ rm(list = ls())
 library(Rcmdr)
 
 ###----------USER INPUT REQUIRED----------###
-
-resDir = "D:/Bat_Project/Res/" # directory where the results are stored
+### Remember to create Scatterplots and Boxplots folders
+resDir = "C:/Users/qliang/Documents/Bat-Project/Res/" # directory where the results are stored
 
 varParam = "ipi"
-dutyCycle = ""
+# dutyCycle = ""
 # dutyCycle = "Unconstrained" # uncomment accordingly
-# dutyCycle = "5.4%" # uncomment accordingly
-# dutyCycle = "15%" # uncomment accordingly
+dutyCycle = "5.4" # uncomment accordingly
+# dutyCycle = "15" # uncomment accordingly
 
 ###----------###################----------###
 
@@ -28,7 +28,7 @@ pcomb = c("nedge","tres","sim_durn","cornerpos","iid_on_axis","mov_angle","fligh
 varParIndex = which(pcomb == varParam)
 
 setwd(resDir)
-repFolders = dir(resDir, pattern = "Res")
+repFolders = dir(resDir, pattern = "Res")[1:11]
 nRep = length(repFolders)
 nSim = length(dir(repFolders[1]))
 
@@ -71,9 +71,9 @@ for (i in 1:nSim){
 	imgPath1 = paste("Boxplots/",sim,".pdf", sep="")
 	pdf(imgPath1, width=7, height=7)
 	layout(matrix(c(1,2,3,4,5,5), ncol=2, byrow=TRUE), widths=c(1,1,1), heights=c(3,3,1))
-	par(mai=rep(0.5, 4))
+	par(mai=rep(0.6, 4))
 
-	indexNames = c("Mean number of sound overlaps per echo","Mean time of sound overlap per echo", "Number of overlapped echoes (%)", "Time of IPI free of sounds (%)")
+	indexNames = c("Mean number of interfering sounds per echo","Mean % duration of interference per echo", "% of echoes having interference", "% time of IPI free of sounds")
 	
 	for (j in c(2,4,6,7)){
 		
@@ -82,13 +82,13 @@ for (i in 1:nSim){
 		ee_index = as.vector(eelist[[i]][j])[,1]
 		indlim = max(ec_index, ee_index, na.rm=T)
 
-		Boxplot(ec_index~ec_ids, medcol="coral", cex=3, ylab = index, xlab = "ID", ylim=c(0,indlim)) 
-		Boxplot(ee_index~ee_ids, medcol="mediumseagreen", cex=3, ylab = index, xlab = "ID", add=T)
+		Boxplot(ec_index~ec_ids, col="snow2", border="coral", cex.axis=1.5, ylab = index, xlab = "ID", ylim=c(0,indlim)) 
+		Boxplot(ee_index~ee_ids, col="snow2", border="mediumseagreen", cex.axis=1.5, ylab = index, xlab = "ID", add=T)
 	}
 	par(mai=c(0,0,0,0))
 	plot.new()
 	legend(x="center", ncol=2, legend=c("Echo-call overlaps","Echo-echo overlaps"),
-      	col=c("coral","mediumseagreen"), title="Type of overlap", pch=20, pt.cex=3)
+      	fill=c("snow2","snow2"), border=c("coral","mediumseagreen"), title="Type of overlap")
 	dev.off()
 
 ###----------End of BOXPLOTS----------###
@@ -100,7 +100,7 @@ for (i in 1:nSim){
 imgPath2 = paste("Scatterplots/",varParam,dutyCycle,".pdf", sep="")
 pdf(imgPath2, width=7, height=7)
 layout(matrix(c(1,2,3,4,5,5), ncol=2, byrow=TRUE), widths=c(1,1,1), heights=c(3,3,1))
-par(mai=rep(0.5, 4))
+par(mai=rep(0.6, 4))
 	
 for (j in 1:4){
 
@@ -123,12 +123,11 @@ for (j in 1:4){
 	}
 
 	maxy = max(ec_index_all, ee_index_all, na.rm=T)
-	jitterStrength = 0.1*(max(param_all)-min(param_all))
+	jitterStrength = 0.5*(max(param_all)-min(param_all))
 	
-	plot(ec_index_all~jitter(param_all, jitterStrength), col="coral", pch=20, ylab = index, xlab = varParam, ylim=c(0,maxy)) 
-	points(ee_index_all~jitter(param_all, jitterStrength), col="mediumseagreen", pch=20)
+	plot(ec_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col="coral", pch=20, ylab = index, xlab = varParam, ylim=c(0,maxy)) 
+	points(ee_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col="mediumseagreen", pch=20)
 }
-
 par(mai=c(0,0,0,0))
 plot.new()
 legend(x="center", ncol=2, legend=c("Echo-call overlaps","Echo-echo overlaps"),
