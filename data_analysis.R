@@ -15,9 +15,9 @@ library(IRanges)
 
 startTime = Sys.time()
 
-resDir = "C:/Users/qliang/Documents/Bat-Project/"
+resDir = "D:/Bat_Project/Res/"
 setwd(resDir)
-resFiles = dir(resDir, pattern="Res0")
+resFiles = dir(resDir, pattern="Res")
 
 for (resfile in resFiles){
 
