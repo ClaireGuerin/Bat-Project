@@ -11,7 +11,7 @@ library(Rcmdr)
 
 ###----------USER INPUT REQUIRED----------###
 ### Remember to create Scatterplots and Boxplots folders
-resDir = "C:/Users/qliang/Documents/Bat-Project/Res/" # directory where the results are stored
+resDir = "C:/Users/qliang/Documents/Bat-Project/" # directory where the results are stored
 
 varParam = "ipi"
 # dutyCycle = ""
@@ -26,15 +26,17 @@ startTime = Sys.time()
 pcomb = c("nedge","tres","sim_durn","cornerpos","iid_on_axis","mov_angle","flight_speed",
 	"call_durn","ipi","hear_tresh","source_level","alpha","speedsound")
 varParIndex = which(pcomb == varParam)
+Nindex = which(pcomb == "nedge")
 
 setwd(resDir)
-repFolders = dir(resDir, pattern = "Res")[1:11]
+repFolders = dir(resDir, pattern = "Res0")
 nRep = length(repFolders)
 nSim = length(dir(repFolders[1]))
 
 eelist = list()
 eclist = list()
 paramlist = list()
+Nlist = list()
 
 for (i in 1:nSim){
 
@@ -52,13 +54,15 @@ for (i in 1:nSim){
 		ee_ind = read.table(ee_file, header=T, sep=",", dec=".", row.names = 1)
 		ec_ind = read.table(ec_file, header=T, sep=",", dec=".", row.names = 1)
 		parameter = as.numeric(as.character(read.table(param_file, header=F, sep="\n", dec=".")[varParIndex,]))
-		
+		N = as.numeric(as.character(read.table(param_file, header=F, sep="\n", dec=".")[Nindex,])) ^ 2
+
 		colnames(eelist[[i]]) = colnames(ee_ind)
 		colnames(eclist[[i]]) = colnames(ec_ind)
 		
 		eelist[[i]] = rbind(eelist[[i]], ee_ind)
 		eclist[[i]] = rbind(eclist[[i]], ec_ind)
 		paramlist[[i]] = parameter
+		Nlist[[i]] = N
 	}
 
 ###----------End of INDICES IMPORT----------###	
@@ -70,17 +74,29 @@ for (i in 1:nSim){
 
 	imgPath1 = paste("Boxplots/",sim,".pdf", sep="")
 	pdf(imgPath1, width=7, height=7)
-	layout(matrix(c(1,2,3,4,5,5), ncol=2, byrow=TRUE), widths=c(1,1,1), heights=c(3,3,1))
-	par(mai=rep(0.6, 4))
+	layout(matrix(c(1,1,2,3,4,4,5,5), ncol=2, byrow=TRUE), widths=c(1,1,1,1), heights=c(1,4,4,1))
+
 
 	indexNames = c("Mean number of interfering sounds per echo","Mean % duration of interference per echo", "% of echoes having interference", "% time of IPI free of sounds")
-	
-	for (j in c(2,4,6,7)){
+
+	par(mai=c(0,0,0,0))
+	plot(c(0,2), c(0,2), pch=20, col="white", axes=F, ylab="", xlab="")
+	text(1,1,labels=paste(varParam,as.character(paramlist[[i]]),dutyCycle), cex=5)
+
+	par(mai=rep(0.6, 4))
+	for (j in 1:3){
 		
+		indexCol = c(2,4,6)[j]
 		index = indexNames[j]
-		ec_index = as.vector(eclist[[i]][j])[,1]
-		ee_index = as.vector(eelist[[i]][j])[,1]
-		indlim = max(ec_index, ee_index, na.rm=T)
+		ec_index = as.vector(eclist[[i]][indexCol])[,1]
+		ee_index = as.vector(eelist[[i]][indexCol])[,1]
+		n = Nlist[[i]] - 1
+		
+		if (j==1){
+			indlim = n 
+		}else{
+			indlim = max(100, ec_index, ee_index, na.rm=T)
+		}
 
 		Boxplot(ec_index~ec_ids, col="snow2", border="coral", cex.axis=1.5, ylab = index, xlab = "ID", ylim=c(0,indlim)) 
 		Boxplot(ee_index~ee_ids, col="snow2", border="mediumseagreen", cex.axis=1.5, ylab = index, xlab = "ID", add=T)
@@ -89,6 +105,7 @@ for (i in 1:nSim){
 	plot.new()
 	legend(x="center", ncol=2, legend=c("Echo-call overlaps","Echo-echo overlaps"),
       	fill=c("snow2","snow2"), border=c("coral","mediumseagreen"), title="Type of overlap")
+	
 	dev.off()
 
 ###----------End of BOXPLOTS----------###
@@ -99,16 +116,21 @@ for (i in 1:nSim){
 
 imgPath2 = paste("Scatterplots/",varParam,dutyCycle,".pdf", sep="")
 pdf(imgPath2, width=7, height=7)
-layout(matrix(c(1,2,3,4,5,5), ncol=2, byrow=TRUE), widths=c(1,1,1), heights=c(3,3,1))
-par(mai=rep(0.6, 4))
-	
-for (j in 1:4){
+layout(matrix(c(1,1,2,3,4,4,5,5), ncol=2, byrow=TRUE), widths=c(1,1,1,1), heights=c(1,4,4,1))
 
-	indexCol = c(2,4,6,7)[j]
+par(mai=c(0,0,0,0))
+plot(c(0,2), c(0,2), pch=20, col="white", axes=F, ylab="", xlab="")
+text(1,1,labels=paste(varParam,dutyCycle), cex=5)
+
+par(mai=rep(0.6, 4))	
+for (j in 1:3){
+
+	indexCol = c(2,4,6)[j]
 	index = indexNames[j]
 	ec_index_all = c()
 	ee_index_all = c()
 	param_all = c()
+	n_all = c()
 	
 	for (i in 1:nSim){
 
@@ -116,14 +138,21 @@ for (j in 1:4){
 		ee_index = as.vector(eelist[[i]][indexCol])[,1]
 		len_ind = length(ec_index)
 		param = rep(paramlist[[i]], len_ind)
+		n = Nlist[[i]] - 1
 
 		ec_index_all = append(ec_index_all, ec_index)
 		ee_index_all = append(ee_index_all, ee_index)
-		param_all = append(param_all, param)		
+		param_all = append(param_all, param)
+		n_all = append(n_all, n)		
 	}
 
-	maxy = max(ec_index_all, ee_index_all, na.rm=T)
+	if (j==1){
+		maxy = max(n_all) 
+	}else{
+		maxy = max(100, ec_index_all, ee_index_all, na.rm=T)
+	}	
 	jitterStrength = 0.5*(max(param_all)-min(param_all))
+
 	
 	plot(ec_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col="coral", pch=20, ylab = index, xlab = varParam, ylim=c(0,maxy)) 
 	points(ee_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col="mediumseagreen", pch=20)

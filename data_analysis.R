@@ -15,11 +15,11 @@ library(IRanges)
 
 startTime = Sys.time()
 
-resDir = "C:/Users/qliang/Documents/Bat-Project/Res/"
+resDir = "C:/Users/qliang/Documents/Bat-Project/"
 setwd(resDir)
-resFiles = dir(resDir, pattern="Res")
+resFiles = dir(resDir, pattern="Res0")
 
-for (resfile in resFiles[1:11]){
+for (resfile in resFiles){
 
 resNum = resfile
 combFolders = dir(resNum)
@@ -435,15 +435,15 @@ for (i in npop){
 		
 	}
 	
-	ECoverlapMat[i+1,2] = 100*mean(numECOverlaps) # mean number of overlaps/echo
-	ECoverlapMat[i+1,3] = 100*sd(numECOverlaps) # standard deviation of number of overlaps/echo
+	ECoverlapMat[i+1,2] = mean(numECOverlaps) # mean number of overlaps/echo
+	ECoverlapMat[i+1,3] = sd(numECOverlaps) # standard deviation of number of overlaps/echo
 	ECoverlapMat[i+1,4] = 100*mean(widthECOverlaps) # mean % time of overlap 
 	ECoverlapMat[i+1,5] = 100*sd(widthECOverlaps) # standard deviation % time of overlap
 	ECoverlapMat[i+1,6] = 100*sum(numECOverlaps>0)/length(e.ranges.f) # total % echoes (number) masked by others' calls 
 	ECoverlapMat[i+1,7] = 100*sum(c.free.ipi@width-1)/sum(ipi.ranges@width-1) # total % of IPI time that is free of calls from others 
 	
-	EEoverlapMat[i+1,2] = 100*mean(numEEOverlaps) # number of echo overlaps/echo 
-	EEoverlapMat[i+1,3] = 100*sd(numEEOverlaps) # standard deviation of number of echo overlaps/echo
+	EEoverlapMat[i+1,2] = mean(numEEOverlaps) # number of echo overlaps/echo 
+	EEoverlapMat[i+1,3] = sd(numEEOverlaps) # standard deviation of number of echo overlaps/echo
 	EEoverlapMat[i+1,4] = 100*mean(widthEEOverlaps) # mean % time/length of overlaps
 	EEoverlapMat[i+1,5] = 100*sd(widthEEOverlaps) # standard deviation % time/length of overlaps
 	EEoverlapMat[i+1,6] = 100*sum(numEEOverlaps>0)/length(e.ranges.f)# total % echoes (number) masked by echoes 
