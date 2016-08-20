@@ -11,12 +11,12 @@ library(car)
 
 ###----------USER INPUT REQUIRED----------###
 ### Remember to create Scatterplots and Boxplots folders
-resDir = "D:/Bat_Project/Res/" # directory where the results are stored
+resDir = "G:/CLAIRE/SL/" # directory where the results are stored
 
-varParam = "ipi"
-# dutyCycle = ""
+varParam = "source_level"
+dutyCycle = ""
 # dutyCycle = "Unconstrained duty cycle" # uncomment accordingly
-dutyCycle = "5.4% duty cycle" # uncomment accordingly
+# dutyCycle = "5.4% duty cycle" # uncomment accordingly
 # dutyCycle = " 15 duty cycle%" # uncomment accordingly
 
 ###----------###################----------###
@@ -169,21 +169,21 @@ for (j in 1:3){
 	}else{
 		maxy = max(100, ec_index_all, ee_index_all, na.rm=T)
 	}	
-	jitterStrength = 0.5*(max(param_all)-min(param_all))
+	jitterStrength = 1
 
 	#baseline[,j] = ec_index_all
 	#baseline[,j+3] = ee_index_all
 
 	plot(ec_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col="coral", pch=20, ylab = index, xlab = varName, ylim=c(0,maxy), cex.lab=1.5, col.lab="gray30") 
 	points(ee_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col="mediumseagreen", pch=20)
-	points(baseline[,j]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col="coral", pch=8)
-	points(baseline[,j+3]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col="mediumseagreen", pch=8)
+	points(baseline[,j]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col="coral4", pch=8)
+	points(baseline[,j+3]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col="cyan4", pch=8)
 }
 par(mai=c(0,0,0,0))
 plot.new()
 legend(x="center", ncol=1, 
 	legend=c("Echo-call overlaps",paste("Reference",varName),"Echo-echo overlaps",paste("Reference",varName)),
-	col=c("coral","coral","mediumseagreen","mediumseagreen"), 
+	col=c("coral","coral4","mediumseagreen","cyan4"), 
 	title="Type of overlapping sound", pch=c(20,8,20,8), pt.cex=3, cex=1.5)		
 dev.off()
 
