@@ -36,7 +36,7 @@ indexNames = c("Echo-sound overlaps \n(mean number)","Echo-sounds total \noverla
 	"% of echoes with overlap(s)", "% time of IPI free of sounds")
 
 setwd(resDir)
-repFolders = dir(resDir, pattern = "Res0")
+repFolders = dir(resDir, pattern = "Res")
 nRep = length(repFolders)
 nSim = length(dir(repFolders[1]))
 
@@ -44,6 +44,17 @@ eelist = list()
 eclist = list()
 paramlist = list()
 Nlist = list()
+
+baseline = matrix(NA, nrow=902, ncol=10)
+colnames(baseline) = c(paste(c("meanNumOvPerEcho","meanTimeOvPerEch","X.echoOverlapped"),"C", sep=""),
+	paste(c("meanNumOvPerEcho","meanTimeOvPerEch","X.echoOverlapped"),"E", sep=""),pcomb[c(1,5,9,11)])
+
+#baseline[,7] = rep(3,902)
+#baseline[,8] = rep(1,902)
+#baseline[,9] = rep(0.07,902)
+#baseline[,10] = rep(120,902)
+#summary(baseline)
+#write.csv(baseline, file="baseline.csv")
 
 for (i in 1:nSim){
 
@@ -157,7 +168,9 @@ for (j in 1:3){
 	}	
 	jitterStrength = 0.5*(max(param_all)-min(param_all))
 
-	
+	#baseline[,j] = ec_index_all
+	#baseline[,j+3] = ee_index_all
+
 	plot(ec_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col="coral", pch=20, ylab = index, xlab = varName, ylim=c(0,maxy), cex.lab=1.5, col.lab="gray30") 
 	points(ee_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col="mediumseagreen", pch=20)
 }
@@ -170,3 +183,13 @@ dev.off()
 ###----------End of SCATTERPLOTS----------###
 
 print(Sys.time() - startTime)
+
+
+
+
+
+
+
+
+
+
