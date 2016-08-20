@@ -7,7 +7,7 @@
 
 rm(list = ls())
 
-library(Rcmdr)
+library(car)
 
 ###----------USER INPUT REQUIRED----------###
 ### Remember to create Scatterplots and Boxplots folders
@@ -45,9 +45,12 @@ eclist = list()
 paramlist = list()
 Nlist = list()
 
-baseline = matrix(NA, nrow=902, ncol=10)
-colnames(baseline) = c(paste(c("meanNumOvPerEcho","meanTimeOvPerEch","X.echoOverlapped"),"C", sep=""),
-	paste(c("meanNumOvPerEcho","meanTimeOvPerEch","X.echoOverlapped"),"E", sep=""),pcomb[c(1,5,9,11)])
+baseline = read.csv("baseline.csv", header=T, row.name=1, dec=".", sep=",")
+varBase = which(colnames(baseline) == varParam)
+
+#baseline = matrix(NA, nrow=902, ncol=10)
+#colnames(baseline) = c(paste(c("meanNumOvPerEcho","meanTimeOvPerEch","X.echoOverlapped"),"C", sep=""),
+#	paste(c("meanNumOvPerEcho","meanTimeOvPerEch","X.echoOverlapped"),"E", sep=""),pcomb[c(1,5,9,11)])
 
 #baseline[,7] = rep(3,902)
 #baseline[,8] = rep(1,902)
@@ -113,8 +116,8 @@ for (i in 1:nSim){
 			indlim = max(100, ec_index, ee_index, na.rm=T)
 		}
 
-		Boxplot(ec_index~ec_ids, col="snow2", border="coral", cex.axis=1.5, ylab = index, xlab = "Individual ID", ylim=c(0,indlim), cex.lab=1.5, col.lab="gray30") 
-		Boxplot(ee_index~ee_ids, col="snow2", border="mediumseagreen", add=T, ylab = "", xlab = "", axes=F)
+		Boxplot(ec_index~ec_ids, col="snow2", border="coral", cex.axis=1.5, ylab = index, xlab = "Individual ID", ylim=c(0,indlim), cex.lab=1.5, col.lab="gray30", id.method="none") 
+		Boxplot(ee_index~ee_ids, col="snow2", border="mediumseagreen", add=T, ylab = "", xlab = "", axes=F, id.method="none")
 	}
 	par(mai=c(0,0,0,0))
 	plot.new()
@@ -173,11 +176,15 @@ for (j in 1:3){
 
 	plot(ec_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col="coral", pch=20, ylab = index, xlab = varName, ylim=c(0,maxy), cex.lab=1.5, col.lab="gray30") 
 	points(ee_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col="mediumseagreen", pch=20)
+	points(baseline[,j]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col="coral", pch=8)
+	points(baseline[,j+3]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col="mediumseagreen", pch=8)
 }
 par(mai=c(0,0,0,0))
 plot.new()
-legend(x="center", ncol=1, legend=c("Echo-call overlaps","Echo-echo overlaps"),
-	col=c("coral","mediumseagreen"), title="Type of overlapping sound", pch=20, pt.cex=3, cex=2)		
+legend(x="center", ncol=1, 
+	legend=c("Echo-call overlaps",paste("Reference",varName),"Echo-echo overlaps",paste("Reference",varName)),
+	col=c("coral","coral","mediumseagreen","mediumseagreen"), 
+	title="Type of overlapping sound", pch=c(20,8,20,8), pt.cex=3, cex=1.5)		
 dev.off()
 
 ###----------End of SCATTERPLOTS----------###
