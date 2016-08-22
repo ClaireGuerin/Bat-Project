@@ -15,9 +15,9 @@ library(IRanges)
 
 startTime = Sys.time()
 
-resDir = 'C:/Users/tbeleyur/Desktop/debugging_echo_calc/'
+resDir = "C:/Users/tbeleyur/Documents/Bat-Project/IPI_15DC/"
 setwd(resDir)
-resFiles = dir(resDir, pattern="Res")[1]
+resFiles = dir(resDir, pattern="Res")
 
 for (resfile in resFiles){
 
