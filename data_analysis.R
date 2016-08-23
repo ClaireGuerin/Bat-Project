@@ -15,7 +15,7 @@ library(IRanges)
 
 startTime = Sys.time()
 
-resDir = "D:/Bat_Project/Res/"
+resDir = "C:/Users/tbeleyur/Documents/Bat-Project/IPI_15DC/"
 setwd(resDir)
 resFiles = dir(resDir, pattern="Res")
 
@@ -149,25 +149,24 @@ R.dist = function(expl.t){
 # for the call to travel from its source to the bat on which
 # it has bounced-off, thus producing an echo.
 
-	new.x = init.x + FLIGHTSPEED * expl.t * cos(TETA)
+	new.x = init.x + FLIGHTSPEED * expl.t * TIMERESOLUTION * cos(TETA)
 	# new position of the moving bat on the x-axis, after delta t = expl.t time
-	new.y = init.y + FLIGHTSPEED * expl.t * sin(TETA)
+	new.y = init.y + FLIGHTSPEED * expl.t * TIMERESOLUTION * sin(TETA)
 	# new position of the moving bat on the y-axis, after delta t = expl.t time
 	R.t.sq = (new.x - x.source) ** 2 + (new.y - y.source) ** 2
 	# R.t.sq stands for R(t)². Distance between the moving bat, which
 	# originally emitted the sound, and the position where the echo 
 	# bounced-off, otherwise called "source" as in source of the echo.
 	# R(t)² slowly decreases, then increases with time.
-	r.t.sq = (VSOUND * expl.t) ** 2
+	r.t.sq = (VSOUND * expl.t*TIMERESOLUTION) ** 2
 	# r.t.sq stands for r(t)². Radius of the sound as it propagates,
 	# i.e. distance between the source of the echo and its current
 	# position in space. r(t)² increases with time.
-		
-	collision = which(R.t.sq <= r.t.sq)
+	difrnce<-abs(R.t.sq - r.t.sq	)
+	collision<- which(difrnce==min(difrnce))
 	# a bat-sound collision occurs as soon as R(t)² <= r(t)²
-	impact.t = collision[1]
 	# Exact time of impact
-	return(impact.t)
+	return(collision)
 }
 
 ### HEAR.ECHO FUNCTION ###
@@ -245,10 +244,10 @@ for (i in 0:(dim(cal)[2]-1)){
 		# position of bat i on x-axis at the time it heard sound j
 		y.source = mov[time.R+1,firstcol[i+1]+1]
 		# position of bat i on y-axis at the time it heard sound j
-		init.x = mov[time.R+1,firstcol[id.E+1]]
+		init.x = mov[time.E+1,firstcol[id.E+1]]
 		# position of bat E on x-axis at the time call j
 		# was heard by bat i.
-		init.y = mov[time.R+1,firstcol[id.E+1]+1]
+		init.y = mov[time.E+1,firstcol[id.E+1]+1]
 		# position of bat E on y-axis at the time call j
 		# was heard by bat i.
 		
