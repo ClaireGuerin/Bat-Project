@@ -13,9 +13,9 @@ loadfonts()
 
 ###----------USER INPUT REQUIRED----------###
 ### Remember to create Scatterplots and Boxplots folders
-resDir = "D:/Bat_Project/Res/" # directory where the results are stored
+resDir = "C:/Users/tbeleyur/Documents/Bat-Project/IID_axe/" # directory where the results are stored
 
-varParam = "source_level"
+varParam = "iid_on_axis"
 dutyCycle = ""
 # dutyCycle = "Unconstrained duty cycle" # uncomment accordingly
 # dutyCycle = "5.4% duty cycle" # uncomment accordingly
@@ -163,7 +163,7 @@ for (j in 1:3){
 		ec_index = as.vector(eclist[[i]][indexCol])[,1]
 		ee_index = as.vector(eelist[[i]][indexCol])[,1]
 		len_ind = length(ec_index)
-		param = rep(paramlist[[i]], len_ind)
+		param = rep(log(paramlist[[i]]), len_ind)
 		n = Nlist[[i]] - 1
 
 		ec_index_all = append(ec_index_all, ec_index)
@@ -171,7 +171,7 @@ for (j in 1:3){
 		ee_index_all = append(ee_index_all, ee_index)
 		ee_index_means = append(ee_index_means, mean(ee_index, na.rm=T))
 		param_all = append(param_all, param)
-		param_for_means = append(param_for_means,paramlist[[i]])
+		param_for_means = append(param_for_means,log(paramlist[[i]]))
 		n_all = append(n_all, n)		
 	}
 
@@ -182,6 +182,7 @@ for (j in 1:3){
 	}	
 	jitterStrength = 1
 
+	param_for_means=sort(param_for_means)
 	#baseline[,j] = ec_index_all
 	#baseline[,j+3] = ee_index_all
 
@@ -189,17 +190,17 @@ for (j in 1:3){
 		xlab = varName, ylim=c(0,maxy), cex.lab=1.5, col.lab="gray30", xaxt="n", pch=21, bg=color_transparent20[1]) 
 	axis(1, at = signif(param_for_means, digits=3), las=1)
 	points(ee_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col=color_transparent30[2], pch=21, bg=color_transparent20[2])
-	points(baseline[,j]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col=color_transparent20[1], pch=8)
-	points(baseline[,j+3]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col=color_transparent20[1], pch=8)
-	points(ec_index_means~param_for_means, col=color[1], type="c", lwd=1.5)
-	points(ee_index_means~param_for_means, col=color[2], type="c", lwd=1.5)
+	points(baseline[,j]~jitter(log(baseline[,varBase]),jitterStrength), cex.axis=1.5, col="darkred", pch=8)
+	points(baseline[,j+3]~jitter(log(baseline[,varBase]),jitterStrength), cex.axis=1.5, col="deepskyblue", pch=8)
+	points(ec_index_means~param_for_means, col="darkred", type="c", lwd=1.5)
+	points(ee_index_means~param_for_means, col="deepskyblue", type="c", lwd=1.5)
 }
 par(mai=c(0,0,0,0))
 plot.new()
 legend(x="center", ncol=1, 
 	legend=c("Echo-call overlaps","Echo-call overall mean","Echo-call for baseline parameters",
 	"Echo-echo overlaps","Echo-echo overall mean","Echo-echo for baseline parameters"),
-	col=c(color[1],color[1], color[1],color[2],color[2], color[2]), text.col = "gray30",
+	col=c(color[1],"darkred", "darkred",color[2],"deepskyblue", "deepskyblue"), text.col = "gray30",
 	title=expression(italic("Type of overlapping sound")), pch=c(21,NA,8,21,NA,8), lty=c(NA,1,NA,NA,1,NA), pt.cex=3, 
 	cex=1.5, pt.bg=c(color_transparent30[1],NA,NA,color_transparent30[2],NA,NA), bty="n", lwd=c(NA,1.5,NA,NA,1.5,NA))		
 dev.off()
