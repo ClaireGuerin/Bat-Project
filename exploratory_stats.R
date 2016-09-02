@@ -13,9 +13,9 @@ loadfonts()
 
 ###----------USER INPUT REQUIRED----------###
 ### Remember to create Scatterplots and Boxplots folders
-resDir = "F:/Bats2016/Nedge/Nedge_variation_good/" # directory where the results are stored
+resDir = "F:/Bats2016/IID_axe/" # directory where the results are stored
 
-varParam = "nedge"
+varParam = "iid_on_axis"
 dutyCycle = ""
 # dutyCycle = "Unconstrained duty cycle" # uncomment accordingly
 # dutyCycle = "5.4% duty cycle" # uncomment accordingly
@@ -80,7 +80,7 @@ for (i in 1:nSim){
 
 		ee_ind = read.table(ee_file, header=T, sep=",", dec=".", row.names = 1)
 		ec_ind = read.table(ec_file, header=T, sep=",", dec=".", row.names = 1)
-		parameter = as.numeric(as.character(read.table(param_file, header=F, sep="\n", dec=".")[varParIndex,]))
+		parameter = log(as.numeric(as.character(read.table(param_file, header=F, sep="\n", dec=".")[varParIndex,])))
 		N = as.numeric(as.character(read.table(param_file, header=F, sep="\n", dec=".")[Nindex,])) ^ 2
 
 		colnames(eelist[[i]]) = colnames(ee_ind)
@@ -173,7 +173,11 @@ for (j in 1:3){
 		ee_index_means = append(ee_index_means, mean(ee_index, na.rm=T))
 		param_all = append(param_all, param)
 		param_for_means = append(param_for_means,paramlist[[i]])
-		n_all = append(n_all, n)		
+		n_all = append(n_all, n)
+		ec_means = cbind(ec_index_means,param_for_means)
+		ec_means = ec_means[order(param_for_means), ]	
+		ee_means = cbind(ee_index_means,param_for_means)
+		ee_means = ee_means[order(param_for_means), ]	
 	}
 
 	if (j==1){
@@ -187,13 +191,13 @@ for (j in 1:3){
 	#baseline[,j+3] = ee_index_all
 
 	plot(ec_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col=color_transparent30[1], ylab = index, 
-		xlab = varName, ylim=c(0,maxy), cex.lab=1.5, col.lab="gray30", xaxt="n", pch=21, bg=color_transparent20[1]) 
+		xlab = paste("log(",varName,")", sep=""), ylim=c(0,maxy), cex.lab=1.5, col.lab="gray30", xaxt="n", pch=21, bg=color_transparent20[1]) 
 	axis(1, at = signif(param_for_means, digits=3), las=1)
 	points(ee_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col=color_transparent30[2], pch=21, bg=color_transparent20[2])
 	points(baseline[,j]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col=color_baseline[1], pch=8)
 	points(baseline[,j+3]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col=color_baseline[2], pch=8)
-	points(ec_index_means~param_for_means, col=color[1], type="c", lwd=1.5)
-	points(ee_index_means~param_for_means, col=color[2], type="c", lwd=1.5)
+	points(ec_index_means~param_for_means, data=ec_means, col=color[1], type="c", lwd=1.5)
+	points(ee_index_means~param_for_means, data=ee_means, col=color[2], type="c", lwd=1.5)
 }
 par(mai=c(0,0,0,0))
 plot.new()
