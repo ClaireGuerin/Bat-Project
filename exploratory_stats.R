@@ -13,9 +13,9 @@ loadfonts()
 
 ###----------USER INPUT REQUIRED----------###
 ### Remember to create Scatterplots and Boxplots folders
-resDir = "D:/Bat_Project/Res/" # directory where the results are stored
+resDir = "F:/Bats2016/Nedge/Nedge_variation_good/" # directory where the results are stored
 
-varParam = "source_level"
+varParam = "nedge"
 dutyCycle = ""
 # dutyCycle = "Unconstrained duty cycle" # uncomment accordingly
 # dutyCycle = "5.4% duty cycle" # uncomment accordingly
@@ -64,6 +64,7 @@ varBase = which(colnames(baseline) == varParam)
 color <- c("firebrick1","deepskyblue4")
 color_transparent30 <- adjustcolor(color, alpha.f = 0.3) 
 color_transparent20 <- adjustcolor(color, alpha.f = 0.2)
+color_baseline <- c("darkred","cyan")
 for (i in 1:nSim){
 
 ###----------IMPORT INDICES----------###
@@ -189,8 +190,8 @@ for (j in 1:3){
 		xlab = varName, ylim=c(0,maxy), cex.lab=1.5, col.lab="gray30", xaxt="n", pch=21, bg=color_transparent20[1]) 
 	axis(1, at = signif(param_for_means, digits=3), las=1)
 	points(ee_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col=color_transparent30[2], pch=21, bg=color_transparent20[2])
-	points(baseline[,j]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col=color_transparent20[1], pch=8)
-	points(baseline[,j+3]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col=color_transparent20[1], pch=8)
+	points(baseline[,j]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col=color_baseline[1], pch=8)
+	points(baseline[,j+3]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col=color_baseline[2], pch=8)
 	points(ec_index_means~param_for_means, col=color[1], type="c", lwd=1.5)
 	points(ee_index_means~param_for_means, col=color[2], type="c", lwd=1.5)
 }
@@ -199,7 +200,7 @@ plot.new()
 legend(x="center", ncol=1, 
 	legend=c("Echo-call overlaps","Echo-call overall mean","Echo-call for baseline parameters",
 	"Echo-echo overlaps","Echo-echo overall mean","Echo-echo for baseline parameters"),
-	col=c(color[1],color[1], color[1],color[2],color[2], color[2]), text.col = "gray30",
+	col=c(color[1],color_baseline[1],color_baseline[1],color[2],color_baseline[2], color_baseline[2]), text.col = "gray30",
 	title=expression(italic("Type of overlapping sound")), pch=c(21,NA,8,21,NA,8), lty=c(NA,1,NA,NA,1,NA), pt.cex=3, 
 	cex=1.5, pt.bg=c(color_transparent30[1],NA,NA,color_transparent30[2],NA,NA), bty="n", lwd=c(NA,1.5,NA,NA,1.5,NA))		
 dev.off()
