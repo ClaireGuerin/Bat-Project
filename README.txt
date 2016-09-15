@@ -1,8 +1,8 @@
-#########################################################################################
-### 																				  ###
-### Documentation for bat_class program (need to change the name of the programme btw ###
-###																					  ###
-#########################################################################################
+####################################
+### 							 ###
+### Documentation for oneinst.py ###
+###								 ###
+####################################
 
 ###----------LAUNCHER----------###
 ### Class implementation to launch the simulation environment.

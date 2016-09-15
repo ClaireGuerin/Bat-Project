@@ -15,7 +15,7 @@ library(IRanges)
 
 startTime = Sys.time()
 
-resDir = "C:/Users/tbeleyur/Documents/Bat-Project/IPI_15DC/"
+resDir = "D:/Bat_Project/Res/"
 setwd(resDir)
 resFiles = dir(resDir, pattern="Res")
 
@@ -252,9 +252,13 @@ for (i in 0:(dim(cal)[2]-1)){
 		# was heard by bat i.
 		
 		echoTravel = R.dist(0:(time.R - time.E + 5))
+		# time that the echo took to travel from the impact position, back to the bat.
 		preCD = (time.R - time.E)*VSOUND*TIMERESOLUTION
+		# distance sound travels from calling bat to target bat before impact/collision (metres)
 		postCD = echoTravel*VSOUND*TIMERESOLUTION
+		# distance sound travels from target bat - now as an echo - towards the bat which had called (metres)
 		echoPerception = Hear.echo(preCD, postCD, SOURCELEVEL, HEARINGTHRESHOLD)
+		# boolean: does the bat hears the echo?
 
 		if (echoPerception){
 			echo$time.C[meter+j] = time.R + echoTravel
@@ -301,84 +305,87 @@ for (i in 0:(dim(cal)[2]-1)){
 # rendering it impossible for the agent to hear it 
 # NB: Filter applied to both calls & echoes 
 
-plotRanges <- function(x, xlim = x, main = deparse(substitute(x)),
-	col = "black", sep = 0.5, ...){
-	height <- 1
-	if (is(xlim, "Ranges")) xlim <- c(min(start(xlim)), max(end(xlim)))
-	bins <- disjointBins(IRanges(start(x), end(x) + 1))
-	plot.new()
-	plot.window(xlim, c(0, max(bins)*(height + sep)))
-	ybottom <- bins * (sep + height) - height
-	rect(start(x)-0.5, ybottom, end(x)+0.5, ybottom + height, col = col, ...)
-	title(main)
-	axis(1)
-}
-
-npop = 0:(dim(cal)[2]-1)
+npop = 0:(dim(cal)[2]-1) # size of the bat population
 
 ECoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 7)
 ECoverlapMat[,1] = npop
 colnames(ECoverlapMat)=c("ID","meanNumOvPerEcho","sdNumOv","meanTimeOvPerEch","sdTimeOv","%echoOverlapped","%timeFreeIPI")
+# Matrix for interference indices storage, per individual, for calls
 
 EEoverlapMat = matrix(NA, nrow = dim(cal)[2], ncol = 7)
 EEoverlapMat[,1] = npop
-colnames(EEoverlapMat)=colnames(ECoverlapMat)		
+colnames(EEoverlapMat)=colnames(ECoverlapMat)
+# Matrix for interference indices storage, per individual, for echoes		
 
 for (i in npop){
-	echo_channel_nofilter = echo[which(echo$id.E == i),] 
+	echo_channel_nofilter = echo[which(echo$id.E == i),]
+	# echo channel, before filtering
 	call_channel_nofilter = get(paste("calls.others",i,sep=""))
+	# call channel, before filtering
 	filter_channel = get(paste("calls.self",i,sep=""))	
-	c.ranges = IRanges()
-	e.ranges = IRanges()
-	f.ranges = IRanges()
+	# own calls channel, that will serve for filtering the above
+	c.ranges = IRanges() # call ranges
+	e.ranges = IRanges() # echo ranges
+	f.ranges = IRanges() # own call ranges
 
-	f.temp = rep(FALSE, SIMDURATION)
-	filtertimes = filter_channel$Time_R+1
-	f.temp[filtertimes] = TRUE
-	f.ranges = append(f.ranges, IRanges(f.temp))
-	f.ranges = shift(f.ranges, -1)
+	f.temp = rep(FALSE, SIMDURATION) 
+	# vector containing 1 boolean element per time step
+	# if vector[z] = FALSE: no sound is heard at time step z
+	# if vector[z] = TRUE: a sound is heard at time step z
+	filtertimes = filter_channel$Time_R+1 # times of the simulation at which a "own call" sound occurs
+	f.temp[filtertimes] = TRUE # transfer these times in the vector 
+	f.ranges = append(f.ranges, IRanges(f.temp)) # translate times into an IRanges object
+	f.ranges = shift(f.ranges, -1) # shift times so that the first time step is 0 instead of 1
 
 
 	for (j in 1:length(npop-1)){
-		ident = npop[-(i+1)][j]
+		ident = npop[-(i+1)][j] # identity of the bat
 		
-		c.temp = rep(FALSE, SIMDURATION)
+		c.temp = rep(FALSE, SIMDURATION) # vector containing 1 boolean element per time step
 		calltimes = call_channel_nofilter$Time_R[which(call_channel_nofilter$ID_E == ident)]+1
+		# times of the simulation at which a "others call" sound occurs
 		checkcall = calltimes[which(calltimes<length(c.temp))]
-		c.temp[checkcall] = TRUE
-		c.ranges = append(c.ranges, IRanges(c.temp))
+		c.temp[checkcall] = TRUE # transfer these times in the vector
+		c.ranges = append(c.ranges, IRanges(c.temp)) # translate times into an IRanges object
 
-		e.temp = rep(FALSE, SIMDURATION)
+		e.temp = rep(FALSE, SIMDURATION) # vector containing 1 boolean element per time step
 		echotimes = echo_channel_nofilter$time.C[which(echo_channel_nofilter$id.B == ident)]+1
+		# times of the simulation at which a "others call" sound occurs
 		checkecho = echotimes[which(echotimes<length(e.temp))]
-		e.temp[checkecho] = TRUE
-		e.ranges = append(e.ranges, IRanges(e.temp))
+		e.temp[checkecho] = TRUE # transfer these times in the vector
+		e.ranges = append(e.ranges, IRanges(e.temp)) # translate times into an IRanges object
 	}	
 
 	c.ranges = shift(c.ranges, -1)
 	e.ranges = shift(e.ranges, -1)
+	# shift times so that the first time step is 0 instead of 1
 
 	c.ranges.f = IRanges()
-	e.ranges.f = IRanges()	
+	e.ranges.f = IRanges()
+	# initiate ranges for filtering (below:)
 
 	for (n in 1:length(c.ranges)) c.ranges.f = append(c.ranges.f,gaps(resize(f.ranges, f.ranges@width-1, fix="start"), c.ranges@start[n], c.ranges@start[n]+c.ranges@width[n]-1)) 
 	for (n in 1:length(e.ranges)) e.ranges.f = append(e.ranges.f,gaps(resize(f.ranges, f.ranges@width-1, fix="start"), e.ranges@start[n], e.ranges@start[n]+e.ranges@width[n]-1)) 
 	
 	ECOverlaps = findOverlaps(e.ranges.f, c.ranges.f)
 	EEOverlaps = findOverlaps(e.ranges.f, e.ranges.f)
-	EEOverlaps = EEOverlaps[-which(EEOverlaps@from == EEOverlaps@to)]
+	# find overlaps between echoes and calls and betweene echoes
+	EEOverlaps = EEOverlaps[-which(EEOverlaps@from == EEOverlaps@to)] 
+	# remove "borderline" overlaps (end of 1 range and start of the other are adjacent)
 
 	numECOverlaps = rep(NA, length(e.ranges.f)) 
-	numEEOverlaps = rep(NA, length(e.ranges.f))	
+	numEEOverlaps = rep(NA, length(e.ranges.f))
+	# number of overlaps
 
 	widthECOverlaps = rep(NA, length(e.ranges.f)) 
 	widthEEOverlaps = rep(NA, length(e.ranges.f))
+	# coverage of overlaps
 
-	all.ranges = IRanges(rep(TRUE, SIMDURATION))
-	ipi.ranges = gaps(f.ranges, all.ranges@start, all.ranges@start+all.ranges@width-1)
-	ipi.ranges = ipi.ranges + 1
-	c.free.ipi = IRanges()
-	e.free.ipi = IRanges()
+	all.ranges = IRanges(rep(TRUE, SIMDURATION)) # range over the whole simulation
+	ipi.ranges = gaps(f.ranges, all.ranges@start, all.ranges@start+all.ranges@width-1) # ipi ranges
+	ipi.ranges = ipi.ranges + 1 
+	c.free.ipi = IRanges() # calls free IPIs
+	e.free.ipi = IRanges() # echoes free IPIs
 	for (n in 1:length(ipi.ranges)){ 
 		c.free.ipi = append(c.free.ipi, gaps(c.ranges, start=ipi.ranges[n]@start, end=ipi.ranges[n]@start+ipi.ranges[n]@width-1))
 		e.free.ipi = append(e.free.ipi, gaps(e.ranges, start=ipi.ranges[n]@start, end=ipi.ranges[n]@start+ipi.ranges[n]@width-1))
@@ -460,3 +467,66 @@ write.csv(EEoverlapMat, file=outputFile2)
 }
 
 print(Sys.time() - startTime)
+
+##########----------PLOT OVERLAPS----------##########
+
+plotRanges <- function(x, xlim = x, main = deparse(substitute(x)), col = "black", sep = 0.5, ...){
+height <- 1
+if (is(xlim, "Ranges"))
+xlim <- c(min(start(xlim)), max(end(xlim)))
+bins <- disjointBins(IRanges(start(x), end(x) + 1))
+plot.new()
+plot.window(xlim, c(0, max(bins)*(height + sep)))
+ybottom <- bins * (sep + height) - height
+rect(start(x)-0.5, ybottom, end(x)+0.5, ybottom + height, col = col, ...)
+}
+
+color <- c("firebrick1","deepskyblue4")
+color_transparent30 <- adjustcolor(color, alpha.f = 0.3) 
+color_transparent20 <- adjustcolor(color, alpha.f = 0.2)
+color_baseline <- c("darkred","cyan")
+
+library(car)
+library(extrafont)
+loadfonts()
+
+imgPath = paste(resDir,"/ovpexample.pdf", sep="")
+pdf(imgPath, family="CM Roman", width=7, height=7)
+layout(matrix(c(1,1,2,2,3,3,4,4), ncol=2, byrow=TRUE), widths=c(1,1,1,1), heights=c(1,4,4,4))
+
+par(mai=c(0,0,0,0))
+plot.new()
+legend("center", legend=c("Sound filter","Focal echo", "Overlap frame"), text.col = "gray30", 
+	pch=c(NA,"<",NA), 
+	density=c(20,-0,-0),
+	fill = c(NA,NA,color[2]), 
+	border=c("black",NA,color[2]),
+	horiz=T,
+	cex=1.5)
+
+par(mai=c(0.6,0.8,0,0))
+plotRanges(f.ranges, col="gray20", xlim=c(0,150))
+mtext("Own calls",2)
+temp.y2 = cnvrt.coords(x=NA,y=1.5)$dev$y
+temp.x1first = f.ranges@start[1]
+temp.x2first = f.ranges@start[1]+f.ranges@width[1]-1
+temp.x1second = f.ranges@start[2]
+temp.x2second = f.ranges@start[2]+f.ranges@width[2]-1
+plotRanges(e.ranges, col=color_transparent30[2], xlim=c(0,150))
+mtext("Endogenous sounds \n(own echoes)",2)
+index.y2 = cnvrt.coords(x=NA,y=5)$dev$y
+index.x1 = e.ranges@start[6]
+index.x2 = e.ranges@start[6] + e.ranges@width[6]-1
+#arrows(index.x2+10,1,index.x2+1,1, length=0.1, angle=30, lwd=2)
+points(index.x2+5,1,pch="<", cex=3)
+plotRanges(c.ranges, col=color_transparent30[1], xlim=c(0,150))
+mtext("Exogenous sounds \n(calls from others)",2)
+axis(1)
+
+par(xpd=NA)
+temp.y2sec = cnvrt.coords(x=NA, y=temp.y2, input='dev')$usr$y
+index.y2sec = cnvrt.coords(x=NA, y=index.y2, input='dev')$usr$y
+rect(c(temp.x1first,temp.x1second), c(0,0), c(temp.x2first,temp.x2second), c(temp.y2sec,temp.y2sec), density=20, col="gray60")
+rect(index.x1, 0, index.x2, index.y2sec, col=color_transparent20[2], border=color[2])
+
+dev.off()

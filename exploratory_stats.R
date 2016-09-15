@@ -13,13 +13,13 @@ loadfonts()
 
 ###----------USER INPUT REQUIRED----------###
 ### Remember to create Scatterplots and Boxplots folders
-resDir = "F:/Bats2016/IID_axe/" # directory where the results are stored
+resDir = "F:/Bats2016/IPI_15DC/" # directory where the results are stored
 
-varParam = "iid_on_axis"
-dutyCycle = ""
+varParam = "ipi"
+# dutyCycle = ""
 # dutyCycle = "Unconstrained duty cycle" # uncomment accordingly
 # dutyCycle = "5.4% duty cycle" # uncomment accordingly
-# dutyCycle = " 15 duty cycle%" # uncomment accordingly
+dutyCycle = " 15% duty cycle" # uncomment accordingly
 
 ###----------###################----------###
 
@@ -65,6 +65,9 @@ color <- c("firebrick1","deepskyblue4")
 color_transparent30 <- adjustcolor(color, alpha.f = 0.3) 
 color_transparent20 <- adjustcolor(color, alpha.f = 0.2)
 color_baseline <- c("darkred","cyan")
+
+subplots = c("A","B","C")
+
 for (i in 1:nSim){
 
 ###----------IMPORT INDICES----------###
@@ -80,7 +83,7 @@ for (i in 1:nSim){
 
 		ee_ind = read.table(ee_file, header=T, sep=",", dec=".", row.names = 1)
 		ec_ind = read.table(ec_file, header=T, sep=",", dec=".", row.names = 1)
-		parameter = log(as.numeric(as.character(read.table(param_file, header=F, sep="\n", dec=".")[varParIndex,])))
+		parameter = as.numeric(as.character(read.table(param_file, header=F, sep="\n", dec=".")[varParIndex,]))
 		N = as.numeric(as.character(read.table(param_file, header=F, sep="\n", dec=".")[Nindex,])) ^ 2
 
 		colnames(eelist[[i]]) = colnames(ee_ind)
@@ -122,7 +125,7 @@ for (i in 1:nSim){
 			indlim = max(100, ec_index, ee_index, na.rm=T)
 		}
 
-		Boxplot(ec_index~ec_ids, col=color_transparent30[1], border=color[1], cex.axis=1.5, ylab = index, xlab = "Individual ID", ylim=c(0,indlim), cex.lab=1.5, col.lab="gray30", id.method="none") 
+		Boxplot(ec_index~ec_ids, main=subplots[j], col.main="gray30", col=color_transparent30[1], border=color[1], cex.axis=1.5, ylab = index, xlab = "Individual ID", ylim=c(0,indlim), cex.lab=1.5, col.lab="gray30", cex.main=1.5, id.method="none") 
 		Boxplot(ee_index~ee_ids, col=color_transparent30[2], border=color[2], add=T, ylab = "", xlab = "", axes=F, id.method="none")
 	}
 	par(mai=c(0,0,0,0))
@@ -159,7 +162,7 @@ for (j in 1:3){
 	param_for_means = c()
 	n_all = c()
 	
-	for (i in 1:nSim){
+	for (i in 2:nSim){
 
 		ec_index = as.vector(eclist[[i]][indexCol])[,1]
 		ee_index = as.vector(eelist[[i]][indexCol])[,1]
@@ -190,8 +193,8 @@ for (j in 1:3){
 	#baseline[,j] = ec_index_all
 	#baseline[,j+3] = ee_index_all
 
-	plot(ec_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col=color_transparent30[1], ylab = index, 
-		xlab = paste("log(",varName,")", sep=""), ylim=c(0,maxy), cex.lab=1.5, col.lab="gray30", xaxt="n", pch=21, bg=color_transparent20[1]) 
+	plot(ec_index_all~jitter(param_all, jitterStrength), main=subplots[j], col.main="gray30", cex.main=1.5, cex.axis=1.5, col=color_transparent30[1], ylab = index, 
+		xlab = varName, ylim=c(0,maxy), cex.lab=1.5, col.lab="gray30", xaxt="n", pch=21, bg=color_transparent20[1]) 
 	axis(1, at = signif(param_for_means, digits=3), las=1)
 	points(ee_index_all~jitter(param_all, jitterStrength), cex.axis=1.5, col=color_transparent30[2], pch=21, bg=color_transparent20[2])
 	points(baseline[,j]~jitter(baseline[,varBase],jitterStrength), cex.axis=1.5, col=color_baseline[1], pch=8)
