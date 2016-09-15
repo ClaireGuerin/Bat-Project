@@ -181,7 +181,7 @@
 
 *Outputs*
  propdist: integer. Distance of propagation of the sound from its source
- dict1: dictiory. callsource dictiory with updated propagation distances
+ dict1: dictionary. callsource dictionary with updated propagation distances
 **End of documentation for PROPAGATION**
 
 **HEARING_TEST**
